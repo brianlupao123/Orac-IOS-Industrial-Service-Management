@@ -1,9 +1,9 @@
-﻿// Orac-IOS API client.
+// Orac-IOS API client.
 // Verified against src/router.js, authController.js, coreController.js,
 // stateMachine.js. See ORAC_API_CONTRACT_REFERENCE.md for the source-checked
 // contract this file implements.
 
-const BASE = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+const BASE = "/api";
 
 function getToken() {
   return localStorage.getItem("orac_token") || "";
@@ -26,9 +26,6 @@ function getCachedUser() {
 }
 
 async function request(path, options = {}) {
-  if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
-    throw new Error("The service is not connected yet. Please try again later.");
-  }
   const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -185,6 +182,12 @@ export const inventory = {
   },
   listSuppliers() {
     return request("/inventory/suppliers");
+  },
+  createSupplier(payload) {
+    return request("/inventory/suppliers", { method: "POST", body: JSON.stringify(payload) });
+  },
+  updateSupplier(id, payload) {
+    return request(`/inventory/suppliers/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
   }
 };
 
@@ -207,6 +210,12 @@ export const admin = {
   },
   updateUser(id, payload) {
     return request(`/admin/users/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+  },
+  createClient(payload) {
+    return request("/admin/clients", { method: "POST", body: JSON.stringify(payload) });
+  },
+  updateClient(id, payload) {
+    return request(`/admin/clients/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
   }
 };
 
