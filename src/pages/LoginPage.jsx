@@ -138,29 +138,31 @@ export default function LoginPage({ onLogin }) {
             </button>
           </form>
 
-          {/* Demo Users Panel */}
-          <div className="mt-10 pt-8 border-t border-gray-100">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
-              Demo Users (1-Click Login)
-            </h3>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {DEMO_USERS.map((u) => (
-                <button
-                  key={u.role}
-                  onClick={() => handleDemoClick(u.email)}
-                  disabled={busy}
-                  className="flex flex-col items-start p-3 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-gray-100 hover:border-gray-300 transition-all text-left group"
-                >
-                  <span className="text-xs font-semibold text-gray-900 group-hover:text-orac-blue transition-colors">
-                    {u.role}
-                  </span>
-                </button>
-              ))}
+          {/* Demo Users Panel (Hidden in Prod) */}
+          {!import.meta.env.PROD && (
+            <div className="mt-10 pt-8 border-t border-gray-100">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
+                Demo Users (1-Click Login)
+              </h3>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {DEMO_USERS.map((u) => (
+                  <button
+                    key={u.role}
+                    onClick={() => handleDemoClick(u.email)}
+                    disabled={busy}
+                    className="flex flex-col items-start p-3 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-gray-100 hover:border-gray-300 transition-all text-left group"
+                  >
+                    <span className="text-xs font-semibold text-gray-900 group-hover:text-orac-blue transition-colors">
+                      {u.role}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-4 text-[11px] text-gray-400 leading-relaxed">
+                Passwords are not required for this demo environment. Clicking a user will instantly authenticate you into their specific portal experience.
+              </p>
             </div>
-            <p className="mt-4 text-[11px] text-gray-400 leading-relaxed">
-              Clicking a role above will instantly log you in to evaluate their specific dashboard and permissions. Real passwords are not required in this demo environment.
-            </p>
-          </div>
+          )}
         </div>
       </div>
     </div>
