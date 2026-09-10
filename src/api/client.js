@@ -3,7 +3,7 @@
 // stateMachine.js. See ORAC_API_CONTRACT_REFERENCE.md for the source-checked
 // contract this file implements.
 
-const BASE = "/api";
+const BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 function getToken() {
   return localStorage.getItem("orac_token") || "";
