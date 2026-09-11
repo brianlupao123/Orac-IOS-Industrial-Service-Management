@@ -30,7 +30,9 @@ export default function LoginPage({ onLogin }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [showAccounts, setShowAccounts] = useState(false);
-  const showDemoAccounts = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_ACCOUNTS === "true";
+  // Explicitly enabled only for the private verification pilot. Do not set
+  // this variable on a public production launch with real client data.
+  const showDemoAccounts = import.meta.env.VITE_ENABLE_DEMO_ACCOUNTS === "true";
 
   async function handleSubmit(e, directEmail = null, directPassword = null) {
     if (e) e.preventDefault();
