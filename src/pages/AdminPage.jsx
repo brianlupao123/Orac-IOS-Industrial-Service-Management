@@ -74,6 +74,7 @@ export default function AdminPage({ user }) {
     const form = new FormData(e.target);
     const payload = Object.fromEntries(form.entries());
     payload.is_active = payload.is_active === "true";
+    if (!payload.password) delete payload.password;
 
     try {
       if (userModal.data?.id) {
@@ -381,6 +382,11 @@ export default function AdminPage({ user }) {
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Email Address</label>
             <input name="email" type="email" defaultValue={userModal.data?.email || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">{userModal.data ? "New Password (optional)" : "Temporary Password"}</label>
+            <input name="password" type="password" minLength="10" required={!userModal.data} autoComplete="new-password" placeholder={userModal.data ? "Leave blank to keep the existing password" : "At least 10 characters"} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+            <p className="mt-1 text-[10px] text-gray-400">Share a temporary password securely; the user can change it through the reset flow.</p>
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">System Role</label>

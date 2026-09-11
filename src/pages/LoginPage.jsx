@@ -30,6 +30,7 @@ export default function LoginPage({ onLogin }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [showAccounts, setShowAccounts] = useState(false);
+  const showDemoAccounts = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_ACCOUNTS === "true";
 
   async function handleSubmit(e, directEmail = null, directPassword = null) {
     if (e) e.preventDefault();
@@ -50,8 +51,8 @@ export default function LoginPage({ onLogin }) {
 
   function handleQuickLogin(user) {
     setEmail(user.email);
-    setPassword("Test@123");
-    handleSubmit(null, user.email, "Test@123");
+    setPassword("password123");
+    handleSubmit(null, user.email, "password123");
   }
 
   return (
@@ -177,7 +178,7 @@ export default function LoginPage({ onLogin }) {
           </form>
 
           {/* Quick Access Accounts — clean, collapsible */}
-          <div className="mt-8 pt-6 border-t border-gray-100">
+          {showDemoAccounts && <div className="mt-8 pt-6 border-t border-gray-100">
             <button
               type="button"
               onClick={() => setShowAccounts(!showAccounts)}
@@ -209,7 +210,7 @@ export default function LoginPage({ onLogin }) {
                 ))}
               </div>
             )}
-          </div>
+          </div>}
 
           <p className="mt-6 text-center text-xs text-gray-400">
             Orac-IOS &copy; {new Date().getFullYear()} &bull; Orac Systems

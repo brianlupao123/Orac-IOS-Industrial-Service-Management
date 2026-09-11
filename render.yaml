@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: orac-ios-web
+    name: orac-industrial-service-portal
     runtime: static
     buildCommand: npm ci && npm run build
     staticPublishPath: ./dist

@@ -237,4 +237,9 @@ quotes.submitClientPo = (id, po_reference, po_amount, extra = {}) => {
 // --- Phase 6 additions --------------------------------------------------
 auth.requestPasswordReset = (email) => { return request('/auth/request-password-reset', { method: 'POST', body: JSON.stringify({ email }) }); };
 auth.resetPassword = (email, token, new_password) => { return request('/auth/reset-password', { method: 'POST', body: JSON.stringify({ email, token, new_password }) }); };
-export const accessRequests = { submit(payload) { return request('/access-requests', { method: 'POST', body: JSON.stringify(payload) }); }, list() { return request('/access_requests'); }, approve(id, role, client_id) { return request(/access-requests//approve, { method: 'POST', body: JSON.stringify({ role, client_id }) }); }, reject(id, reason) { return request(/access-requests//reject, { method: 'POST', body: JSON.stringify({ reason }) }); } };
+export const accessRequests = {
+  submit(payload) { return request("/access-requests", { method: "POST", body: JSON.stringify(payload) }); },
+  list() { return request("/access_requests"); },
+  approve(id, role, client_id) { return request(`/access-requests/${id}/approve`, { method: "POST", body: JSON.stringify({ role, client_id }) }); },
+  reject(id, reason) { return request(`/access-requests/${id}/reject`, { method: "POST", body: JSON.stringify({ reason }) }); }
+};
