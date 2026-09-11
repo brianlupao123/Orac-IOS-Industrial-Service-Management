@@ -3,26 +3,10 @@ import { collections, admin } from "../api/client.js";
 import DataTable from "../components/DataTable.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import StatCard from "../components/StatCard.jsx";
-
-// Modal Component for Forms
-function Modal({ title, isOpen, onClose, children }) {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-          <h3 className="text-lg font-semibold text-orac-slate">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-        </div>
-        <div className="p-6">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
+import AdminAccessRequestsPage from "./AdminAccessRequestsPage.jsx";
+import AdminAnalyticsPage from "./AdminAnalyticsPage.jsx";
+import AdminEntitiesTab from "./AdminEntitiesTab.jsx";
+import Modal from "../components/Modal.jsx";
 
 export default function AdminPage({ user }) {
   const [users, setUsers] = useState([]);
@@ -173,6 +157,36 @@ export default function AdminPage({ user }) {
                 }`}
               >
                 Client Directory
+              </button>
+              <button
+                onClick={() => setActiveTab("access-requests")}
+                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === "access-requests"
+                    ? "border-orac-blue text-orac-blue"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Access Requests
+              </button>
+              <button
+                onClick={() => setActiveTab("analytics")}
+                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === "analytics"
+                    ? "border-orac-blue text-orac-blue"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Analytics
+              </button>
+              <button
+                onClick={() => setActiveTab("entities")}
+                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === "entities"
+                    ? "border-orac-blue text-orac-blue"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Entity Management
               </button>
             </>
           )}
@@ -328,6 +342,27 @@ export default function AdminPage({ user }) {
                 </div>
               </div>
             </form>
+          </div>
+        )}
+
+        {/* ACCESS REQUESTS TAB */}
+        {activeTab === "access-requests" && canManageUsers && (
+          <div className="pt-4 animate-in fade-in">
+            <AdminAccessRequestsPage />
+          </div>
+        )}
+
+        {/* ANALYTICS TAB */}
+        {activeTab === "analytics" && canManageUsers && (
+          <div className="pt-4 animate-in fade-in">
+            <AdminAnalyticsPage />
+          </div>
+        )}
+
+        {/* ENTITIES TAB */}
+        {activeTab === "entities" && canManageUsers && (
+          <div className="pt-4 animate-in fade-in">
+            <AdminEntitiesTab />
           </div>
         )}
       </div>

@@ -28,10 +28,20 @@ export default function ReportsPage() {
   }, [active]);
 
   function handleExportCsv() {
-    if (!data || !Array.isArray(data)) return;
-    if (data.length === 0) return;
-    const headers = Object.keys(data[0]).join(",");
-    const rows = data.map(row => Object.values(row).map(val => `"${val}"`).join(","));
+    if (!data) return;
+    const isArray = Array.isArray(data);
+    let rowsToExport = isArray ? data : [];
+    
+    // Fallback logic for object-based reports
+    if (!isArray && typeof data === 'object') {
+       if (data.counts) rowsToExport = [data.counts];
+       else if (data.by_status) rowsToExport = [data.by_status];
+       else rowsToExport = [data]; 
+    }
+
+    if (rowsToExport.length === 0) return;
+    const headers = Object.keys(rowsToExport[0]).join(",");
+    const rows = rowsToExport.map(row => Object.values(row).map(val => `"${typeof val === 'object' ? JSON.stringify(val).replace(/"/g, '""') : val}"`).join(","));
     const csv = [headers, ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -89,9 +99,9 @@ export default function ReportsPage() {
           <div className="flex flex-1 items-center justify-center text-gray-400">Loading report data...</div>
         ) : (
           <div className="flex-1 overflow-auto">
-            {!data || data.length === 0 ? (
+            {!data || (Array.isArray(data) && data.length === 0) ? (
               <div className="flex h-full items-center justify-center text-sm text-gray-400">No data found for this report.</div>
-            ) : (
+            ) : Array.isArray(data) ? (
               <table className="min-w-full text-sm">
                 <thead className="sticky top-0 bg-gray-100 shadow-sm z-10">
                   <tr className="text-left text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -112,6 +122,10 @@ export default function ReportsPage() {
                   ))}
                 </tbody>
               </table>
+            ) : (
+              <div className="p-6 text-sm font-mono text-gray-700 bg-gray-50 h-full overflow-auto whitespace-pre">
+                {JSON.stringify(data, null, 2)}
+              </div>
             )}
           </div>
         )}

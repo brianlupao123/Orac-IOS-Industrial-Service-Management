@@ -1,0 +1,274 @@
+import React, { useEffect, useState } from "react";
+import { collections, admin } from "../api/client.js";
+import DataTable from "../components/DataTable.jsx";
+import StatusBadge from "../components/StatusBadge.jsx";
+import Modal from "../components/Modal.jsx";
+
+const ENTITIES = [
+  { key: "mine_sites", label: "Mine Sites", columns: ["Name", "Location", "Client ID", "Status", "Actions"] },
+  { key: "plants", label: "Plants", columns: ["Name", "Mine Site ID", "Status", "Actions"] },
+  { key: "plant_sections", label: "Plant Sections", columns: ["Name", "Plant ID", "Status", "Actions"] },
+  { key: "equipment_tags", label: "Equipment Tags", columns: ["Tag Number", "Name", "Plant Section ID", "Status", "Actions"] },
+  { key: "catalog_items", label: "Catalog Items", columns: ["Part Number", "Description", "Unit Price", "Status", "Actions"] },
+];
+
+export default function AdminEntitiesTab() {
+  const [activeEntity, setActiveEntity] = useState("mine_sites");
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [modal, setModal] = useState({ open: false, item: null });
+
+  async function loadData() {
+    setLoading(true);
+    setError("");
+    try {
+      const items = await collections.list(activeEntity);
+      setData(items);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadData();
+  }, [activeEntity]);
+
+  async function handleSave(e) {
+    e.preventDefault();
+    const form = new FormData(e.target);
+    const payload = Object.fromEntries(form.entries());
+    
+    // Type casting
+    if (payload.is_active) payload.is_active = payload.is_active === "true";
+    if (payload.unit_price) payload.unit_price = Number(payload.unit_price);
+
+    try {
+      const isEdit = !!modal.item?.id;
+      
+      switch (activeEntity) {
+        case "mine_sites":
+          isEdit ? await admin.updateMineSite(modal.item.id, payload) : await admin.createMineSite(payload);
+          break;
+        case "plants":
+          isEdit ? await admin.updatePlant(modal.item.id, payload) : await admin.createPlant(payload);
+          break;
+        case "plant_sections":
+          isEdit ? await admin.updatePlantSection(modal.item.id, payload) : await admin.createPlantSection(payload);
+          break;
+        case "equipment_tags":
+          isEdit ? await admin.updateEquipmentTag(modal.item.id, payload) : await admin.createEquipmentTag(payload);
+          break;
+        case "catalog_items":
+          isEdit ? await admin.updateCatalogItem(modal.item.id, payload) : await admin.createCatalogItem(payload);
+          break;
+      }
+      
+      setModal({ open: false, item: null });
+      loadData();
+    } catch (err) {
+      alert("Error saving: " + err.message);
+    }
+  }
+
+  const currentConfig = ENTITIES.find(e => e.key === activeEntity);
+
+  return (
+    <div className="flex flex-col md:flex-row gap-6 animate-in fade-in">
+      {/* Side Menu */}
+      <div className="w-full md:w-64 flex-shrink-0">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+            <h3 className="font-semibold text-orac-slate">Entities</h3>
+          </div>
+          <div className="flex flex-col p-2">
+            {ENTITIES.map(ent => (
+              <button
+                key={ent.key}
+                onClick={() => setActiveEntity(ent.key)}
+                className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  activeEntity === ent.key 
+                    ? "bg-orac-blue/10 text-orac-blue" 
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                {ent.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 space-y-4">
+        <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <div>
+            <h2 className="text-lg font-semibold text-orac-slate">{currentConfig.label}</h2>
+            <p className="text-sm text-gray-500">Manage all records for this entity.</p>
+          </div>
+          <button
+            onClick={() => setModal({ open: true, item: null })}
+            className="px-4 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md hover:bg-slate-700 transition-all"
+          >
+            + Add New
+          </button>
+        </div>
+
+        {error && (
+          <div className="rounded-xl border border-red-100 bg-red-50/80 px-4 py-3 text-sm text-red-600 shadow-sm">
+            {error}
+          </div>
+        )}
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          {loading ? (
+            <div className="p-12 text-center text-gray-400">Loading {currentConfig.label}...</div>
+          ) : (
+            <DataTable
+              title=""
+              columns={currentConfig.columns}
+              rows={data}
+              emptyText={`No ${currentConfig.label.toLowerCase()} found.`}
+              renderRow={(row) => (
+                <tr key={row.id} className="transition-colors hover:bg-gray-50/80 group">
+                  {/* Common Render logic, dynamically handled based on entity */}
+                  {activeEntity === "mine_sites" && (
+                    <>
+                      <td className="px-5 py-4 text-sm font-medium text-orac-slate">{row.name}</td>
+                      <td className="px-5 py-4 text-sm text-gray-500">{row.location || "—"}</td>
+                      <td className="px-5 py-4 text-sm text-gray-500">{row.client_id}</td>
+                    </>
+                  )}
+                  {activeEntity === "plants" && (
+                    <>
+                      <td className="px-5 py-4 text-sm font-medium text-orac-slate">{row.name}</td>
+                      <td className="px-5 py-4 text-sm text-gray-500">{row.mine_site_id}</td>
+                    </>
+                  )}
+                  {activeEntity === "plant_sections" && (
+                    <>
+                      <td className="px-5 py-4 text-sm font-medium text-orac-slate">{row.name}</td>
+                      <td className="px-5 py-4 text-sm text-gray-500">{row.plant_id}</td>
+                    </>
+                  )}
+                  {activeEntity === "equipment_tags" && (
+                    <>
+                      <td className="px-5 py-4 text-sm font-medium text-orac-slate">{row.tag_number}</td>
+                      <td className="px-5 py-4 text-sm text-gray-500">{row.name}</td>
+                      <td className="px-5 py-4 text-sm text-gray-500">{row.plant_section_id}</td>
+                    </>
+                  )}
+                  {activeEntity === "catalog_items" && (
+                    <>
+                      <td className="px-5 py-4 text-sm font-medium text-orac-slate">{row.part_number}</td>
+                      <td className="px-5 py-4 text-sm text-gray-500">{row.description}</td>
+                      <td className="px-5 py-4 text-sm text-gray-500">${row.unit_price}</td>
+                    </>
+                  )}
+                  
+                  <td className="px-5 py-4 text-sm">
+                    <StatusBadge status={row.is_active ? "Active" : "Inactive"} />
+                  </td>
+                  <td className="px-5 py-4 text-sm text-right">
+                    <button
+                      onClick={() => setModal({ open: true, item: row })}
+                      className="text-orac-slate font-medium hover:text-gray-900 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      Edit
+                    </button>
+                  </td>
+                </tr>
+              )}
+            />
+          )}
+        </div>
+      </div>
+
+      <Modal
+        title={modal.item ? `Edit ${currentConfig.label.slice(0, -1)}` : `New ${currentConfig.label.slice(0, -1)}`}
+        isOpen={modal.open}
+        onClose={() => setModal({ open: false, item: null })}
+      >
+        <form onSubmit={handleSave} className="space-y-4">
+          {/* Dynamic Fields */}
+          {activeEntity === "catalog_items" ? (
+            <>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Part Number</label>
+                <input name="part_number" defaultValue={modal.item?.part_number || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Description</label>
+                <input name="description" defaultValue={modal.item?.description || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Unit Price</label>
+                <input name="unit_price" type="number" step="0.01" defaultValue={modal.item?.unit_price || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+              </div>
+            </>
+          ) : (
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Name</label>
+              <input name="name" defaultValue={modal.item?.name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+            </div>
+          )}
+
+          {activeEntity === "mine_sites" && (
+            <>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Location</label>
+                <input name="location" defaultValue={modal.item?.location || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Client ID</label>
+                <input name="client_id" defaultValue={modal.item?.client_id || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+              </div>
+            </>
+          )}
+
+          {activeEntity === "plants" && (
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Mine Site ID</label>
+              <input name="mine_site_id" defaultValue={modal.item?.mine_site_id || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+            </div>
+          )}
+
+          {activeEntity === "plant_sections" && (
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Plant ID</label>
+              <input name="plant_id" defaultValue={modal.item?.plant_id || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+            </div>
+          )}
+
+          {activeEntity === "equipment_tags" && (
+            <>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Tag Number</label>
+                <input name="tag_number" defaultValue={modal.item?.tag_number || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Plant Section ID</label>
+                <input name="plant_section_id" defaultValue={modal.item?.plant_section_id || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+              </div>
+            </>
+          )}
+
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Status</label>
+            <select name="is_active" defaultValue={modal.item ? String(modal.item.is_active) : "true"} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 bg-white">
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
+
+          <div className="pt-4 flex justify-end gap-3">
+            <button type="button" onClick={() => setModal({ open: false, item: null })} className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900">Cancel</button>
+            <button type="submit" className="px-5 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg hover:bg-slate-800 shadow-sm">Save</button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+}

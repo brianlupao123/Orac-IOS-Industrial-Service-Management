@@ -60,7 +60,7 @@ export default function WorksheetsPage({ user }) {
     total: items.length,
     draft: items.filter((w) => w.status === "Draft").length,
     submitted: items.filter((w) => w.status === "Submitted").length,
-    approved: items.filter((w) => w.status === "Approved" || w.status === "Completed").length,
+    approved: items.filter((w) => w.status === "Supervisor_Approved").length,
   };
 
   return (
@@ -85,7 +85,7 @@ export default function WorksheetsPage({ user }) {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2 pb-2 border-b border-gray-100">
-        {[["all", "All Worksheets"], ["Draft", "Draft"], ["Submitted", "Submitted"], ["Approved", "Approved"], ["Returned", "Returned"]].map(([key, label]) => (
+        {[["all", "All Worksheets"], ["Draft", "Draft"], ["Submitted", "Submitted"], ["Supervisor_Approved", "Approved"], ["Returned_For_Correction", "Returned"]].map(([key, label]) => (
           <button
             key={key}
             onClick={() => setFilter(key)}
@@ -148,7 +148,7 @@ export default function WorksheetsPage({ user }) {
                   )}
                 </div>
                 
-                {canSubmit && ws.status === "Draft" && (
+                {canSubmit && (ws.status === "Draft" || ws.status === "Returned_For_Correction") && (
                   <button
                     onClick={() => handleSubmit(ws.id)}
                     className="shrink-0 rounded-lg bg-gray-900 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-gray-800 focus:ring-2 focus:ring-gray-900/20"

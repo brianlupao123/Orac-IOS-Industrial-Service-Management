@@ -3,7 +3,7 @@
 // stateMachine.js. See ORAC_API_CONTRACT_REFERENCE.md for the source-checked
 // contract this file implements.
 
-const BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+const BASE = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
 
 function getToken() {
   return localStorage.getItem("orac_token") || "";
@@ -26,6 +26,9 @@ function getCachedUser() {
 }
 
 async function request(path, options = {}) {
+  if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
+    throw new Error("The service is not connected yet. Please try again later.");
+  }
   const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -42,10 +45,10 @@ async function request(path, options = {}) {
 }
 
 export const auth = {
-  async login(email) {
+  async login(email, password) {
     const data = await request("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email, password })
     });
     // Confirmed shape: { user, token } â€” not { role } at the top level.
     setSession(data.user, data.token);
@@ -182,12 +185,6 @@ export const inventory = {
   },
   listSuppliers() {
     return request("/inventory/suppliers");
-  },
-  createSupplier(payload) {
-    return request("/inventory/suppliers", { method: "POST", body: JSON.stringify(payload) });
-  },
-  updateSupplier(id, payload) {
-    return request(`/inventory/suppliers/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
   }
 };
 
@@ -216,7 +213,17 @@ export const admin = {
   },
   updateClient(id, payload) {
     return request(`/admin/clients/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
-  }
+  },
+  createMineSite(payload) { return request("/admin/mine_sites", { method: "POST", body: JSON.stringify(payload) }); },
+  updateMineSite(id, payload) { return request(`/admin/mine_sites/${id}`, { method: "PATCH", body: JSON.stringify(payload) }); },
+  createPlant(payload) { return request("/admin/plants", { method: "POST", body: JSON.stringify(payload) }); },
+  updatePlant(id, payload) { return request(`/admin/plants/${id}`, { method: "PATCH", body: JSON.stringify(payload) }); },
+  createPlantSection(payload) { return request("/admin/plant_sections", { method: "POST", body: JSON.stringify(payload) }); },
+  updatePlantSection(id, payload) { return request(`/admin/plant_sections/${id}`, { method: "PATCH", body: JSON.stringify(payload) }); },
+  createEquipmentTag(payload) { return request("/admin/equipment_tags", { method: "POST", body: JSON.stringify(payload) }); },
+  updateEquipmentTag(id, payload) { return request(`/admin/equipment_tags/${id}`, { method: "PATCH", body: JSON.stringify(payload) }); },
+  createCatalogItem(payload) { return request("/admin/catalog_items", { method: "POST", body: JSON.stringify(payload) }); },
+  updateCatalogItem(id, payload) { return request(`/admin/catalog_items/${id}`, { method: "PATCH", body: JSON.stringify(payload) }); }
 };
 
 // Attach to the existing `quotes` export rather than redefining it.
@@ -226,3 +233,8 @@ quotes.submitClientPo = (id, po_reference, po_amount, extra = {}) => {
     body: JSON.stringify({ po_reference, po_amount, ...extra })
   });
 };
+
+// --- Phase 6 additions --------------------------------------------------
+auth.requestPasswordReset = (email) => { return request('/auth/request-password-reset', { method: 'POST', body: JSON.stringify({ email }) }); };
+auth.resetPassword = (email, token, new_password) => { return request('/auth/reset-password', { method: 'POST', body: JSON.stringify({ email, token, new_password }) }); };
+export const accessRequests = { submit(payload) { return request('/access-requests', { method: 'POST', body: JSON.stringify(payload) }); }, list() { return request('/access_requests'); }, approve(id, role, client_id) { return request(/access-requests//approve, { method: 'POST', body: JSON.stringify({ role, client_id }) }); }, reject(id, reason) { return request(/access-requests//reject, { method: 'POST', body: JSON.stringify({ reason }) }); } };
