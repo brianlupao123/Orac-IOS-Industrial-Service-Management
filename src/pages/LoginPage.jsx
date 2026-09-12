@@ -2,37 +2,11 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { auth } from "../api/client.js";
 
-const DEMO_USERS = [
-  { role: "Admin", email: "admin@orac.co.zw", name: "Admin User" },
-  { role: "Management", email: "management@orac.co.zw", name: "Management User" },
-  { role: "Sales", email: "sales@orac.co.zw", name: "Sales User" },
-  { role: "Finance", email: "finance@orac.co.zw", name: "Finance User" },
-  { role: "Operations", email: "ops@orac.co.zw", name: "Operations User" },
-  { role: "Supervisor", email: "supervisor@orac.co.zw", name: "Supervisor User" },
-  { role: "Technician", email: "tech@orac.co.zw", name: "Technician User" },
-  { role: "Client", email: "client@orac.co.zw", name: "Client Viewer" },
-];
-
-const ROLE_ICONS = {
-  Admin: "⚙️",
-  Management: "📊",
-  Sales: "💼",
-  Finance: "💰",
-  Operations: "🔧",
-  Supervisor: "👷",
-  Technician: "🛠️",
-  Client: "👤",
-};
-
 export default function LoginPage({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [showAccounts, setShowAccounts] = useState(false);
-  // Explicitly enabled only for the private verification pilot. Do not set
-  // this variable on a public production launch with real client data.
-  const showDemoAccounts = import.meta.env.VITE_ENABLE_DEMO_ACCOUNTS === "true";
 
   async function handleSubmit(e, directEmail = null, directPassword = null) {
     if (e) e.preventDefault();
@@ -49,12 +23,6 @@ export default function LoginPage({ onLogin }) {
       setError(err.message);
       setBusy(false);
     }
-  }
-
-  function handleQuickLogin(user) {
-    setEmail(user.email);
-    setPassword("password123");
-    handleSubmit(null, user.email, "password123");
   }
 
   return (
@@ -178,41 +146,6 @@ export default function LoginPage({ onLogin }) {
               </Link>
             </p>
           </form>
-
-          {/* Quick Access Accounts — clean, collapsible */}
-          {showDemoAccounts && <div className="mt-8 pt-6 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={() => setShowAccounts(!showAccounts)}
-              className="w-full flex items-center justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors"
-            >
-              <span>Quick Access</span>
-              <svg className={`w-4 h-4 transition-transform ${showAccounts ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {showAccounts && (
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                {DEMO_USERS.map((u) => (
-                  <button
-                    key={u.role}
-                    onClick={() => handleQuickLogin(u)}
-                    disabled={busy}
-                    className="flex items-center gap-2.5 p-3 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-orac-blue/5 hover:border-orac-blue/30 transition-all text-left group"
-                  >
-                    <span className="text-base">{ROLE_ICONS[u.role] || "👤"}</span>
-                    <div className="min-w-0">
-                      <span className="text-xs font-semibold text-gray-900 group-hover:text-orac-blue transition-colors block">
-                        {u.role}
-                      </span>
-                      <span className="text-[10px] text-gray-400 truncate block">{u.email}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>}
 
           <p className="mt-6 text-center text-xs text-gray-400">
             Orac-IOS &copy; {new Date().getFullYear()} &bull; Orac Systems
