@@ -1,17 +1,31 @@
 import React, { useEffect, useState } from "react";
-import { collections, worksheets } from "../api/client.js";
+import { collections, worksheets, dispatch } from "../api/client.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import StatCard from "../components/StatCard.jsx";
+import Modal from "../components/Modal.jsx";
 
 const REVIEW_ROLES = ["Admin", "Operations", "Supervisor"];
 const SUBMIT_ROLES = ["Admin", "Operations", "Technician", "Supervisor"];
 
 export default function WorksheetsPage({ user }) {
   const [items, setItems] = useState([]);
+  const [dispatches, setDispatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [comment, setComment] = useState({});
   const [filter, setFilter] = useState("all");
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalError, setModalError] = useState("");
+  const [modalSubmitting, setModalSubmitting] = useState(false);
+  const [form, setForm] = useState({
+    dispatch_card_id: "",
+    work_date: new Date().toISOString().slice(0, 10),
+    hours: "",
+    activity: "",
+    outcomes: ""
+  });
 
   const canReview = REVIEW_ROLES.includes(user.role);
   const canSubmit = SUBMIT_ROLES.includes(user.role);
@@ -20,8 +34,12 @@ export default function WorksheetsPage({ user }) {
     setLoading(true);
     setError("");
     try {
-      const data = await collections.list("field_worksheets");
-      setItems(data);
+      const [wsData, dcData] = await Promise.all([
+        collections.list("field_worksheets"),
+        collections.list("dispatch_cards").catch(() => [])
+      ]);
+      setItems(wsData || []);
+      if (dcData) setDispatches(dcData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -37,6 +55,37 @@ export default function WorksheetsPage({ user }) {
       await load();
     } catch (err) {
       setError(err.message);
+    }
+  }
+
+  async function handleCreateWorksheet(e) {
+    e.preventDefault();
+    if (!form.dispatch_card_id) {
+      setModalError("Please select a dispatch card.");
+      return;
+    }
+    setModalSubmitting(true);
+    setModalError("");
+    try {
+      await dispatch.createWorksheet(form.dispatch_card_id, {
+        work_date: form.work_date,
+        hours: Number(form.hours),
+        activity: form.activity,
+        outcomes: form.outcomes
+      });
+      setIsModalOpen(false);
+      setForm({
+        dispatch_card_id: "",
+        work_date: new Date().toISOString().slice(0, 10),
+        hours: "",
+        activity: "",
+        outcomes: ""
+      });
+      await load();
+    } catch (err) {
+      setModalError(err.message);
+    } finally {
+      setModalSubmitting(false);
     }
   }
 
@@ -66,13 +115,26 @@ export default function WorksheetsPage({ user }) {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-light tracking-tight text-gray-900 mb-2">Field Worksheets</h1>
-        <p className="text-sm text-gray-500 max-w-3xl leading-relaxed">
-          <strong>Field Worksheets</strong> document the actual work performed on-site, including safety checks and daily outcomes. 
-          They are distinct from <em>Timesheets</em>, which only log labor hours, and <em>Dispatch Cards</em>, which represent the overall assignment. 
-          Technicians draft and submit Worksheets; Supervisors review and approve them.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-light tracking-tight text-gray-900 mb-2">Field Worksheets</h1>
+          <p className="text-sm text-gray-500 max-w-3xl leading-relaxed">
+            <strong>Field Worksheets</strong> document the actual work performed on-site, including safety checks and daily outcomes.
+            They are distinct from <em>Timesheets</em>, which only log labor hours, and <em>Dispatch Cards</em>, which represent the overall assignment.
+            Technicians draft and submit Worksheets; Supervisors review and approve them.
+          </p>
+        </div>
+        {canSubmit && (
+          <button
+            onClick={() => {
+              setModalError("");
+              setIsModalOpen(true);
+            }}
+            className="shrink-0 self-start sm:self-auto rounded-lg bg-orac-blue px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-105"
+          >
+            + New Worksheet
+          </button>
+        )}
       </div>
 
       {/* KPI cards */}
@@ -115,6 +177,17 @@ export default function WorksheetsPage({ user }) {
           </div>
           <p className="text-sm font-medium text-gray-500">No field worksheets found.</p>
           <p className="mt-1 text-xs text-gray-400">Adjust your filters or create a new worksheet from a dispatch card.</p>
+          {canSubmit && (
+            <button
+              onClick={() => {
+                setModalError("");
+                setIsModalOpen(true);
+              }}
+              className="mt-4 rounded-lg bg-orac-blue px-4 py-2 text-xs font-semibold text-white shadow-sm hover:brightness-105 transition-all"
+            >
+              + Create Worksheet
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
@@ -188,6 +261,117 @@ export default function WorksheetsPage({ user }) {
           ))}
         </div>
       )}
+
+      {/* New Worksheet Modal */}
+      <Modal
+        title="Create Field Worksheet"
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setModalError("");
+        }}
+      >
+        <form onSubmit={handleCreateWorksheet} className="space-y-4">
+          {modalError && (
+            <div className="rounded-lg bg-red-50 p-3 text-xs text-red-700 border border-red-200">
+              {modalError}
+            </div>
+          )}
+
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+              Dispatch Card
+            </label>
+            <select
+              required
+              value={form.dispatch_card_id}
+              onChange={(e) => setForm({ ...form, dispatch_card_id: e.target.value })}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 bg-white"
+            >
+              <option value="">Select dispatch card...</option>
+              {dispatches.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.dispatch_number || d.id} {d.status ? `(${d.status})` : ""} {d.site_name ? `— ${d.site_name}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+                Work Date
+              </label>
+              <input
+                type="date"
+                required
+                value={form.work_date}
+                onChange={(e) => setForm({ ...form, work_date: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+                Hours
+              </label>
+              <input
+                type="number"
+                step="0.5"
+                min="0.5"
+                required
+                placeholder="e.g. 8"
+                value={form.hours}
+                onChange={(e) => setForm({ ...form, hours: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+              Activity
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Ceramic liner replacement"
+              value={form.activity}
+              onChange={(e) => setForm({ ...form, activity: e.target.value })}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+              Outcomes
+            </label>
+            <textarea
+              rows={3}
+              placeholder="Summary of work completed and observations"
+              value={form.outcomes}
+              onChange={(e) => setForm({ ...form, outcomes: e.target.value })}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20"
+            />
+          </div>
+
+          <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={modalSubmitting}
+              className="px-5 py-2 bg-orac-blue text-white text-sm font-semibold rounded-lg hover:brightness-105 shadow-sm disabled:opacity-50"
+            >
+              {modalSubmitting ? "Creating..." : "Create Worksheet"}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
