@@ -15,6 +15,11 @@ const STATUS_MAP = {
   Cancelled:            "bg-gray-200 text-gray-600",
   // Worksheets
   Pending:              "bg-amber-100 text-amber-800",
+  // Real backend worksheet values (field_worksheets.status) - previously
+  // missing entirely, which made every Supervisor-approved or returned
+  // worksheet render as the default gray badge.
+  Supervisor_Approved:     "bg-emerald-100 text-emerald-800",
+  Returned_For_Correction: "bg-red-100 text-red-800",
   Completed:            "bg-emerald-100 text-emerald-800",
   Returned:             "bg-orange-100 text-orange-800",
   // Dispatches

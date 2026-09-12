@@ -185,6 +185,12 @@ export const inventory = {
   },
   listSuppliers() {
     return request("/inventory/suppliers");
+  },
+  createSupplier(payload) {
+    return request("/inventory/suppliers", { method: "POST", body: JSON.stringify(payload) });
+  },
+  updateSupplier(id, payload) {
+    return request(`/inventory/suppliers/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
   }
 };
 

@@ -12,29 +12,38 @@ export default function AdminPage({ user }) {
   const [users, setUsers] = useState([]);
   const [clients, setClients] = useState([]);
   const [profile, setProfile] = useState(null);
-  
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("users");
-  
-  // Profile state
+  const initialTab =
+    user.role === "Admin" ? "users" :
+    user.role === "Operations" ? "entities" :
+    "clients";
+  const [activeTab, setActiveTab] = useState(initialTab);
+
   const [saveBusy, setSaveBusy] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Modal states
   const [userModal, setUserModal] = useState({ open: false, data: null });
   const [clientModal, setClientModal] = useState({ open: false, data: null });
 
   const canManageUsers = user.role === "Admin";
+  const canManageClients = user.role === "Admin" || user.role === "Management";
   const canManageProfile = user.role === "Admin" || user.role === "Management";
+  const canManageEntities = user.role === "Admin" || user.role === "Management" || user.role === "Operations";
 
   async function load() {
     setLoading(true);
     setError("");
     try {
       const tasks = [];
+      // FIX: previously clients were only fetched under canManageUsers,
+      // even though the Client Directory tab is visible to canManageClients
+      // (Admin or Management) - Management would see the tab but no data.
       if (canManageUsers) {
         tasks.push(collections.list("users").then(setUsers));
+      }
+      if (canManageClients) {
         tasks.push(collections.list("clients").then(setClients));
       }
       if (canManageProfile) {
@@ -50,7 +59,6 @@ export default function AdminPage({ user }) {
 
   useEffect(() => { load(); }, []);
 
-  // Profile
   async function saveProfile(e) {
     e.preventDefault();
     setError("");
@@ -68,7 +76,6 @@ export default function AdminPage({ user }) {
     }
   }
 
-  // Users CRUD
   async function handleUserSave(e) {
     e.preventDefault();
     const form = new FormData(e.target);
@@ -89,7 +96,6 @@ export default function AdminPage({ user }) {
     }
   }
 
-  // Clients CRUD
   async function handleClientSave(e) {
     e.preventDefault();
     const form = new FormData(e.target);
@@ -108,17 +114,16 @@ export default function AdminPage({ user }) {
     }
   }
 
-  if (!canManageUsers && !canManageProfile) {
+  if (!canManageUsers && !canManageProfile && !canManageEntities && !canManageClients) {
     return <div className="p-8 text-center text-gray-500">You do not have administrative access.</div>;
   }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Header & Analytics */}
       <div>
         <h1 className="text-3xl font-light tracking-tight text-orac-slate mb-2">Administration Console</h1>
         <p className="text-sm text-gray-400 mb-8">Manage system users, client records, and company settings seamlessly.</p>
-        
+
         {canManageUsers && (
           <div className="grid gap-4 sm:grid-cols-3">
             <StatCard label="Total Active Users" value={users.filter(u => u.is_active).length} icon="👥" tone="blue" />
@@ -134,70 +139,63 @@ export default function AdminPage({ user }) {
         </div>
       )}
 
-      {/* Tabs */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
           {canManageUsers && (
-            <>
-              <button
-                onClick={() => setActiveTab("users")}
-                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "users"
-                    ? "border-orac-blue text-orac-blue"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                User Management
-              </button>
-              <button
-                onClick={() => setActiveTab("clients")}
-                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "clients"
-                    ? "border-orac-blue text-orac-blue"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Client Directory
-              </button>
-              <button
-                onClick={() => setActiveTab("access-requests")}
-                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "access-requests"
-                    ? "border-orac-blue text-orac-blue"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Access Requests
-              </button>
-              <button
-                onClick={() => setActiveTab("analytics")}
-                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "analytics"
-                    ? "border-orac-blue text-orac-blue"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Analytics
-              </button>
-              <button
-                onClick={() => setActiveTab("entities")}
-                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "entities"
-                    ? "border-orac-blue text-orac-blue"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Entity Management
-              </button>
-            </>
+            <button
+              onClick={() => setActiveTab("users")}
+              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === "users" ? "border-orac-blue text-orac-blue" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              User Management
+            </button>
+          )}
+          {canManageClients && (
+            <button
+              onClick={() => setActiveTab("clients")}
+              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === "clients" ? "border-orac-blue text-orac-blue" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Client Directory
+            </button>
+          )}
+          {canManageUsers && (
+            <button
+              onClick={() => setActiveTab("access-requests")}
+              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === "access-requests" ? "border-orac-blue text-orac-blue" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Access Requests
+            </button>
+          )}
+          {(canManageUsers || canManageProfile) && (
+            <button
+              onClick={() => setActiveTab("analytics")}
+              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === "analytics" ? "border-orac-blue text-orac-blue" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Analytics
+            </button>
+          )}
+          {canManageEntities && (
+            <button
+              onClick={() => setActiveTab("entities")}
+              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === "entities" ? "border-orac-blue text-orac-blue" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Entity Management
+            </button>
           )}
           {canManageProfile && (
             <button
               onClick={() => setActiveTab("profile")}
               className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "profile"
-                  ? "border-orac-blue text-orac-blue"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                activeTab === "profile" ? "border-orac-blue text-orac-blue" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
               Company Profile
@@ -206,17 +204,12 @@ export default function AdminPage({ user }) {
         </nav>
       </div>
 
-      {/* Tab Content */}
       <div className="pt-2">
-        
-        {/* USERS TAB */}
+
         {activeTab === "users" && canManageUsers && (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <button
-                onClick={() => setUserModal({ open: true, data: null })}
-                className="px-4 py-2 bg-orac-blue text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md hover:bg-orac-blue/90 transition-all"
-              >
+              <button onClick={() => setUserModal({ open: true, data: null })} className="px-4 py-2 bg-orac-blue text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md hover:bg-orac-blue/90 transition-all">
                 + Add New User
               </button>
             </div>
@@ -233,18 +226,13 @@ export default function AdminPage({ user }) {
                     <td className="px-5 py-4 text-sm font-medium text-orac-slate">{u.name || "—"}</td>
                     <td className="px-5 py-4 text-sm text-gray-500">{u.email}</td>
                     <td className="px-5 py-4 text-sm">
-                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 border border-slate-200">
-                        {u.role}
-                      </span>
+                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 border border-slate-200">{u.role}</span>
                     </td>
                     <td className="px-5 py-4 text-sm">
                       <StatusBadge status={u.is_active ? "Active" : "Inactive"} />
                     </td>
                     <td className="px-5 py-4 text-sm text-right">
-                      <button
-                        onClick={() => setUserModal({ open: true, data: u })}
-                        className="text-orac-blue font-medium hover:text-indigo-600 transition-colors opacity-0 group-hover:opacity-100"
-                      >
+                      <button onClick={() => setUserModal({ open: true, data: u })} className="text-orac-blue font-medium hover:text-indigo-600 transition-colors opacity-0 group-hover:opacity-100">
                         Edit
                       </button>
                     </td>
@@ -255,14 +243,10 @@ export default function AdminPage({ user }) {
           </div>
         )}
 
-        {/* CLIENTS TAB */}
-        {activeTab === "clients" && canManageUsers && (
+        {activeTab === "clients" && canManageClients && (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <button
-                onClick={() => setClientModal({ open: true, data: null })}
-                className="px-4 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md hover:bg-slate-700 transition-all"
-              >
+              <button onClick={() => setClientModal({ open: true, data: null })} className="px-4 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md hover:bg-slate-700 transition-all">
                 + Register Client
               </button>
             </div>
@@ -285,10 +269,7 @@ export default function AdminPage({ user }) {
                     <td className="px-5 py-4 text-sm text-gray-600">{c.contact_person || "—"}</td>
                     <td className="px-5 py-4 text-sm text-gray-500">{c.email || "—"}</td>
                     <td className="px-5 py-4 text-sm text-right">
-                      <button
-                        onClick={() => setClientModal({ open: true, data: c })}
-                        className="text-orac-slate font-medium hover:text-gray-900 transition-colors opacity-0 group-hover:opacity-100"
-                      >
+                      <button onClick={() => setClientModal({ open: true, data: c })} className="text-orac-slate font-medium hover:text-gray-900 transition-colors opacity-0 group-hover:opacity-100">
                         Edit
                       </button>
                     </td>
@@ -299,7 +280,6 @@ export default function AdminPage({ user }) {
           </div>
         )}
 
-        {/* PROFILE TAB */}
         {activeTab === "profile" && canManageProfile && profile && (
           <div className="max-w-2xl mx-auto">
             <form onSubmit={saveProfile} className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
@@ -326,13 +306,8 @@ export default function AdminPage({ user }) {
                     {field.help && <p className="mt-1 text-[11px] text-gray-400">{field.help}</p>}
                   </div>
                 ))}
-                
                 <div className="pt-4 border-t border-gray-100 mt-6">
-                  <button
-                    type="submit"
-                    disabled={saveBusy}
-                    className="w-full rounded-lg bg-gray-900 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-gray-800 disabled:opacity-50"
-                  >
+                  <button type="submit" disabled={saveBusy} className="w-full rounded-lg bg-gray-900 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-gray-800 disabled:opacity-50">
                     {saveBusy ? "Saving Changes..." : "Save Profile Settings"}
                   </button>
                   {saveSuccess && (
@@ -346,34 +321,26 @@ export default function AdminPage({ user }) {
           </div>
         )}
 
-        {/* ACCESS REQUESTS TAB */}
         {activeTab === "access-requests" && canManageUsers && (
           <div className="pt-4 animate-in fade-in">
             <AdminAccessRequestsPage />
           </div>
         )}
 
-        {/* ANALYTICS TAB */}
-        {activeTab === "analytics" && canManageUsers && (
+        {activeTab === "analytics" && (canManageUsers || canManageProfile) && (
           <div className="pt-4 animate-in fade-in">
             <AdminAnalyticsPage />
           </div>
         )}
 
-        {/* ENTITIES TAB */}
-        {activeTab === "entities" && canManageUsers && (
+        {activeTab === "entities" && canManageEntities && (
           <div className="pt-4 animate-in fade-in">
             <AdminEntitiesTab />
           </div>
         )}
       </div>
 
-      {/* User Modal */}
-      <Modal 
-        title={userModal.data ? "Edit User" : "Create New User"} 
-        isOpen={userModal.open} 
-        onClose={() => setUserModal({ open: false, data: null })}
-      >
+      <Modal title={userModal.data ? "Edit User" : "Create New User"} isOpen={userModal.open} onClose={() => setUserModal({ open: false, data: null })}>
         <form onSubmit={handleUserSave} className="space-y-4">
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Full Name</label>
@@ -420,12 +387,7 @@ export default function AdminPage({ user }) {
         </form>
       </Modal>
 
-      {/* Client Modal */}
-      <Modal 
-        title={clientModal.data ? "Edit Client" : "Register Client"} 
-        isOpen={clientModal.open} 
-        onClose={() => setClientModal({ open: false, data: null })}
-      >
+      <Modal title={clientModal.data ? "Edit Client" : "Register Client"} isOpen={clientModal.open} onClose={() => setClientModal({ open: false, data: null })}>
         <form onSubmit={handleClientSave} className="space-y-4">
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Client Name</label>
