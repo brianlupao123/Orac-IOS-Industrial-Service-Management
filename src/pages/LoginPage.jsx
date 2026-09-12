@@ -26,46 +26,17 @@ export default function LoginPage({ onLogin }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50 text-orac-slate font-sans selection:bg-orac-blue/20">
-      {/* Left Pane - Branding & Graphic */}
-      <div className="hidden lg:flex lg:w-5/12 bg-[#0B0F19] flex-col justify-between p-12 relative overflow-hidden">
-        {/* Subtle gradient orbs */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-orac-blue/10 blur-[120px]"></div>
-          <div className="absolute bottom-[10%] -right-[20%] w-[60%] h-[60%] rounded-full bg-indigo-500/10 blur-[100px]"></div>
-        </div>
-
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 text-white mb-16">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-orac-blue text-sm font-bold shadow-lg shadow-orac-blue/20">
-              O
-            </div>
-            <span className="text-xl font-bold tracking-tight">ORAC-IOS</span>
-          </div>
-
-          <h2 className="text-4xl font-light text-white leading-tight mb-6">
-            Intelligent operations,<br />
-            <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-orac-blue to-indigo-400">unified in one platform.</span>
-          </h2>
-          <p className="text-gray-400 text-lg max-w-md leading-relaxed">
-            Manage field worksheets, track inventory, and generate compliance reports seamlessly.
-          </p>
-        </div>
-
-        <div className="relative z-10 text-xs text-gray-500 uppercase tracking-widest">
-          Version 2.0 &bull; Production Build
-        </div>
-      </div>
-
-      {/* Right Pane - Login Form */}
-      <div className="flex-1 flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-24 xl:px-32 relative bg-white">
+    <div className="min-h-screen bg-gray-50 text-orac-slate font-sans selection:bg-orac-blue/20">
+      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center px-6 py-12 sm:px-12">
         <div className="w-full max-w-[420px] mx-auto">
-          {/* Mobile Header */}
-          <div className="flex lg:hidden items-center gap-3 mb-10">
+          <div className="mb-10 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orac-blue text-white text-lg font-bold shadow-lg shadow-orac-blue/20">
               O
             </div>
-            <span className="text-2xl font-bold tracking-tight text-orac-slate">ORAC-IOS</span>
+            <div>
+              <div className="text-xl font-bold tracking-tight text-orac-slate">ORAC-IOS</div>
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Industrial Service Management</div>
+            </div>
           </div>
 
           <div className="mb-8">

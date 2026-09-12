@@ -48,6 +48,13 @@ export default function PortalLayout({ user, onLogout, children }) {
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Online</span>
             </div>
             <NotificationBell />
+            <button
+              type="button"
+              onClick={onLogout}
+              className="hidden items-center rounded-md border border-gray-200 px-3 py-1.5 text-xs font-semibold text-orac-slate transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-700 sm:inline-flex"
+            >
+              Sign out
+            </button>
             <UserProfileDropdown user={user} onSignOut={onLogout} />
           </div>
         </div>
