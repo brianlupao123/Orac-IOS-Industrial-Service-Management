@@ -1,20 +1,30 @@
 import React, { useEffect, useState } from "react";
 import { reports } from "../api/client.js";
+import DataTable from "../components/DataTable.jsx";
+import StatCard from "../components/StatCard.jsx";
+import StatusBadge from "../components/StatusBadge.jsx";
 
 const REPORT_TABS = [
-  { key: "pipeline", label: "Pipeline" },
-  { key: "po-compliance", label: "PO Compliance" },
-  { key: "dispatch", label: "Dispatch" },
-  { key: "worksheets", label: "Worksheets" },
-  { key: "invoice-ready", label: "Invoice Ready" },
-  { key: "variance", label: "Variance" }
+  { key: "pipeline", label: "Pipeline", roles: ["Admin", "Management", "Sales"] },
+  { key: "po-compliance", label: "PO Compliance", roles: ["Admin", "Management", "Finance", "Operations"] },
+  { key: "dispatch", label: "Dispatch", roles: ["Admin", "Management", "Operations", "Supervisor"] },
+  { key: "worksheets", label: "Worksheets", roles: ["Admin", "Management", "Operations", "Supervisor"] },
+  { key: "invoice-ready", label: "Invoice Ready", roles: ["Admin", "Management", "Finance"] },
+  { key: "variance", label: "Variance", roles: ["Admin", "Management", "Finance", "Operations", "Supervisor"] }
 ];
 
-export default function ReportsPage() {
-  const [active, setActive] = useState("pipeline");
+export default function ReportsPage({ user }) {
+  const visibleTabs = REPORT_TABS.filter((tab) => tab.roles.includes(user.role));
+  const [active, setActive] = useState(visibleTabs[0]?.key || "");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!visibleTabs.some((tab) => tab.key === active)) {
+      setActive(visibleTabs[0]?.key || "");
+    }
+  }, [active, user.role]);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,27 +39,62 @@ export default function ReportsPage() {
 
   function handleExportCsv() {
     if (!data) return;
-    const isArray = Array.isArray(data);
-    let rowsToExport = isArray ? data : [];
-    
-    // Fallback logic for object-based reports
-    if (!isArray && typeof data === 'object') {
-       if (data.counts) rowsToExport = [data.counts];
-       else if (data.by_status) rowsToExport = [data.by_status];
-       else rowsToExport = [data]; 
+    let rowsToExport = Array.isArray(data) ? data : [];
+    if (active === "pipeline" && data?.by_status && typeof data.by_status === "object") {
+      rowsToExport = Object.entries(data.by_status).flatMap(([status, rows]) =>
+        Array.isArray(rows) ? rows.map((row) => ({ report_category: status, ...row })) : []
+      );
+    } else if (active === "po-compliance") {
+      rowsToExport = [
+        ...(Array.isArray(data?.approved_awaiting_po) ? data.approved_awaiting_po.map((row) => ({ report_category: "Approved Awaiting PO", ...row })) : []),
+        ...(Array.isArray(data?.requires_amendment) ? data.requires_amendment.map((row) => ({ report_category: "Requires Amendment", ...row })) : []),
+        ...(Array.isArray(data?.urgent_pending_verification) ? data.urgent_pending_verification.map((row) => ({ report_category: "Urgent Pending Verification", ...row })) : [])
+      ];
+    } else if (active === "worksheets") {
+      rowsToExport = [
+        ...(Array.isArray(data?.pending_review) ? data.pending_review.map((row) => ({ report_category: "Pending Review", ...row })) : []),
+        ...(Array.isArray(data?.returned_for_correction) ? data.returned_for_correction.map((row) => ({ report_category: "Returned For Correction", ...row })) : []),
+        { report_category: "Summary", approved_count: data?.approved_count || 0 }
+      ];
+    } else if (!Array.isArray(data) && typeof data === "object") {
+      rowsToExport = [data];
     }
 
     if (rowsToExport.length === 0) return;
-    const headers = Object.keys(rowsToExport[0]).join(",");
-    const rows = rowsToExport.map(row => Object.values(row).map(val => `"${typeof val === 'object' ? JSON.stringify(val).replace(/"/g, '""') : val}"`).join(","));
+    const columnNames = [...new Set(rowsToExport.flatMap((row) => Object.keys(row)))];
+    const headers = columnNames.join(",");
+    const rows = rowsToExport.map((row) => columnNames.map((column) => {
+      const value = row[column];
+      const text = typeof value === "object" ? JSON.stringify(value) : String(value ?? "");
+      return `"${text.replace(/"/g, '""')}"`;
+    }).join(","));
     const csv = [headers, ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `orac-report-${active}-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  function renderStructuredReport() {
+    if (active === "pipeline" && data?.counts && data?.by_status && typeof data.counts === "object" && typeof data.by_status === "object") {
+      return <div className="space-y-6 p-5">
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">{Object.entries(data.counts).map(([status, count]) => <StatCard key={status} label={status.replace(/_/g, " ")} value={count} tone="blue" />)}</div>
+        {Object.entries(data.by_status).map(([status, rows]) => <DataTable key={status} title={`${status.replace(/_/g, " ")} (${Array.isArray(rows) ? rows.length : 0})`} columns={["Quote", "Client", "Total"]} rows={Array.isArray(rows) ? rows : []} emptyText="No quotes in this stage." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5 font-medium">{row.quote_number || row.id}</td><td className="px-5 py-3.5">{row.client_id || "-"}</td><td className="px-5 py-3.5">R {Number(row.total_amount || 0).toLocaleString()}</td></tr>} />)}</div>;
+    }
+    if (active === "po-compliance" && Array.isArray(data?.approved_awaiting_po) && Array.isArray(data?.requires_amendment) && Array.isArray(data?.urgent_pending_verification)) {
+      return <div className="space-y-6 p-5">
+        <DataTable title="Approved Quotes Awaiting PO" columns={["Quote", "Client"]} rows={data.approved_awaiting_po} emptyText="No quotes awaiting a purchase order." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5 font-medium">{row.quote_number || row.id}</td><td className="px-5 py-3.5">{row.client_id || "-"}</td></tr>} />
+        <DataTable title="Purchase Orders Requiring Amendment" columns={["PO", "PO Amount", "Logged Value"]} rows={data.requires_amendment} emptyText="No purchase orders require amendment." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5 font-medium">{row.po_reference || row.id}</td><td className="px-5 py-3.5">R {Number(row.po_amount || 0).toLocaleString()}</td><td className="px-5 py-3.5 text-red-600">R {Number(row.logged_value || 0).toLocaleString()}</td></tr>} />
+        <DataTable title="Urgent Dispatch Awaiting PO Verification" columns={["PO", "Quotation", "Status"]} rows={data.urgent_pending_verification} emptyText="No urgent dispatches await PO verification." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5">{row.id}</td><td className="px-5 py-3.5">{row.quotation_id || "-"}</td><td className="px-5 py-3.5"><StatusBadge status="Approved_Pending_PO" /></td></tr>} />
+      </div>;
+    }
+    if (active === "worksheets" && Array.isArray(data?.pending_review) && Array.isArray(data?.returned_for_correction) && typeof data?.approved_count === "number") {
+      return <div className="space-y-6 p-5"><div className="grid gap-3 sm:grid-cols-3"><StatCard label="Approved" value={data.approved_count} tone="green" /><StatCard label="Pending Review" value={data.pending_review.length} tone={data.pending_review.length ? "amber" : "slate"} /><StatCard label="Returned" value={data.returned_for_correction.length} tone={data.returned_for_correction.length ? "red" : "slate"} /></div><DataTable title="Worksheets Pending Review" columns={["Worksheet", "Dispatch", "Date", "Hours"]} rows={data.pending_review} emptyText="No worksheets are pending review." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5">{row.id}</td><td className="px-5 py-3.5">{row.dispatch_card_id}</td><td className="px-5 py-3.5">{row.work_date || "-"}</td><td className="px-5 py-3.5">{row.hours ?? "-"}</td></tr>} /><DataTable title="Worksheets Returned for Correction" columns={["Worksheet", "Dispatch", "Comment"]} rows={data.returned_for_correction} emptyText="No worksheets have been returned." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5">{row.id}</td><td className="px-5 py-3.5">{row.dispatch_card_id}</td><td className="px-5 py-3.5">{row.supervisor_comment || "-"}</td></tr>} /></div>;
+    }
+    return null;
   }
 
   return (
@@ -75,7 +120,7 @@ export default function ReportsPage() {
 
         {/* Tab Strip */}
         <div className="mt-6 flex flex-wrap gap-2 border-b border-gray-200 pb-px">
-          {REPORT_TABS.map((tab) => (
+          {visibleTabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActive(tab.key)}
@@ -101,6 +146,8 @@ export default function ReportsPage() {
           <div className="flex-1 overflow-auto">
             {!data || (Array.isArray(data) && data.length === 0) ? (
               <div className="flex h-full items-center justify-center text-sm text-gray-400">No data found for this report.</div>
+            ) : renderStructuredReport() ? (
+              renderStructuredReport()
             ) : Array.isArray(data) ? (
               <table className="min-w-full text-sm">
                 <thead className="sticky top-0 bg-gray-100 shadow-sm z-10">

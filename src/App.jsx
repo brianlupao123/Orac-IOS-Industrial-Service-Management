@@ -59,10 +59,10 @@ export default function App() {
           <>
             <Route path="/worksheets" element={<WorksheetsPage user={user} />} />
             {(user.role === "Admin" || user.role === "Management" || user.role === "Operations") && (
-              <Route path="/inventory" element={<InventoryPage />} />
+              <Route path="/inventory" element={<InventoryPage user={user} />} />
             )}
-            {(user.role === "Admin" || user.role === "Management" || user.role === "Finance") && (
-              <Route path="/reports" element={<ReportsPage />} />
+            {(["Admin", "Management", "Sales", "Finance", "Operations", "Supervisor"].includes(user.role)) && (
+              <Route path="/reports" element={<ReportsPage user={user} />} />
             )}
             {(user.role === "Admin" || user.role === "Management" || user.role === "Operations") && (
               <Route path="/admin" element={<AdminPage user={user} />} />
