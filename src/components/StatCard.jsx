@@ -8,9 +8,20 @@ const TONES = {
   red:    "border-red-100 bg-red-50/50 text-red-900 ring-1 ring-red-900/5",
 };
 
-export default function StatCard({ label, value, tone = "slate", icon, subtitle }) {
+export default function StatCard({ label, value, tone = "slate", icon, subtitle, onClick, href }) {
+  const Component = href ? "a" : onClick ? "button" : "div";
+  const isInteractive = Boolean(href || onClick);
+  const interactiveClasses = isInteractive
+    ? "cursor-pointer hover:brightness-95 hover:shadow-lg hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orac-blue/30 text-left w-full block transition-all duration-200"
+    : "transition-all duration-200";
+
   return (
-    <div className={`rounded-xl border p-5 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${TONES[tone] || TONES.slate}`}>
+    <Component
+      {...(Component === "button" ? { type: "button" } : {})}
+      href={href}
+      onClick={onClick}
+      className={`rounded-xl border p-5 shadow-sm ${interactiveClasses} ${TONES[tone] || TONES.slate}`}
+    >
       <div className="flex items-start justify-between">
         <div className="flex flex-col">
           <div className="text-xs font-semibold tracking-wide uppercase opacity-60 mb-1">{label}</div>
@@ -29,6 +40,6 @@ export default function StatCard({ label, value, tone = "slate", icon, subtitle 
           </div>
         )}
       </div>
-    </div>
+    </Component>
   );
 }
