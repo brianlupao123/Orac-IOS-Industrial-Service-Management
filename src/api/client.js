@@ -269,3 +269,9 @@ export const accessRequests = {
   approve(id, role, client_id) { return request(`/access-requests/${id}/approve`, { method: "POST", body: JSON.stringify({ role, client_id }) }); },
   reject(id, reason) { return request(`/access-requests/${id}/reject`, { method: "POST", body: JSON.stringify({ reason }) }); }
 };
+
+export const leads = {
+  create(payload) {
+    return request("/leads", { method: "POST", body: JSON.stringify(payload) });
+  }
+};

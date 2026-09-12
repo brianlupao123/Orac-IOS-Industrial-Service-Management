@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { auth, onSessionExpired } from "./api/client.js";
 import LoginPage from "./pages/LoginPage.jsx";
+import LandingPage from "./pages/LandingPage.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import RequestAccess from "./pages/RequestAccess.jsx";
@@ -41,10 +42,12 @@ export default function App() {
     // always rendered LoginPage, which would have swallowed these too.
     return (
       <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage onLogin={setUser} />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/request-access" element={<RequestAccess />} />
-        <Route path="*" element={<LoginPage onLogin={setUser} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
   }
