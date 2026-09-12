@@ -4,3 +4,7 @@ dist/
 .env.*
 !.env.example
 *.log
+
+# Local recovery artifacts; never deploy or commit these.
+backup-stabilize-*/
+phase-stabilize-frontend-sync-*.ps1
