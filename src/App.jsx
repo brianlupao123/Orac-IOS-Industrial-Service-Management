@@ -57,7 +57,7 @@ export default function App() {
             {(user.role === "Admin" || user.role === "Management" || user.role === "Finance") && (
               <Route path="/reports" element={<ReportsPage />} />
             )}
-            {user.role === "Admin" && (
+            {(user.role === "Admin" || user.role === "Management" || user.role === "Operations") && (
               <Route path="/admin" element={<AdminPage user={user} />} />
             )}
           </>
