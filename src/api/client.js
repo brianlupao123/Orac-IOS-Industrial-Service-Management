@@ -25,6 +25,20 @@ function getCachedUser() {
   catch { clearSession(); return null; }
 }
 
+const sessionExpiredListeners = new Set();
+
+function notifySessionExpired() {
+  clearSession();
+  for (const listener of sessionExpiredListeners) {
+    try { listener(); } catch { /* One UI listener must not affect another. */ }
+  }
+}
+
+export function onSessionExpired(listener) {
+  sessionExpiredListeners.add(listener);
+  return () => sessionExpiredListeners.delete(listener);
+}
+
 async function request(path, options = {}) {
   if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
     throw new Error("The service is not connected yet. Please try again later.");
@@ -38,6 +52,12 @@ async function request(path, options = {}) {
 
   if (!res.ok || body.success === false) {
     const message = body.message || `Request failed (${res.status})`;
+    if (res.status === 401) {
+      notifySessionExpired();
+      const error = new Error(message);
+      error.sessionExpired = true;
+      throw error;
+    }
     throw new Error(message);
   }
   // Every backend response is { success: true, data: ... } â€” always unwrap.

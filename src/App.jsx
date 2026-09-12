@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { auth } from "./api/client.js";
+import { auth, onSessionExpired } from "./api/client.js";
 import LoginPage from "./pages/LoginPage.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
@@ -20,6 +20,13 @@ export default function App() {
   useEffect(() => {
     auth.restoreSession().then((restored) => {
       setUser(restored);
+      setChecking(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    return onSessionExpired(() => {
+      setUser(null);
       setChecking(false);
     });
   }, []);
