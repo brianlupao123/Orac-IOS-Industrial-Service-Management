@@ -2,7 +2,10 @@ import React, { useEffect, useState } from "react";
 import { collections, quotes as quotesApi } from "../api/client.js";
 import DataTable from "../components/DataTable.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
-import StatCard from "../components/StatCard.jsx";
+import IconStatCard from "../components/IconStatCard.jsx";
+import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
+import { ErrorBanner } from "../components/PageStates.jsx";
+import { ICONS } from "../components/icons.jsx";
 
 // Server already scopes these collections to the caller's client_id
 // (src/middleware/clientScope.js) — no client-side filtering needed here.
@@ -52,31 +55,27 @@ export default function ClientPortalPage() {
   const unpaidInvoices = invoices.filter((i) => i.status !== "Paid");
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-orac-slate">Client Portal</h1>
-        <p className="mt-1 text-sm text-gray-400">View your quotes, submit purchase orders, and track invoices</p>
-      </div>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <PageHeaderBanner eyebrow="Client workspace" title="Client Portal" subtitle="View your quotes, submit purchase orders, and track invoices." iconPath={ICONS.building} />
 
       {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Total Quotes" value={quotes.length} tone="slate" icon="📋" />
-        <StatCard
+        <IconStatCard label="Total Quotes" value={quotes.length} tone="neutral" iconPath={ICONS.clipboard} />
+        <IconStatCard
           label="Pending Purchase Orders"
           value={pendingPo.length}
           tone={pendingPo.length > 0 ? "amber" : "green"}
-          icon="⏳"
+          iconPath={ICONS.clock}
         />
-        <StatCard
+        <IconStatCard
           label="Unpaid Invoices"
           value={unpaidInvoices.length}
           tone={unpaidInvoices.length > 0 ? "amber" : "green"}
-          icon="💰"
+          iconPath={ICONS.money}
         />
       </div>
 
-      {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+      {error && <ErrorBanner message={error} />}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column: PO Form + Invoices */}

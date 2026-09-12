@@ -2,11 +2,14 @@ import React, { useEffect, useState } from "react";
 import { collections, admin } from "../api/client.js";
 import DataTable from "../components/DataTable.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
-import StatCard from "../components/StatCard.jsx";
+import IconStatCard from "../components/IconStatCard.jsx";
 import AdminAccessRequestsPage from "./AdminAccessRequestsPage.jsx";
 import AdminAnalyticsPage from "./AdminAnalyticsPage.jsx";
 import AdminEntitiesTab from "./AdminEntitiesTab.jsx";
 import Modal from "../components/Modal.jsx";
+import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
+import { ErrorBanner } from "../components/PageStates.jsx";
+import { ICONS } from "../components/icons.jsx";
 
 export default function AdminPage({ user }) {
   const [users, setUsers] = useState([]);
@@ -120,24 +123,19 @@ export default function AdminPage({ user }) {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-light tracking-tight text-orac-slate mb-2">Administration Console</h1>
-        <p className="text-sm text-gray-400 mb-8">Manage system users, client records, and company settings seamlessly.</p>
+      <div className="space-y-6">
+        <PageHeaderBanner eyebrow="Administration" title="Administration Console" subtitle="Manage system users, client records, and company settings." iconPath={ICONS.users} />
 
         {canManageUsers && (
           <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard label="Total Active Users" value={users.filter(u => u.is_active).length} icon="👥" tone="blue" />
-            <StatCard label="Registered Clients" value={clients.length} icon="🏢" tone="slate" />
-            <StatCard label="System Status" value="Online" icon="✨" tone="green" />
+            <IconStatCard label="Total Active Users" value={users.filter(u => u.is_active).length} iconPath={ICONS.users} tone="blue" />
+            <IconStatCard label="Registered Clients" value={clients.length} iconPath={ICONS.building} tone="neutral" />
+            <IconStatCard label="System Status" value="Online" iconPath={ICONS.check} tone="green" />
           </div>
         )}
       </div>
 
-      {error && (
-        <div className="rounded-xl border border-red-100 bg-red-50/80 px-4 py-3 text-sm text-red-600 shadow-sm backdrop-blur-sm">
-          {error}
-        </div>
-      )}
+      {error && <ErrorBanner message={error} />}
 
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">

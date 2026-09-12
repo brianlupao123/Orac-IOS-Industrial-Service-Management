@@ -3,6 +3,9 @@ import { reports } from "../api/client.js";
 import DataTable from "../components/DataTable.jsx";
 import StatCard from "../components/StatCard.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
+import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
+import { ErrorBanner } from "../components/PageStates.jsx";
+import { ICONS } from "../components/icons.jsx";
 
 const REPORT_TABS = [
   { key: "pipeline", label: "Pipeline", roles: ["Admin", "Management", "Sales"] },
@@ -98,14 +101,11 @@ export default function ReportsPage({ user }) {
   }
 
   return (
-    <div className="space-y-6 flex flex-col h-[calc(100vh-8rem)]">
+    <div className="space-y-6 flex flex-col h-[calc(100vh-8rem)] animate-in fade-in duration-500">
       {/* Header and Controls */}
       <div>
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-orac-slate">Operational Reports</h1>
-            <p className="mt-1 text-sm text-gray-400">View and export system metrics</p>
-          </div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <PageHeaderBanner eyebrow="Operational intelligence" title="Operational Reports" subtitle="View and export system metrics." iconPath={ICONS.report} />
           <button
             onClick={handleExportCsv}
             disabled={loading || !data || data.length === 0}
@@ -137,7 +137,7 @@ export default function ReportsPage({ user }) {
       </div>
 
       {/* Data Viewer */}
-      {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 shrink-0">{error}</div>}
+      {error && <ErrorBanner message={error} />}
       
       <div className="flex-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm flex flex-col relative z-0">
         {loading ? (

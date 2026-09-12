@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { inventory } from "../api/client.js";
 import DataTable from "../components/DataTable.jsx";
-import StatCard from "../components/StatCard.jsx";
+import IconStatCard from "../components/IconStatCard.jsx";
 import Modal from "../components/Modal.jsx";
+import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
+import { ErrorBanner } from "../components/PageStates.jsx";
+import { ICONS } from "../components/icons.jsx";
 
 export default function InventoryPage({ user }) {
   const [items, setItems] = useState([]);
@@ -101,22 +104,16 @@ export default function InventoryPage({ user }) {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-light tracking-tight text-orac-slate mb-2">Inventory Management</h1>
-        <p className="text-sm text-gray-400 mb-8">Track stock levels, record movements, and manage suppliers.</p>
-        
+      <div className="space-y-6">
+        <PageHeaderBanner eyebrow="Materials control" title="Inventory Management" subtitle="Track stock levels, record movements, and manage suppliers." iconPath={ICONS.inventory} />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard label="Total Items" value={items.length} icon="📦" tone="slate" />
-          <StatCard label="Low Stock Alerts" value={lowStockCount} icon="⚠️" tone={lowStockCount > 0 ? "red" : "green"} />
-          <StatCard label="Total Value On Hand" value={`$${totalValue.toLocaleString(undefined, {minimumFractionDigits:2})}`} icon="💰" tone="blue" />
+          <IconStatCard label="Total Items" value={items.length} iconPath={ICONS.inventory} tone="neutral" />
+          <IconStatCard label="Low Stock Alerts" value={lowStockCount} iconPath={ICONS.warning} tone={lowStockCount > 0 ? "red" : "green"} />
+          <IconStatCard label="Total Value On Hand" value={`$${totalValue.toLocaleString(undefined, {minimumFractionDigits:2})}`} iconPath={ICONS.money} tone="blue" />
         </div>
       </div>
 
-      {error && (
-        <div className="rounded-xl border border-red-100 bg-red-50/80 px-4 py-3 text-sm text-red-600 shadow-sm backdrop-blur-sm">
-          {error}
-        </div>
-      )}
+      {error && <ErrorBanner message={error} />}
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
