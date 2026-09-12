@@ -17,6 +17,12 @@ session remain `NOT VERIFIED` until that evidence exists.
 - Frontend build: `npm run build` passed on 2026-09-12.
 - Backend suite: `npm test` passed, 31/31 tests, on 2026-09-12.
 - Backend syntax: `node --check server.js` passed as part of the backend check.
+- Live API health: `GET https://orac-operations-api.onrender.com/healthz` returned
+  `200` with `success: true`, `status: ok`, and `store_driver: postgres` on
+  2026-09-12.
+- Live frontend reachability: the public root returned `200`; direct
+  navigation to `/login` returned `404`, so the Render SPA rewrite must be
+  enabled in the service dashboard before direct links are considered ready.
 
 ## Current Capability Status
 
@@ -35,7 +41,7 @@ session remain `NOT VERIFIED` until that evidence exists.
 | Document authorization | VERIFIED (automated) | `npm test` passed quote, worksheet, job-card, invoice amendment, and Client Viewer document-scope tests. Browser document rendering UAT is pending. |
 | Notifications | VERIFIED (automated) | `npm test` passed worksheet submission, PO amendment, visibility, idempotency, mark-read, and oversight notification tests. Live notification UAT is pending. |
 | PostgreSQL production guard | VERIFIED (source) | Backend `src/config.js:37,48-61` selects `STORE_DRIVER`, requires Postgres in production, and requires `DATABASE_URL` for Postgres. Neon persistence and backup verification are pending. |
-| Health endpoint source | PARTIAL | Backend `server.js:33-34` defines `/healthz` with a 200 response. Live request is pending. |
+| Health endpoint | VERIFIED (live) | `GET /healthz` on the deployed API returned HTTP 200 with `success`, `status`, and `store_driver` fields. |
 | AI assistant in deployed frontend | VERIFIED (source) | Canonical local workspace contains `AiAssistant.jsx`; deployed frontend source does not. No real backend-supported assistant exists. |
 | Quick Access source and local bundle | VERIFIED | Commit `bcb0c7e` removes the browser-side auto-login path. A successful build followed by a source/bundle marker scan found no Quick Access implementation markers. Render deployment confirmation is pending. |
 | Monorepo migration | NOT IMPLEMENTED | The frontend and backend remain separate deployment repositories; migration has not started. |
@@ -55,7 +61,12 @@ The 31 passing standard tests included:
 
 ## Blocking Follow-ups
 
-1. Confirm Render has deployed frontend commit `b2a4bed`.
-2. Run role-by-role UAT without recording credentials or client data.
-3. Verify Neon persistence and establish a documented backup/export procedure.
-4. Create the reconciliation table before starting monorepo migration.
+1. In Render Static Site > Redirects/Rewrites, add or confirm `/*` ->
+   `/index.html` with action `Rewrite`, then verify direct `/login` returns
+   HTTP 200. The repository `render.yaml` already contains this rule, but the
+   live service did not apply it during this check.
+2. Confirm Render has deployed frontend commit `04ce2a4` after the rewrite
+   configuration is saved.
+3. Run role-by-role UAT without recording credentials or client data.
+4. Verify Neon persistence and establish a documented backup/export procedure.
+5. Create the reconciliation table before starting monorepo migration.
