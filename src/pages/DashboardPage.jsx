@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { summary, collections } from "../api/client.js";
-import StatCard from "../components/StatCard.jsx";
+import IconStatCard from "../components/IconStatCard.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import DataTable from "../components/DataTable.jsx";
+import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
+import { ErrorBanner } from "../components/PageStates.jsx";
+import { ICONS } from "../components/icons.jsx";
 
 /**
  * Role-aware operational dashboard.
@@ -79,9 +82,7 @@ export default function DashboardPage({ user }) {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-        {error}
-      </div>
+      <ErrorBanner message={error} />
     );
   }
 
@@ -154,12 +155,12 @@ export default function DashboardPage({ user }) {
   // Admin / Management: Pending Access Requests
   if ((user.role === "Admin" || user.role === "Management") && pendingAccessCount !== null) {
     roleCards.push(
-      <StatCard
+      <IconStatCard
         key="access_requests"
         label="Pending Access Requests"
         value={pendingAccessCount}
-        icon="🔑"
-        tone={pendingAccessCount > 0 ? "amber" : "slate"}
+        iconPath={ICONS.users}
+        tone={pendingAccessCount > 0 ? "amber" : "neutral"}
         subtitle="Requires authorization"
         onClick={canAdmin ? () => navigate("/admin") : undefined}
       />
@@ -169,11 +170,11 @@ export default function DashboardPage({ user }) {
   // Finance: Blocked Amendments
   if (user.role === "Finance" || user.role === "Admin") {
     roleCards.push(
-      <StatCard
+      <IconStatCard
         key="blocked_amendments"
         label="Blocked Amendments"
         value={stats?.blocked_amendments ?? 0}
-        icon="⚠️"
+        iconPath={ICONS.warning}
         tone={(stats?.blocked_amendments || 0) > 0 ? "red" : "green"}
         subtitle="POs requiring amendment"
         onClick={() => navigate("/reports")}
@@ -185,12 +186,12 @@ export default function DashboardPage({ user }) {
   if (user.role === "Supervisor" || user.role === "Admin" || user.role === "Operations") {
     const pendingReviewCount = worksheets.filter((w) => w.status === "Submitted").length;
     roleCards.push(
-      <StatCard
+      <IconStatCard
         key="worksheets_review"
         label="Worksheets Pending Review"
         value={pendingReviewCount}
-        icon="⏳"
-        tone={pendingReviewCount > 0 ? "amber" : "slate"}
+        iconPath={ICONS.clock}
+        tone={pendingReviewCount > 0 ? "amber" : "neutral"}
         subtitle="Awaiting supervisor sign-off"
         onClick={() => navigate("/worksheets")}
       />
@@ -204,12 +205,12 @@ export default function DashboardPage({ user }) {
       d.status !== "Completed" && d.status !== "Cancelled"
     );
     roleCards.push(
-      <StatCard
+      <IconStatCard
         key="my_active_dispatches"
         label="My Active Dispatches"
         value={myActive.length}
-        icon="🚛"
-        tone={myActive.length > 0 ? "blue" : "slate"}
+        iconPath={ICONS.truck}
+        tone={myActive.length > 0 ? "blue" : "neutral"}
         subtitle="Assigned active jobs"
         onClick={() => navigate("/worksheets")}
       />
@@ -217,51 +218,37 @@ export default function DashboardPage({ user }) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header card */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-orac-blue">{user.role}</p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-orac-slate">{greeting}</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Welcome back, {user.name || user.email}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-400">{new Date().toLocaleDateString("en-ZA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <PageHeaderBanner eyebrow={user.role} title={greeting} subtitle={`Welcome back, ${user.name || user.email}`} iconPath={ICONS.dashboard} aside={new Date().toLocaleDateString("en-ZA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} />
 
       {/* KPI stat cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
+        <IconStatCard
           label="Total Clients"
           value={stats?.clients}
-          icon="🏢"
-          tone="slate"
+          iconPath={ICONS.building}
+          tone="neutral"
           onClick={canAdmin ? () => navigate("/admin") : (canReports ? () => navigate("/reports") : undefined)}
         />
-        <StatCard
+        <IconStatCard
           label="Active Quotes"
           value={stats?.quotes}
-          icon="📋"
-          tone={stats?.quotes > 0 ? "blue" : "slate"}
+          iconPath={ICONS.clipboard}
+          tone={stats?.quotes > 0 ? "blue" : "neutral"}
           onClick={() => navigate("/reports")}
         />
-        <StatCard
+        <IconStatCard
           label="Dispatches"
           value={stats?.dispatches}
-          icon="🚛"
-          tone={stats?.dispatches > 0 ? "amber" : "slate"}
+          iconPath={ICONS.truck}
+          tone={stats?.dispatches > 0 ? "amber" : "neutral"}
           onClick={() => navigate(canWorksheets ? "/worksheets" : "/reports")}
         />
-        <StatCard
+        <IconStatCard
           label="Invoices"
           value={stats?.invoices}
-          icon="💰"
-          tone={stats?.invoices > 0 ? "green" : "slate"}
+          iconPath={ICONS.money}
+          tone={stats?.invoices > 0 ? "green" : "neutral"}
           onClick={() => navigate("/reports")}
         />
       </div>
