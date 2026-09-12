@@ -10,11 +10,12 @@ session remain `NOT VERIFIED` until that evidence exists.
 ## Evidence Snapshot
 
 - Frontend repository: `brianlupao123/Orac-IOS-Industrial-Service-Management`
-- Frontend latest pushed commit: `bcb0c7e`
+- Frontend latest pushed commit: `b2a4bed` (the last functional security
+  change is `bcb0c7e`; `b2a4bed` adds this evidence report).
 - Backend repository: `brianlupao123/orac-portal-api`
-- Backend local commit inspected: `5b7088b`
+- Backend latest pushed commit: `3884dd7`.
 - Frontend build: `npm run build` passed on 2026-09-12.
-- Backend suite: `npm test` passed, 26/26 tests, on 2026-09-12.
+- Backend suite: `npm test` passed, 31/31 tests, on 2026-09-12.
 - Backend syntax: `node --check server.js` passed as part of the backend check.
 
 ## Current Capability Status
@@ -29,7 +30,7 @@ session remain `NOT VERIFIED` until that evidence exists.
 | Urgent dispatch reason guard | PARTIAL | Backend `src/stateMachine.js:59-60` rejects urgent pre-PO dispatch without `urgent_reason`; an explicit automated regression test is not in the standard passing suite. |
 | Mining asset CRUD source | PARTIAL | Frontend `src/api/client.js:243-249` exposes mine-site, plant, section, and tag methods; backend routes/controllers exist. Form and role UAT is pending. |
 | Supplier CRUD source | PARTIAL | Frontend `src/api/client.js:209-212` exposes supplier create/update; backend router imports and registers supplier handlers. Live CRUD UAT is pending. |
-| Inventory sign and negative-stock controls | NOT VERIFIED | A separate legacy test `tests/phase0-bugfixes.test.cjs` currently fails because `../fixes/stockGuard.cjs` is missing. The normal 26-test suite does not run this file. |
+| Inventory sign and negative-stock controls | VERIFIED (automated) | Backend `tests/inventoryController.test.js` covers signed adjustments, stock-out sign normalization, insufficient-stock rejection, Management override denial, and Admin override authorization. |
 | Structured reports and CSV source | PARTIAL | Frontend `src/pages/ReportsPage.jsx:43-97` handles structured Pipeline, PO Compliance, and Worksheet responses and CSV export. Six-tab UAT and spreadsheet validation are pending. |
 | Document authorization | VERIFIED (automated) | `npm test` passed quote, worksheet, job-card, invoice amendment, and Client Viewer document-scope tests. Browser document rendering UAT is pending. |
 | Notifications | VERIFIED (automated) | `npm test` passed worksheet submission, PO amendment, visibility, idempotency, mark-read, and oversight notification tests. Live notification UAT is pending. |
@@ -42,7 +43,7 @@ session remain `NOT VERIFIED` until that evidence exists.
 
 ## Automated Test Evidence
 
-The 26 passing standard tests included:
+The 31 passing standard tests included:
 
 - document authorization and Client Viewer isolation;
 - notification creation, visibility, and mark-read behavior;
@@ -50,11 +51,11 @@ The 26 passing standard tests included:
 - illegal quote transition rejection;
 - PO, amendment, and supervisor-worksheet invoice blocks;
 - Sales and Client Viewer permission rejection.
+- signed inventory adjustments and negative-stock authorization.
 
 ## Blocking Follow-ups
 
-1. Confirm Render has deployed frontend commit `bcb0c7e`.
+1. Confirm Render has deployed frontend commit `b2a4bed`.
 2. Run role-by-role UAT without recording credentials or client data.
-3. Repair or replace the stale `tests/phase0-bugfixes.test.cjs` test so inventory control has an active regression test.
-4. Verify Neon persistence and establish a documented backup/export procedure.
-5. Create the reconciliation table before starting monorepo migration.
+3. Verify Neon persistence and establish a documented backup/export procedure.
+4. Create the reconciliation table before starting monorepo migration.
