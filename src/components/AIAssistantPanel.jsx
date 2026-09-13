@@ -60,33 +60,34 @@ export default function AIAssistantPanel({ user }) {
   }
 
   return (
-    <section className="rounded-lg border border-sky-200 bg-sky-50/50 p-4 shadow-sm" aria-label="Dashboard assistant">
+    <section className="rounded-lg border border-sky-200 bg-sky-50 p-5 shadow-sm" aria-label="Dashboard assistant">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase text-orac-blue">Providerless dashboard assistant</p>
-          <h2 className="mt-1 text-base font-semibold text-orac-slate">Ask about your dashboard</h2>
+          <p className="text-sm font-semibold text-orac-blue">Dashboard assistant</p>
+          <h2 className="mt-1 text-xl font-semibold text-orac-slate">Review your dashboard information</h2>
+          <p className="mt-1 text-sm leading-5 text-slate-700">Responses use the same verified figures shown on this page.</p>
         </div>
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="rounded-lg bg-orac-blue px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-orac-blue/40"
+          className="rounded-lg bg-orac-blue px-5 py-2.5 text-base font-semibold text-white transition-colors hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-orac-blue/40"
           aria-expanded={open}
         >
-          {open ? "Hide assistant" : "Open assistant"}
+          {open ? "Close assistant" : "Ask assistant"}
         </button>
       </div>
 
       {open && (
         <div className="mt-4 border-t border-sky-200 pt-4">
           <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={loading} onClick={() => run(() => assistant.briefing())} className="rounded-lg border border-sky-300 bg-white px-3 py-2 text-sm font-semibold text-orac-blue hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60">
+            <button type="button" disabled={loading} onClick={() => run(() => assistant.briefing())} className="rounded-lg border border-sky-300 bg-white px-4 py-2.5 text-base font-semibold text-orac-blue hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60">
               Brief me
             </button>
-            <button type="button" disabled={loading} onClick={() => run(() => assistant.attention())} className="rounded-lg border border-sky-300 bg-white px-3 py-2 text-sm font-semibold text-orac-blue hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60">
+            <button type="button" disabled={loading} onClick={() => run(() => assistant.attention())} className="rounded-lg border border-sky-300 bg-white px-4 py-2.5 text-base font-semibold text-orac-blue hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60">
               What needs attention
             </button>
             {config.metrics?.map((metric) => (
-              <button key={metric.key} type="button" disabled={loading} onClick={() => run(() => assistant.explain(metric.key))} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60">
+              <button key={metric.key} type="button" disabled={loading} onClick={() => run(() => assistant.explain(metric.key))} className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-slate-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60">
                 Why: {metric.label}
               </button>
             ))}

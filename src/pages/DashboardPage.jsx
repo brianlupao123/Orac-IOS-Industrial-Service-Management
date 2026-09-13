@@ -312,8 +312,8 @@ export default function DashboardPage({ user }) {
       {/* Role-specific KPI row */}
       {roleCards.length > 0 && (
         <div className="space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-            Role Priorities & Action Items
+          <div className="text-sm font-semibold text-orac-slate">
+            Role priorities and action items
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {roleCards}
@@ -326,13 +326,13 @@ export default function DashboardPage({ user }) {
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-4">
             <div>
-              <h2 className="text-sm font-bold tracking-tight text-orac-slate">Pipeline Status Breakdown</h2>
-              <p className="text-xs text-gray-400">Current quotation distribution across workflow stages</p>
+              <h2 className="text-lg font-semibold text-orac-slate">Pipeline status breakdown</h2>
+              <p className="mt-1 text-sm text-slate-600">Current quotation distribution across workflow stages</p>
             </div>
             {canReports && (
               <button
                 onClick={() => navigate("/reports")}
-                className="text-xs font-semibold text-orac-blue hover:underline self-start sm:self-auto"
+                className="text-sm font-semibold text-orac-blue hover:underline self-start sm:self-auto"
               >
                 View Pipeline Report &rarr;
               </button>
