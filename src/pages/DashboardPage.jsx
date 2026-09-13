@@ -25,6 +25,10 @@ const ROLE_GREETING = {
   "Client Viewer":"Client Dashboard",
 };
 
+const QUOTE_DASHBOARD_ROLES = ["Admin", "Management", "Sales", "Finance", "Operations", "Client Viewer"];
+const OPERATIONAL_DASHBOARD_ROLES = ["Admin", "Management", "Operations", "Supervisor", "Technician"];
+const FIELD_DASHBOARD_ROLES = ["Supervisor", "Technician"];
+
 export default function DashboardPage({ user }) {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
@@ -40,9 +44,11 @@ export default function DashboardPage({ user }) {
     setLoading(true);
     setError("");
 
-    const loads = [summary.get(), collections.list("quotes")];
-    // Load dispatches and worksheets if role needs them
-    if (user.role !== "Client Viewer") {
+    const canLoadQuotes = QUOTE_DASHBOARD_ROLES.includes(user.role);
+    const canLoadOperationalData = OPERATIONAL_DASHBOARD_ROLES.includes(user.role);
+    const loads = [summary.get(), canLoadQuotes ? collections.list("quotes") : Promise.resolve([])];
+
+    if (canLoadOperationalData) {
       loads.push(collections.list("dispatch_cards"));
       loads.push(collections.list("field_worksheets"));
     } else {
@@ -148,6 +154,7 @@ export default function DashboardPage({ user }) {
   const canReports = ["Admin", "Management", "Finance"].includes(user.role);
   const canWorksheets = ["Admin", "Operations", "Supervisor", "Technician", "Management"].includes(user.role);
   const canAdmin = user.role === "Admin";
+  const isFieldDashboard = FIELD_DASHBOARD_ROLES.includes(user.role);
 
   // Build role-specific KPI cards
   const roleCards = [];
@@ -198,6 +205,33 @@ export default function DashboardPage({ user }) {
     );
   }
 
+  if (user.role === "Supervisor") {
+    const assignedDispatches = dispatches.filter((dispatch) =>
+      dispatch.status !== "Completed" && dispatch.status !== "Cancelled"
+    );
+    const returnedWorksheets = worksheets.filter((worksheet) => worksheet.status === "Returned_For_Correction");
+    roleCards.push(
+      <IconStatCard
+        key="assigned_dispatches"
+        label="Assigned Dispatches"
+        value={assignedDispatches.length}
+        iconPath={ICONS.truck}
+        tone={assignedDispatches.length > 0 ? "blue" : "neutral"}
+        subtitle="Jobs in your review scope"
+        onClick={() => navigate("/worksheets")}
+      />,
+      <IconStatCard
+        key="returned_worksheets"
+        label="Returned for Correction"
+        value={returnedWorksheets.length}
+        iconPath={ICONS.warning}
+        tone={returnedWorksheets.length > 0 ? "amber" : "neutral"}
+        subtitle="Awaiting technician resubmission"
+        onClick={() => navigate("/worksheets")}
+      />
+    );
+  }
+
   // Technician: My Active Dispatches
   if (user.role === "Technician") {
     const myActive = dispatches.filter((d) =>
@@ -213,6 +247,24 @@ export default function DashboardPage({ user }) {
         tone={myActive.length > 0 ? "blue" : "neutral"}
         subtitle="Assigned active jobs"
         onClick={() => navigate("/worksheets")}
+      />,
+      <IconStatCard
+        key="my_worksheets"
+        label="My Worksheets"
+        value={worksheets.length}
+        iconPath={ICONS.clipboard}
+        tone={worksheets.length > 0 ? "blue" : "neutral"}
+        subtitle="Draft, submitted, and returned work"
+        onClick={() => navigate("/worksheets")}
+      />,
+      <IconStatCard
+        key="submitted_worksheets"
+        label="Awaiting Review"
+        value={worksheets.filter((worksheet) => worksheet.status === "Submitted").length}
+        iconPath={ICONS.clock}
+        tone={worksheets.some((worksheet) => worksheet.status === "Submitted") ? "amber" : "neutral"}
+        subtitle="Submitted work awaiting decision"
+        onClick={() => navigate("/worksheets")}
       />
     );
   }
@@ -221,37 +273,38 @@ export default function DashboardPage({ user }) {
     <div className="space-y-6 animate-in fade-in duration-500">
       <PageHeaderBanner eyebrow={user.role} title={greeting} subtitle={`Welcome back, ${user.name || user.email}`} iconPath={ICONS.dashboard} aside={new Date().toLocaleDateString("en-ZA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} />
 
-      {/* KPI stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <IconStatCard
-          label="Total Clients"
-          value={stats?.clients}
-          iconPath={ICONS.building}
-          tone="neutral"
-          onClick={canAdmin ? () => navigate("/admin") : (canReports ? () => navigate("/reports") : undefined)}
-        />
-        <IconStatCard
-          label="Active Quotes"
-          value={stats?.quotes}
-          iconPath={ICONS.clipboard}
-          tone={stats?.quotes > 0 ? "blue" : "neutral"}
-          onClick={() => navigate("/reports")}
-        />
-        <IconStatCard
-          label="Dispatches"
-          value={stats?.dispatches}
-          iconPath={ICONS.truck}
-          tone={stats?.dispatches > 0 ? "amber" : "neutral"}
-          onClick={() => navigate(canWorksheets ? "/worksheets" : "/reports")}
-        />
-        <IconStatCard
-          label="Invoices"
-          value={stats?.invoices}
-          iconPath={ICONS.money}
-          tone={stats?.invoices > 0 ? "green" : "neutral"}
-          onClick={() => navigate("/reports")}
-        />
-      </div>
+      {!isFieldDashboard && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <IconStatCard
+            label={user.role === "Client Viewer" ? "My Organization" : "Total Clients"}
+            value={stats?.clients}
+            iconPath={ICONS.building}
+            tone="neutral"
+            onClick={canAdmin ? () => navigate("/admin") : (canReports ? () => navigate("/reports") : undefined)}
+          />
+          <IconStatCard
+            label="Active Quotes"
+            value={stats?.quotes}
+            iconPath={ICONS.clipboard}
+            tone={stats?.quotes > 0 ? "blue" : "neutral"}
+            onClick={() => navigate("/reports")}
+          />
+          <IconStatCard
+            label="Dispatches"
+            value={stats?.dispatches}
+            iconPath={ICONS.truck}
+            tone={stats?.dispatches > 0 ? "amber" : "neutral"}
+            onClick={() => navigate(canWorksheets ? "/worksheets" : "/reports")}
+          />
+          <IconStatCard
+            label="Invoices"
+            value={stats?.invoices}
+            iconPath={ICONS.money}
+            tone={stats?.invoices > 0 ? "green" : "neutral"}
+            onClick={() => navigate("/reports")}
+          />
+        </div>
+      )}
 
       {/* Role-specific KPI row */}
       {roleCards.length > 0 && (
@@ -266,7 +319,7 @@ export default function DashboardPage({ user }) {
       )}
 
       {/* Pipeline Status Breakdown */}
-      {stats?.status_counts && Object.keys(stats.status_counts).length > 0 && (
+      {!isFieldDashboard && stats?.status_counts && Object.keys(stats.status_counts).length > 0 && (
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-4">
             <div>
@@ -306,7 +359,7 @@ export default function DashboardPage({ user }) {
       {/* Activity tables */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent quotes */}
-        <DataTable
+        {!isFieldDashboard && <DataTable
           title="Recent Quotes"
           columns={["Number", "Status", "Total"]}
           rows={quotes.slice(0, 8)}
@@ -318,10 +371,10 @@ export default function DashboardPage({ user }) {
               <td className="px-4 py-2.5 tabular-nums">{q.total_amount != null ? `R ${Number(q.total_amount).toLocaleString()}` : "—"}</td>
             </tr>
           )}
-        />
+        />}
 
         {/* Recent dispatches (not for Client Viewer) */}
-        {user.role !== "Client Viewer" && (
+        {OPERATIONAL_DASHBOARD_ROLES.includes(user.role) && (
           <DataTable
             title="Recent Dispatches"
             columns={["ID", "Status", "Site"]}
