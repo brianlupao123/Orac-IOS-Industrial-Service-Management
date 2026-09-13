@@ -105,6 +105,24 @@ export const summary = {
   }
 };
 
+export const assistant = {
+  health() {
+    return request("/ai/health");
+  },
+  briefing() {
+    return request("/ai/briefing", { method: "POST", body: JSON.stringify({}) });
+  },
+  attention() {
+    return request("/ai/attention", { method: "POST", body: JSON.stringify({}) });
+  },
+  explain(metric) {
+    return request("/ai/explain", { method: "POST", body: JSON.stringify({ metric }) });
+  },
+  flag(requestId) {
+    return request("/ai/feedback", { method: "POST", body: JSON.stringify({ request_id: requestId }) });
+  }
+};
+
 export const quotes = {
   create(payload) {
     return request("/quotes", { method: "POST", body: JSON.stringify(payload) });

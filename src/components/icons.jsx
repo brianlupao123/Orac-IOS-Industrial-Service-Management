@@ -12,7 +12,8 @@ export const ICONS = {
   report: "M5 3h10l4 4v14H5V3Zm10 0v5h5M9 12h6m-6 4h6",
   check: "m5 12 4 4L19 6",
   document: "M6 3h8l4 4v14H6V3Zm8 0v5h5M9 12h6m-6 4h6",
-  dashboard: "M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z"
+  dashboard: "M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z",
+  flag: "M5 21V4m0 0h10l-1 4 1 4H5"
 };
 
 export function Icon({ path, className = "h-5 w-5" }) {
