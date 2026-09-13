@@ -31,6 +31,7 @@ export default function AIAssistantPanel({ user }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [flagged, setFlagged] = useState(false);
+  const assistantEnabledForRole = Object.hasOwn(ROLE_COPY, user.role);
   const copy = ROLE_COPY[user.role] || {
     scope: `${user.role} dashboard evidence`,
     briefing: "Summarize dashboard",
@@ -42,6 +43,12 @@ export default function AIAssistantPanel({ user }) {
     setConfig(null);
     setOpen(false);
     setResponse(null);
+
+    if (!assistantEnabledForRole) {
+      setConfig({ enabled: false });
+      return () => { cancelled = true; };
+    }
+
     assistant.health()
       .then((data) => {
         if (!cancelled) setConfig(data);
@@ -50,7 +57,7 @@ export default function AIAssistantPanel({ user }) {
         if (!cancelled) setConfig({ enabled: false });
       });
     return () => { cancelled = true; };
-  }, [user.role]);
+  }, [user.role, assistantEnabledForRole]);
 
   useEffect(() => {
     if (!open) return undefined;
