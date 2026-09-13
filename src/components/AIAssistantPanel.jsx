@@ -1,15 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { assistant } from "../api/client.js";
-import { Icon } from "./icons.jsx";
+import { Icon, ICONS } from "./icons.jsx";
 
 function ResponseLabel({ label }) {
   const unavailable = label === "Unavailable";
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${unavailable ? "bg-gray-100 text-gray-600" : "bg-emerald-50 text-emerald-800"}`}>
+    <span className={`inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold ${unavailable ? "bg-slate-100 text-slate-700" : "bg-emerald-50 text-emerald-800"}`}>
       {label}
     </span>
   );
 }
+
+const ROLE_COPY = {
+  Finance: {
+    scope: "Finance dashboard evidence",
+    briefing: "Summarize finance",
+    attention: "Find finance risks"
+  },
+  Operations: {
+    scope: "Operations dashboard evidence",
+    briefing: "Summarize operations",
+    attention: "Find operational risks"
+  }
+};
 
 export default function AIAssistantPanel({ user }) {
   const [config, setConfig] = useState(null);
@@ -18,6 +31,11 @@ export default function AIAssistantPanel({ user }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [flagged, setFlagged] = useState(false);
+  const copy = ROLE_COPY[user.role] || {
+    scope: `${user.role} dashboard evidence`,
+    briefing: "Summarize dashboard",
+    attention: "Find items needing attention"
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -33,6 +51,15 @@ export default function AIAssistantPanel({ user }) {
       });
     return () => { cancelled = true; };
   }, [user.role]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [open]);
 
   if (!config?.enabled) return null;
 
@@ -60,64 +87,91 @@ export default function AIAssistantPanel({ user }) {
   }
 
   return (
-    <section className="rounded-lg border border-sky-200 bg-sky-50 p-5 shadow-sm" aria-label="Dashboard assistant">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-orac-blue">Dashboard assistant</p>
-          <h2 className="mt-1 text-xl font-semibold text-orac-slate">Review your dashboard information</h2>
-          <p className="mt-1 text-sm leading-5 text-slate-700">Responses use the same verified figures shown on this page.</p>
+    <>
+      <section className="w-full max-w-sm rounded-lg border border-sky-200 bg-white p-4 shadow-sm" aria-label="Dashboard assistant">
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-orac-blue">
+            <Icon path={ICONS.report} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base font-semibold text-orac-slate">AI assistant</h2>
+            <p className="mt-1 text-sm leading-5 text-slate-600">{copy.scope}</p>
+          </div>
         </div>
         <button
           type="button"
-          onClick={() => setOpen((value) => !value)}
-          className="rounded-lg bg-orac-blue px-5 py-2.5 text-base font-semibold text-white transition-colors hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-orac-blue/40"
+          onClick={() => setOpen(true)}
+          className="mt-4 w-full rounded-lg border border-orac-blue bg-sky-50 px-4 py-2.5 text-sm font-semibold text-orac-blue transition-colors hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-orac-blue/40"
+          aria-haspopup="dialog"
           aria-expanded={open}
+          aria-controls="dashboard-assistant-panel"
         >
-          {open ? "Close assistant" : "Ask assistant"}
+          Open assistant
         </button>
-      </div>
+      </section>
 
       {open && (
-        <div className="mt-4 border-t border-sky-200 pt-4">
-          <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={loading} onClick={() => run(() => assistant.briefing())} className="rounded-lg border border-sky-300 bg-white px-4 py-2.5 text-base font-semibold text-orac-blue hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60">
-              Brief me
-            </button>
-            <button type="button" disabled={loading} onClick={() => run(() => assistant.attention())} className="rounded-lg border border-sky-300 bg-white px-4 py-2.5 text-base font-semibold text-orac-blue hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60">
-              What needs attention
-            </button>
-            {config.metrics?.map((metric) => (
-              <button key={metric.key} type="button" disabled={loading} onClick={() => run(() => assistant.explain(metric.key))} className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-slate-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60">
-                Why: {metric.label}
-              </button>
-            ))}
-          </div>
-
-          {error && <p className="mt-3 text-sm text-red-700">{error}</p>}
-          {loading && <p className="mt-3 text-sm text-gray-600">Checking your verified dashboard summary...</p>}
-
-          {response && (
-            <div className="mt-4 rounded-lg border border-white bg-white p-4" aria-live="polite">
-              <div className="flex items-start justify-between gap-3">
-                <ResponseLabel label={response.label} />
-                <button type="button" onClick={flagResponse} disabled={flagged} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-orac-slate disabled:opacity-60" title={flagged ? "Flag submitted" : "Flag this answer for review"} aria-label={flagged ? "Flag submitted" : "Flag this answer for review"}>
-                  <Icon path="M5 21V4m0 0h10l-1 4 1 4H5" className="h-4 w-4" />
-                </button>
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-40 cursor-default bg-slate-950/30"
+            onClick={() => setOpen(false)}
+            aria-label="Close assistant"
+          />
+          <aside id="dashboard-assistant-panel" role="dialog" aria-modal="true" aria-labelledby="assistant-title" className="fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col border-l border-slate-200 bg-white shadow-2xl">
+            <header className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+              <div>
+                <p className="text-sm font-semibold text-orac-blue">{copy.scope}</p>
+                <h2 id="assistant-title" className="mt-1 text-2xl font-semibold text-orac-slate">Dashboard assistant</h2>
+                <p className="mt-2 text-sm leading-5 text-slate-600">Ask for a short explanation of the verified information currently available to your role.</p>
               </div>
-              {response.label === "Unavailable" ? (
-                <p className="mt-3 text-sm text-gray-600">This request cannot be verified from your current dashboard summary.</p>
-              ) : response.claims.length === 0 ? (
-                <p className="mt-3 text-sm text-gray-600">Nothing in the selected dashboard checks currently needs attention.</p>
-              ) : (
-                <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                  {response.claims.map((claim) => <li key={claim.metric}>{claim.sentence}</li>)}
-                </ul>
+              <button type="button" onClick={() => setOpen(false)} className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-orac-blue/40">
+                Close
+              </button>
+            </header>
+
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button type="button" disabled={loading} onClick={() => run(() => assistant.briefing())} className="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-left text-sm font-semibold text-orac-blue hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60">
+                  {copy.briefing}
+                </button>
+                <button type="button" disabled={loading} onClick={() => run(() => assistant.attention())} className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm font-semibold text-amber-900 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60">
+                  {copy.attention}
+                </button>
+                {config.metrics?.map((metric) => (
+                  <button key={metric.key} type="button" disabled={loading} onClick={() => run(() => assistant.explain(metric.key))} className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
+                    Explain {metric.label}
+                  </button>
+                ))}
+              </div>
+
+              {error && <p className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+              {loading && <p className="mt-5 text-sm text-slate-600">Checking your verified dashboard summary...</p>}
+
+              {response && (
+                <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-5" aria-live="polite">
+                  <div className="flex items-start justify-between gap-3">
+                    <ResponseLabel label={response.label} />
+                    <button type="button" onClick={flagResponse} disabled={flagged} className="rounded-md p-2 text-slate-500 hover:bg-white hover:text-orac-slate disabled:opacity-60" title={flagged ? "Flag submitted" : "Flag this answer for review"} aria-label={flagged ? "Flag submitted" : "Flag this answer for review"}>
+                      <Icon path={ICONS.flag} className="h-5 w-5" />
+                    </button>
+                  </div>
+                  {response.label === "Unavailable" ? (
+                    <p className="mt-4 text-sm leading-6 text-slate-700">This request cannot be verified from your current dashboard summary.</p>
+                  ) : response.claims.length === 0 ? (
+                    <p className="mt-4 text-sm leading-6 text-slate-700">Nothing in the selected dashboard checks currently needs attention.</p>
+                  ) : (
+                    <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
+                      {response.claims.map((claim) => <li key={claim.metric}>{claim.sentence}</li>)}
+                    </ul>
+                  )}
+                  {flagged && <p className="mt-4 text-sm font-semibold text-emerald-800">Flag submitted for review.</p>}
+                </div>
               )}
-              {flagged && <p className="mt-3 text-xs font-semibold text-emerald-700">Flag submitted for review.</p>}
             </div>
-          )}
-        </div>
+          </aside>
+        </>
       )}
-    </section>
+    </>
   );
 }

@@ -274,7 +274,9 @@ export default function DashboardPage({ user }) {
     <div className="space-y-6 animate-in fade-in duration-500">
       <PageHeaderBanner eyebrow={user.role} title={greeting} subtitle={`Welcome back, ${user.name || user.email}`} iconPath={ICONS.dashboard} aside={new Date().toLocaleDateString("en-ZA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} />
 
-      <AIAssistantPanel user={user} />
+      <div className="flex justify-end">
+        <AIAssistantPanel user={user} />
+      </div>
 
       {!isFieldDashboard && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
