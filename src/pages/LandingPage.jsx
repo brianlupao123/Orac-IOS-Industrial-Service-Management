@@ -44,7 +44,7 @@ export default function LandingPage() {
     <header className="border-b border-slate-200 bg-white">
       <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-6 lg:px-8">
         <a href="#top" className="flex items-center gap-3" aria-label="Orac-IOS home">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500 text-white shadow-sm"><Icon path={ICONS.clipboard} /></span>
+          <img src="/images/orac-systems-logo.png" alt="Orac Systems" className="h-11 w-11 rounded-full bg-white object-contain" />
           <span><span className="block text-base font-bold text-slate-800">ORAC-IOS</span><span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Operations portal</span></span>
         </a>
         <div className="flex items-center gap-3 sm:gap-5">
@@ -63,7 +63,7 @@ export default function LandingPage() {
             <h1 className="mt-4 text-4xl font-semibold leading-tight text-slate-950 sm:text-5xl">Control service work from quote to invoice.</h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">Orac-IOS records the approvals, field evidence, and commercial checks behind each mining-service job. It is the working system, not a second company brochure.</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/login" className="rounded-md bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700">Sign in to the portal</Link>
+              <Link to="/login" className="rounded-md bg-orac-navy px-5 py-3 text-sm font-semibold text-white transition hover:bg-orac-ink">Sign in to the portal</Link>
               <a href="#request" className="rounded-md border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:border-slate-500">Request service</a>
             </div>
             <p className="mt-5 text-sm text-slate-500">Looking for company services, projects, or contacts? <a className="font-semibold text-sky-700 hover:underline" href="https://oracsystems.co.zw" target="_blank" rel="noreferrer">Visit Orac Systems</a>.</p>

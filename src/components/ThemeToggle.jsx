@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Icon, ICONS } from "./icons.jsx";
 
-const STORAGE_KEY = "orac-ios-theme";
+const STORAGE_KEY = "orac-theme";
 
 function readTheme() {
   const saved = window.localStorage.getItem(STORAGE_KEY);
   if (saved === "light" || saved === "dark") return saved;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "light";
 }
 
 export default function ThemeToggle() {

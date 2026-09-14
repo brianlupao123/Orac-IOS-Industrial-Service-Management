@@ -40,8 +40,10 @@ export default function RequestAccess() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+    <div className="min-h-screen bg-gray-50 px-4 py-10">
+      <div className="mx-auto w-full max-w-md">
+        <div className="mb-6 text-center"><img src="/images/orac-systems-logo.png" alt="Orac Systems" className="mx-auto h-20 w-20 rounded-full bg-white object-contain shadow-sm" /><p className="mt-3 text-sm font-semibold text-orac-navy">ORAC-IOS</p><p className="text-xs text-gray-500">Orac Systems operations portal</p></div>
+      <div className="bg-white rounded-lg border border-gray-300 shadow-sm p-6">
         <h1 className="text-lg font-semibold text-orac-slate mb-1">Request access</h1>
 
         {submitted ? (
@@ -108,7 +110,7 @@ export default function RequestAccess() {
             <button
               type="submit"
               disabled={busy}
-              className="w-full rounded bg-orac-blue text-orac-slate font-semibold py-2.5 text-sm disabled:opacity-50"
+              className="w-full rounded bg-orac-navy text-white font-semibold py-2.5 text-sm disabled:opacity-50"
             >
               {busy ? "Submitting..." : "Submit request"}
             </button>
@@ -118,6 +120,8 @@ export default function RequestAccess() {
             </Link>
           </form>
         )}
+      </div>
+      <footer className="mt-6 border-t border-gray-200 pt-4 text-center text-xs text-gray-500"><p>Orac-IOS · Orac Systems Integrated Operations &amp; Service Portal</p><p className="mt-1">&copy; {new Date().getFullYear()} Handon Enterprises (Pvt) Ltd, trading as Orac Systems.</p><a className="mt-2 inline-block font-semibold text-orac-navy hover:underline" href="https://oracsystems.co.zw" target="_blank" rel="noreferrer">Company site</a></footer>
       </div>
     </div>
   );

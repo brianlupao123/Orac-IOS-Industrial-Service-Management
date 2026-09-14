@@ -230,7 +230,7 @@ export default function AdminPage({ user }) {
                       <StatusBadge status={u.is_active ? "Active" : "Inactive"} />
                     </td>
                     <td className="px-5 py-4 text-sm text-right">
-                      <button onClick={() => setUserModal({ open: true, data: u })} className="text-orac-blue font-medium hover:text-indigo-600 transition-colors opacity-0 group-hover:opacity-100">
+                      <button onClick={() => setUserModal({ open: true, data: u })} className="text-orac-navy font-medium hover:text-orac-ink transition-colors opacity-70 group-hover:opacity-100">
                         Edit
                       </button>
                     </td>
@@ -267,7 +267,7 @@ export default function AdminPage({ user }) {
                     <td className="px-5 py-4 text-sm text-gray-600">{c.contact_person || "—"}</td>
                     <td className="px-5 py-4 text-sm text-gray-500">{c.email || "—"}</td>
                     <td className="px-5 py-4 text-sm text-right">
-                      <button onClick={() => setClientModal({ open: true, data: c })} className="text-orac-slate font-medium hover:text-gray-900 transition-colors opacity-0 group-hover:opacity-100">
+                      <button onClick={() => setClientModal({ open: true, data: c })} className="text-orac-navy font-medium hover:text-orac-ink transition-colors opacity-70 group-hover:opacity-100">
                         Edit
                       </button>
                     </td>

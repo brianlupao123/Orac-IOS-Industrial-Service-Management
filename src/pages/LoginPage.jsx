@@ -30,9 +30,7 @@ export default function LoginPage({ onLogin }) {
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center px-6 py-12 sm:px-12">
         <div className="w-full max-w-[420px] mx-auto">
           <div className="mb-10 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orac-blue text-white text-lg font-bold shadow-lg shadow-orac-blue/20">
-              O
-            </div>
+            <img src="/images/orac-systems-logo.png" alt="Orac Systems" className="h-12 w-12 rounded-full bg-white object-contain shadow-sm" />
             <div>
               <div className="text-xl font-bold tracking-tight text-orac-slate">ORAC-IOS</div>
               <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Industrial Service Management</div>

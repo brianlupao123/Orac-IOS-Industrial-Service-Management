@@ -227,7 +227,7 @@ export default function InventoryPage({ user }) {
                       <td className="px-5 py-4 text-sm tabular-nums text-gray-400">{i.reorder_level}</td>
                       <td className="px-5 py-4 text-sm text-right">
                         {canManage && (
-                          <button onClick={() => setItemModal({ open: true, data: i })} className="text-orac-slate font-medium hover:text-gray-900 opacity-0 group-hover:opacity-100 transition-all">
+                          <button onClick={() => setItemModal({ open: true, data: i })} className="text-orac-navy font-medium hover:text-orac-ink opacity-70 group-hover:opacity-100 transition-all">
                             Edit
                           </button>
                         )}
@@ -266,7 +266,7 @@ export default function InventoryPage({ user }) {
                     <td className="px-5 py-4 text-sm text-gray-500">{s.lead_time_days ? `${s.lead_time_days} days` : "—"}</td>
                     <td className="px-5 py-4 text-sm text-right">
                       {canManage && (
-                        <button onClick={() => setSupplierModal({ open: true, data: s })} className="text-orac-blue font-medium hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all">
+                        <button onClick={() => setSupplierModal({ open: true, data: s })} className="text-orac-navy font-medium hover:text-orac-ink opacity-70 group-hover:opacity-100 transition-all">
                           Edit
                         </button>
                       )}

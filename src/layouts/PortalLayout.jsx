@@ -32,12 +32,10 @@ export default function PortalLayout({ user, onLogout, children }) {
         <div className="flex items-center justify-between px-6 py-3">
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orac-blue text-sm font-bold text-white shadow-sm">
-              O
-            </div>
+            <img src="/images/orac-systems-logo.png" alt="Orac Systems" className="h-10 w-10 rounded-full bg-white object-contain" />
             <div>
               <div className="text-sm font-bold tracking-wide text-orac-slate">ORAC-IOS</div>
-              <div className="text-[10px] uppercase tracking-widest text-gray-400">Integrated Operations System</div>
+              <div className="text-[10px] uppercase tracking-widest text-gray-500">Orac Systems operations portal</div>
             </div>
           </div>
 
@@ -86,8 +84,9 @@ export default function PortalLayout({ user, onLogout, children }) {
       <main className="flex-1 p-6">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-100 bg-white px-6 py-3 text-center text-xs text-gray-400">
-        Orac-IOS &copy; {new Date().getFullYear()} &middot; Integrated Operations System
+      <footer className="border-t border-gray-200 bg-white px-6 py-5 text-xs text-gray-500">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><span>Orac-IOS · Orac Systems Integrated Operations &amp; Service Portal</span><span><a className="font-semibold text-orac-navy hover:underline" href="https://oracsystems.co.zw" target="_blank" rel="noreferrer">Company site</a> · <button type="button" onClick={onLogout} className="font-semibold text-orac-navy hover:underline">Sign out</button></span></div>
+        <p className="mx-auto mt-2 max-w-7xl">&copy; {new Date().getFullYear()} Handon Enterprises (Pvt) Ltd, trading as Orac Systems.</p>
       </footer>
     </div>
   );
