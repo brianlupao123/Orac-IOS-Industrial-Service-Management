@@ -70,6 +70,17 @@ export default function AIAssistantPanel({ user }) {
 
   if (!config?.enabled) return null;
 
+  function focusEvidence(ref) {
+    if (!ref?.targetId) return;
+    const target = document.getElementById(ref.targetId) || document.querySelector(`[data-evidence-target="${ref.targetId}"]`);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    target.classList.add("ring-4", "ring-orac-blue/50", "ring-offset-2", "transition-shadow");
+    window.setTimeout(() => {
+      target.classList.remove("ring-4", "ring-orac-blue/50", "ring-offset-2", "transition-shadow");
+    }, 2600);
+  }
+
   async function run(action) {
     setLoading(true);
     setError("");
@@ -171,6 +182,23 @@ export default function AIAssistantPanel({ user }) {
                     <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
                       {response.claims.map((claim) => <li key={claim.metric}>{claim.sentence}</li>)}
                     </ul>
+                  )}
+                  {response.evidenceRefs?.length > 0 && (
+                    <div className="mt-5 border-t border-slate-200 pt-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Evidence links</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {response.evidenceRefs.map((ref) => (
+                          <button
+                            key={`${ref.metric}-${ref.targetId}`}
+                            type="button"
+                            onClick={() => focusEvidence(ref)}
+                            className="rounded-full border border-sky-200 bg-white px-3 py-1.5 text-xs font-semibold text-orac-blue hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-orac-blue/40"
+                          >
+                            {ref.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   )}
                   {flagged && <p className="mt-4 text-sm font-semibold text-emerald-800">Flag submitted for review.</p>}
                 </div>

@@ -185,6 +185,7 @@ export default function DashboardPage({ user }) {
         iconPath={ICONS.warning}
         tone={(stats?.blocked_amendments || 0) > 0 ? "red" : "green"}
         subtitle="POs requiring amendment"
+        evidenceTarget="evidence-kpi-blocked-amendments"
         onClick={() => navigate("/reports")}
       />
     );
@@ -192,7 +193,9 @@ export default function DashboardPage({ user }) {
 
   // Supervisor: Worksheets Pending Review
   if (user.role === "Supervisor" || user.role === "Admin" || user.role === "Operations") {
-    const pendingReviewCount = worksheets.filter((w) => w.status === "Submitted").length;
+    const pendingReviewCount = user.role === "Operations"
+      ? (stats?.pending_review ?? 0)
+      : worksheets.filter((w) => w.status === "Submitted").length;
     roleCards.push(
       <IconStatCard
         key="worksheets_review"
@@ -201,6 +204,32 @@ export default function DashboardPage({ user }) {
         iconPath={ICONS.clock}
         tone={pendingReviewCount > 0 ? "amber" : "neutral"}
         subtitle="Awaiting supervisor sign-off"
+        evidenceTarget="evidence-kpi-worksheets-review"
+        onClick={() => navigate("/worksheets")}
+      />
+    );
+  }
+
+  if (user.role === "Operations") {
+    roleCards.push(
+      <IconStatCard
+        key="field_worksheets"
+        label="Field Worksheets"
+        value={stats?.worksheets ?? 0}
+        iconPath={ICONS.clipboard}
+        tone={(stats?.worksheets || 0) > 0 ? "blue" : "neutral"}
+        subtitle="Work recorded in your operational scope"
+        evidenceTarget="evidence-kpi-worksheets"
+        onClick={() => navigate("/worksheets")}
+      />,
+      <IconStatCard
+        key="returned_for_correction"
+        label="Returned for Correction"
+        value={stats?.returned_for_correction ?? 0}
+        iconPath={ICONS.warning}
+        tone={(stats?.returned_for_correction || 0) > 0 ? "amber" : "neutral"}
+        subtitle="Work awaiting technician resubmission"
+        evidenceTarget="evidence-kpi-returned-for-correction"
         onClick={() => navigate("/worksheets")}
       />
     );
@@ -285,6 +314,7 @@ export default function DashboardPage({ user }) {
             value={stats?.clients}
             iconPath={ICONS.building}
             tone="neutral"
+            evidenceTarget="evidence-kpi-clients"
             onClick={canAdmin ? () => navigate("/admin") : (canReports ? () => navigate("/reports") : undefined)}
           />
           <IconStatCard
@@ -292,6 +322,7 @@ export default function DashboardPage({ user }) {
             value={stats?.quotes}
             iconPath={ICONS.clipboard}
             tone={stats?.quotes > 0 ? "blue" : "neutral"}
+            evidenceTarget="evidence-kpi-quotes"
             onClick={() => navigate("/reports")}
           />
           <IconStatCard
@@ -299,6 +330,7 @@ export default function DashboardPage({ user }) {
             value={stats?.dispatches}
             iconPath={ICONS.truck}
             tone={stats?.dispatches > 0 ? "amber" : "neutral"}
+            evidenceTarget="evidence-kpi-dispatches"
             onClick={() => navigate(canWorksheets ? "/worksheets" : "/reports")}
           />
           <IconStatCard
@@ -306,6 +338,7 @@ export default function DashboardPage({ user }) {
             value={stats?.invoices}
             iconPath={ICONS.money}
             tone={stats?.invoices > 0 ? "green" : "neutral"}
+            evidenceTarget="evidence-kpi-invoices"
             onClick={() => navigate("/reports")}
           />
         </div>
@@ -313,7 +346,7 @@ export default function DashboardPage({ user }) {
 
       {/* Role-specific KPI row */}
       {roleCards.length > 0 && (
-        <div className="space-y-2">
+        <div id="evidence-section-role-priorities" data-evidence-target="evidence-section-role-priorities" className="space-y-2">
           <div className="text-sm font-semibold text-orac-slate">
             Role priorities and action items
           </div>
@@ -344,6 +377,8 @@ export default function DashboardPage({ user }) {
             {Object.entries(stats.status_counts).map(([status, count]) => (
               <div
                 key={status}
+                id={`evidence-pipeline-${String(status).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}
+                data-evidence-target={`evidence-pipeline-${String(status).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}
                 onClick={canReports ? () => navigate("/reports") : undefined}
                 className={`flex flex-col justify-between rounded-lg border border-gray-100 bg-gray-50/70 p-3 transition-all ${
                   canReports ? "hover:bg-white hover:border-gray-300 hover:shadow-sm cursor-pointer" : ""
@@ -398,6 +433,7 @@ export default function DashboardPage({ user }) {
 
       {/* Worksheets (for operations roles) */}
       {user.role !== "Client Viewer" && user.role !== "Finance" && worksheets.length > 0 && (
+        <div id="evidence-section-worksheets" data-evidence-target="evidence-section-worksheets">
         <DataTable
           title="Field Worksheets"
           columns={["Activity", "Hours", "Status", "Technician"]}
@@ -412,6 +448,7 @@ export default function DashboardPage({ user }) {
             </tr>
           )}
         />
+        </div>
       )}
     </div>
   );
