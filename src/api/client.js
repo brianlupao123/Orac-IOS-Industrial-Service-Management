@@ -118,6 +118,9 @@ export const assistant = {
   explain(metric) {
     return request("/ai/explain", { method: "POST", body: JSON.stringify({ metric }) });
   },
+  chat(message) {
+    return request("/ai/chat", { method: "POST", body: JSON.stringify({ message }) });
+  },
   flag(requestId) {
     return request("/ai/feedback", { method: "POST", body: JSON.stringify({ request_id: requestId }) });
   }

@@ -26,10 +26,16 @@ test("all role dashboard evidence targets are stable and visible", () => {
 });
 
 test("assistant drawer renders evidence references as buttons", () => {
-  assert.match(assistantSource, /response\.evidenceRefs\?\.length/);
+  assert.match(assistantSource, /message\.response\?\.evidenceRefs\?\.length/);
   assert.match(assistantSource, /focusEvidence\(ref\)/);
   assert.match(assistantSource, /scrollIntoView/);
   assert.match(assistantSource, /ring-orac-blue\/50/);
+});
+
+test("assistant drawer supports a typed, bounded dashboard question", () => {
+  assert.match(assistantSource, /onSubmit=\{submitQuestion\}/);
+  assert.match(assistantSource, /maxLength=\{500\}/);
+  assert.match(assistantSource, /assistant\.chat\(question\)/);
 });
 
 test("assistant has role-specific copy for all ORAC roles", () => {
