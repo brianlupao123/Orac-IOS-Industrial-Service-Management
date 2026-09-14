@@ -18,7 +18,7 @@ const REQUIRED_TARGETS = [
   "evidence-section-worksheets"
 ];
 
-test("Finance and Operations dashboard evidence targets are stable and visible", () => {
+test("all role dashboard evidence targets are stable and visible", () => {
   for (const target of REQUIRED_TARGETS) {
     assert.match(dashboardSource, new RegExp(target));
   }
@@ -32,10 +32,10 @@ test("assistant drawer renders evidence references as buttons", () => {
   assert.match(assistantSource, /ring-orac-blue\/50/);
 });
 
-test("assistant remains limited to Finance and Operations", () => {
-  assert.match(assistantSource, /Finance:/);
-  assert.match(assistantSource, /Operations:/);
-  assert.doesNotMatch(assistantSource, /Management:\s*\{/);
-  assert.doesNotMatch(assistantSource, /Technician:\s*\{/);
-  assert.doesNotMatch(assistantSource, /Client Viewer:\s*\{/);
+test("assistant has role-specific copy for all ORAC roles", () => {
+  for (const role of ["Admin", "Management", "Sales", "Finance", "Operations", "Supervisor", "Technician"]) {
+    assert.match(assistantSource, new RegExp(`${role}\\s*:`));
+  }
+  assert.match(assistantSource, /["']Client Viewer["']\s*:/);
+  assert.match(dashboardSource, /ROLE_CHART_METRICS/);
 });

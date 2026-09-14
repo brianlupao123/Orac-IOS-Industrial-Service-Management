@@ -12,6 +12,21 @@ function ResponseLabel({ label }) {
 }
 
 const ROLE_COPY = {
+  Admin: {
+    scope: "System oversight evidence",
+    briefing: "Summarize system attention",
+    attention: "Find blocked approvals"
+  },
+  Management: {
+    scope: "Management dashboard evidence",
+    briefing: "Summarize business performance",
+    attention: "Find operational risks"
+  },
+  Sales: {
+    scope: "Sales dashboard evidence",
+    briefing: "Summarize sales pipeline",
+    attention: "Find follow-ups"
+  },
   Finance: {
     scope: "Finance dashboard evidence",
     briefing: "Summarize finance",
@@ -21,6 +36,21 @@ const ROLE_COPY = {
     scope: "Operations dashboard evidence",
     briefing: "Summarize operations",
     attention: "Find operational risks"
+  },
+  Supervisor: {
+    scope: "Supervisor review evidence",
+    briefing: "Summarize team workload",
+    attention: "Find review priorities"
+  },
+  Technician: {
+    scope: "Assigned-work evidence",
+    briefing: "Summarize my work",
+    attention: "Find my priority work"
+  },
+  "Client Viewer": {
+    scope: "Your organisation's dashboard evidence",
+    briefing: "Summarize my service status",
+    attention: "Find items needing my attention"
   }
 };
 

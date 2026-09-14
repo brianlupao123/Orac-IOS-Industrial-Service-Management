@@ -30,6 +30,50 @@ const QUOTE_DASHBOARD_ROLES = ["Admin", "Management", "Sales", "Finance", "Opera
 const OPERATIONAL_DASHBOARD_ROLES = ["Admin", "Management", "Operations", "Supervisor", "Technician"];
 const FIELD_DASHBOARD_ROLES = ["Supervisor", "Technician"];
 
+const ROLE_CHART_METRICS = {
+  Admin: [["clients", "Clients"], ["quotes", "Quotes"], ["dispatches", "Dispatches"], ["invoices", "Invoices"], ["blocked_amendments", "Blocked amendments"]],
+  Management: [["clients", "Clients"], ["quotes", "Quotes"], ["dispatches", "Dispatches"], ["invoices", "Invoices"], ["pending_review", "Awaiting review"]],
+  Sales: [["clients", "Clients"], ["quotes", "Active quotes"]],
+  Finance: [["quotes", "Active quotes"], ["invoices", "Invoices"], ["pending_po", "Awaiting PO"], ["blocked_amendments", "Blocked amendments"]],
+  Operations: [["dispatches", "Dispatches"], ["worksheets", "Worksheets"], ["pending_review", "Awaiting review"], ["returned_for_correction", "Returned work"]],
+  Supervisor: [["dispatches", "Review-scope dispatches"], ["pending_review", "Awaiting review"], ["returned_for_correction", "Returned work"]],
+  Technician: [["dispatches", "My dispatches"], ["worksheets", "My worksheets"], ["pending_review", "Awaiting review"]],
+  "Client Viewer": [["quotes", "My quotes"], ["dispatches", "My dispatches"], ["invoices", "My invoices"]]
+};
+
+function RoleMetricChart({ role, stats }) {
+  const items = (ROLE_CHART_METRICS[role] || []).map(([key, label]) => ({ key, label, value: Number(stats?.[key] || 0) }));
+  const maximum = Math.max(1, ...items.map((item) => item.value));
+
+  if (items.length === 0) return null;
+
+  return (
+    <section id="evidence-chart-role-summary" className="border-y border-slate-200 bg-white py-5" aria-label="Role dashboard summary chart">
+      <div className="mx-auto max-w-5xl px-1">
+        <div className="mb-4 flex items-baseline justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-orac-slate">Role dashboard summary</h2>
+            <p className="mt-1 text-sm text-slate-600">Current role-scoped operational indicators</p>
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((item) => (
+            <div key={item.key} className="min-w-0">
+              <div className="mb-1 flex justify-between gap-3 text-sm text-slate-700">
+                <span className="truncate">{item.label}</span>
+                <span className="shrink-0 font-semibold tabular-nums text-orac-slate">{item.value}</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-sky-500 transition-[width] duration-500" style={{ width: `${Math.round((item.value / maximum) * 100)}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function DashboardPage({ user }) {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
@@ -236,27 +280,25 @@ export default function DashboardPage({ user }) {
   }
 
   if (user.role === "Supervisor") {
-    const assignedDispatches = dispatches.filter((dispatch) =>
-      dispatch.status !== "Completed" && dispatch.status !== "Cancelled"
-    );
-    const returnedWorksheets = worksheets.filter((worksheet) => worksheet.status === "Returned_For_Correction");
     roleCards.push(
       <IconStatCard
         key="assigned_dispatches"
         label="Assigned Dispatches"
-        value={assignedDispatches.length}
+        value={stats?.dispatches ?? 0}
         iconPath={ICONS.truck}
-        tone={assignedDispatches.length > 0 ? "blue" : "neutral"}
+        tone={(stats?.dispatches || 0) > 0 ? "blue" : "neutral"}
         subtitle="Jobs in your review scope"
+        evidenceTarget="evidence-kpi-dispatches"
         onClick={() => navigate("/worksheets")}
       />,
       <IconStatCard
         key="returned_worksheets"
         label="Returned for Correction"
-        value={returnedWorksheets.length}
+        value={stats?.returned_for_correction ?? 0}
         iconPath={ICONS.warning}
-        tone={returnedWorksheets.length > 0 ? "amber" : "neutral"}
+        tone={(stats?.returned_for_correction || 0) > 0 ? "amber" : "neutral"}
         subtitle="Awaiting technician resubmission"
+        evidenceTarget="evidence-kpi-returned-for-correction"
         onClick={() => navigate("/worksheets")}
       />
     );
@@ -264,36 +306,35 @@ export default function DashboardPage({ user }) {
 
   // Technician: My Active Dispatches
   if (user.role === "Technician") {
-    const myActive = dispatches.filter((d) =>
-      (d.assigned_technician_id === user.id || d.technician_id === user.id || d.assigned_to === user.id) &&
-      d.status !== "Completed" && d.status !== "Cancelled"
-    );
     roleCards.push(
       <IconStatCard
         key="my_active_dispatches"
         label="My Active Dispatches"
-        value={myActive.length}
+        value={stats?.dispatches ?? 0}
         iconPath={ICONS.truck}
-        tone={myActive.length > 0 ? "blue" : "neutral"}
+        tone={(stats?.dispatches || 0) > 0 ? "blue" : "neutral"}
         subtitle="Assigned active jobs"
+        evidenceTarget="evidence-kpi-dispatches"
         onClick={() => navigate("/worksheets")}
       />,
       <IconStatCard
         key="my_worksheets"
         label="My Worksheets"
-        value={worksheets.length}
+        value={stats?.worksheets ?? 0}
         iconPath={ICONS.clipboard}
-        tone={worksheets.length > 0 ? "blue" : "neutral"}
+        tone={(stats?.worksheets || 0) > 0 ? "blue" : "neutral"}
         subtitle="Draft, submitted, and returned work"
+        evidenceTarget="evidence-kpi-worksheets"
         onClick={() => navigate("/worksheets")}
       />,
       <IconStatCard
         key="submitted_worksheets"
         label="Awaiting Review"
-        value={worksheets.filter((worksheet) => worksheet.status === "Submitted").length}
+        value={stats?.pending_review ?? 0}
         iconPath={ICONS.clock}
-        tone={worksheets.some((worksheet) => worksheet.status === "Submitted") ? "amber" : "neutral"}
+        tone={(stats?.pending_review || 0) > 0 ? "amber" : "neutral"}
         subtitle="Submitted work awaiting decision"
+        evidenceTarget="evidence-kpi-worksheets-review"
         onClick={() => navigate("/worksheets")}
       />
     );
@@ -306,6 +347,8 @@ export default function DashboardPage({ user }) {
       <div className="flex justify-end">
         <AIAssistantPanel user={user} />
       </div>
+
+      <RoleMetricChart role={user.role} stats={stats} />
 
       {!isFieldDashboard && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
