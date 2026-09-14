@@ -99,10 +99,7 @@ export default function AIAssistantPanel({ user }) {
   }
 
   return <>
-    <section className="w-full max-w-sm rounded-lg border border-sky-200 bg-white p-4 shadow-sm" aria-label="Dashboard assistant">
-      <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-orac-blue"><Icon path={ICONS.report} /></span><div className="min-w-0 flex-1"><h2 className="text-base font-semibold text-orac-slate">AI assistant</h2><p className="mt-1 text-sm leading-5 text-slate-600">{copy.scope}</p></div></div>
-      <button type="button" onClick={() => setOpen(true)} className="mt-4 w-full rounded-lg border border-orac-blue bg-sky-50 px-4 py-2.5 text-sm font-semibold text-orac-blue hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-orac-blue/40" aria-haspopup="dialog" aria-expanded={open} aria-controls="dashboard-assistant-panel">Open assistant</button>
-    </section>
+    <button type="button" onClick={() => setOpen(true)} className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-orac-blue text-white shadow-lg transition-transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orac-blue/30" aria-label={`Open ${user.role} dashboard assistant`} title={`Open ${copy.scope}`} aria-haspopup="dialog" aria-expanded={open} aria-controls="dashboard-assistant-panel"><Icon path={ICONS.report} className="h-6 w-6" /><span className="sr-only">Open assistant</span></button>
 
     {open && <>
       <button type="button" className="fixed inset-0 z-40 cursor-default bg-slate-950/20" onClick={() => setOpen(false)} aria-label="Close assistant" />

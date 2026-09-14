@@ -344,9 +344,7 @@ export default function DashboardPage({ user }) {
     <div className="space-y-6 animate-in fade-in duration-500">
       <PageHeaderBanner eyebrow={user.role} title={greeting} subtitle={`Welcome back, ${user.name || user.email}`} iconPath={ICONS.dashboard} aside={new Date().toLocaleDateString("en-ZA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} />
 
-      <div className="flex justify-end">
-        <AIAssistantPanel user={user} />
-      </div>
+      <AIAssistantPanel user={user} />
 
       <RoleMetricChart role={user.role} stats={stats} />
 

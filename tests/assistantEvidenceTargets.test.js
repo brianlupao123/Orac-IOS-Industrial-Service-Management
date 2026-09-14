@@ -38,6 +38,11 @@ test("assistant drawer supports a typed, bounded dashboard question", () => {
   assert.match(assistantSource, /assistant\.chat\(question\)/);
 });
 
+test("assistant uses a floating launcher and a right-side chat drawer", () => {
+  assert.match(assistantSource, /fixed bottom-6 right-6/);
+  assert.match(assistantSource, /fixed inset-y-0 right-0/);
+});
+
 test("assistant has role-specific copy for all ORAC roles", () => {
   for (const role of ["Admin", "Management", "Sales", "Finance", "Operations", "Supervisor", "Technician"]) {
     assert.match(assistantSource, new RegExp(`${role}\\s*:`));
