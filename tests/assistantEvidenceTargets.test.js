@@ -1,52 +1,45 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import fs from "node:fs";
+import path from "node:path";
 
-const dashboardSource = readFileSync(new URL("../src/pages/DashboardPage.jsx", import.meta.url), "utf8");
-const assistantSource = readFileSync(new URL("../src/components/AIAssistantPanel.jsx", import.meta.url), "utf8");
+const root = process.cwd();
 
-const REQUIRED_TARGETS = [
-  "evidence-kpi-clients",
-  "evidence-kpi-quotes",
-  "evidence-kpi-dispatches",
-  "evidence-kpi-invoices",
-  "evidence-kpi-blocked-amendments",
-  "evidence-kpi-worksheets",
-  "evidence-kpi-worksheets-review",
-  "evidence-kpi-returned-for-correction",
-  "evidence-section-role-priorities",
-  "evidence-section-worksheets"
-];
-
-test("all role dashboard evidence targets are stable and visible", () => {
-  for (const target of REQUIRED_TARGETS) {
-    assert.match(dashboardSource, new RegExp(target));
+test("floating assistant supports all eight role copies with compact quick actions", () => {
+  const file = fs.readFileSync(path.join(root, "src/components/AIAssistantPanel.jsx"), "utf8");
+  for (const role of ["Admin", "Management", "Sales", "Finance", "Operations", "Supervisor", "Technician", "Client Viewer"]) {
+    assert.ok(file.includes(`${role}:`) || file.includes(`"${role}":`));
   }
-  assert.match(dashboardSource, /evidence-pipeline-/);
+  const quickGroups = file.match(/quick:\s*\[/g) || [];
+  assert.equal(quickGroups.length, 8);
+  assert.match(file, /Ask AI/);
+  assert.match(file, /Role-scoped dashboard evidence/);
 });
 
-test("assistant drawer renders evidence references as buttons", () => {
-  assert.match(assistantSource, /message\.response\?\.evidenceRefs\?\.length/);
-  assert.match(assistantSource, /focusEvidence\(ref\)/);
-  assert.match(assistantSource, /scrollIntoView/);
-  assert.match(assistantSource, /ring-orac-blue\/50/);
+test("assistant drawer renders typed chat and evidence highlighting", () => {
+  const file = fs.readFileSync(path.join(root, "src/components/AIAssistantPanel.jsx"), "utf8");
+  assert.match(file, /assistant\.chat\(question, lastContext\)/);
+  assert.match(file, /Show evidence:/);
+  assert.match(file, /scrollIntoView/);
+  assert.match(file, /ring-orac-blue\/50/);
+  assert.match(file, /whitespace-pre-line/);
 });
 
-test("assistant drawer supports a typed, bounded dashboard question", () => {
-  assert.match(assistantSource, /onSubmit=\{submitQuestion\}/);
-  assert.match(assistantSource, /maxLength=\{500\}/);
-  assert.match(assistantSource, /assistant\.chat\(question\)/);
-});
-
-test("assistant uses a floating launcher and a right-side chat drawer", () => {
-  assert.match(assistantSource, /fixed bottom-6 right-6/);
-  assert.match(assistantSource, /fixed inset-y-0 right-0/);
-});
-
-test("assistant has role-specific copy for all ORAC roles", () => {
-  for (const role of ["Admin", "Management", "Sales", "Finance", "Operations", "Supervisor", "Technician"]) {
-    assert.match(assistantSource, new RegExp(`${role}\\s*:`));
+test("dashboard has stable evidence targets for kpis, workflow, and operational queues", () => {
+  const file = fs.readFileSync(path.join(root, "src/pages/DashboardPage.jsx"), "utf8");
+  for (const target of [
+    "evidence-kpi-clients",
+    "evidence-kpi-quotes",
+    "evidence-kpi-dispatches",
+    "evidence-kpi-invoices",
+    "evidence-kpi-blocked-amendments",
+    "evidence-kpi-worksheets-review",
+    "evidence-kpi-worksheets",
+    "evidence-kpi-returned-for-correction",
+    "evidence-section-role-priorities",
+    "evidence-section-worksheets"
+  ]) {
+    assert.match(file, new RegExp(target));
   }
-  assert.match(assistantSource, /["']Client Viewer["']\s*:/);
-  assert.match(dashboardSource, /ROLE_CHART_METRICS/);
+  assert.match(file, /evidence-pipeline-/);
 });

@@ -118,8 +118,8 @@ export const assistant = {
   explain(metric) {
     return request("/ai/explain", { method: "POST", body: JSON.stringify({ metric }) });
   },
-  chat(message) {
-    return request("/ai/chat", { method: "POST", body: JSON.stringify({ message }) });
+  chat(message, lastContext = null) {
+    return request("/ai/chat", { method: "POST", body: JSON.stringify({ message, lastContext }) });
   },
   flag(requestId) {
     return request("/ai/feedback", { method: "POST", body: JSON.stringify({ request_id: requestId }) });
