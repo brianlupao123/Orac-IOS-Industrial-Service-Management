@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import UserProfileDropdown from "../components/UserProfileDropdown.jsx";
 import NotificationBell from "../components/NotificationBell.jsx";
+import ThemeToggle from "../components/ThemeToggle.jsx";
 
 /**
  * Production portal layout shell.
@@ -47,6 +48,7 @@ export default function PortalLayout({ user, onLogout, children }) {
               <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Online</span>
             </div>
+            <ThemeToggle />
             <NotificationBell />
             <button
               type="button"

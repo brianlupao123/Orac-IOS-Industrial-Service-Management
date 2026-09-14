@@ -101,15 +101,15 @@ export default function ReportsPage({ user }) {
   }
 
   return (
-    <div className="space-y-6 flex flex-col h-[calc(100vh-8rem)] animate-in fade-in duration-500">
+    <div className="flex h-[calc(100vh-8rem)] flex-col gap-4 animate-in fade-in duration-500">
       {/* Header and Controls */}
       <div>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <PageHeaderBanner eyebrow="Operational intelligence" title="Operational Reports" subtitle="View and export system metrics." iconPath={ICONS.report} />
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-stretch">
+          <PageHeaderBanner className="min-w-0" eyebrow="Operational intelligence" title="Operational Reports" subtitle="View and export system metrics." iconPath={ICONS.report} />
           <button
             onClick={handleExportCsv}
             disabled={loading || !data || data.length === 0}
-            className="flex items-center gap-2 rounded-lg bg-orac-blue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:brightness-105 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-lg bg-orac-blue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-500 disabled:opacity-50"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
