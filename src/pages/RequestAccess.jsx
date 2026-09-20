@@ -121,7 +121,7 @@ export default function RequestAccess() {
           </form>
         )}
       </div>
-      <footer className="mt-6 border-t border-gray-200 pt-4 text-center text-xs text-gray-500"><p>Orac-IOS · Orac Systems Integrated Operations &amp; Service Portal</p><p className="mt-1">&copy; {new Date().getFullYear()} Handon Enterprises (Pvt) Ltd, trading as Orac Systems.</p><a className="mt-2 inline-block font-semibold text-orac-navy hover:underline" href="https://oracsystems.co.zw" target="_blank" rel="noreferrer">Company site</a></footer>
+      <footer className="mt-6 border-t border-gray-200 pt-4 text-center text-xs text-gray-500"><p>Orac-IOS · Orac Industrial Operations System</p><p className="mt-1">&copy; {new Date().getFullYear()} Handon Enterprises (Pvt) Ltd, trading as Orac Systems.</p><a className="mt-2 inline-block font-semibold text-orac-navy hover:underline" href="https://oracsystems.co.zw" target="_blank" rel="noreferrer">Company site</a></footer>
       </div>
     </div>
   );

@@ -119,15 +119,15 @@ export default function ReportsPage({ user }) {
         </div>
 
         {/* Tab Strip */}
-        <div className="mt-6 flex flex-wrap gap-2 border-b border-gray-200 pb-px">
+        <div className="mt-4 flex flex-wrap items-center gap-1 rounded-lg bg-gray-100 p-1">
           {visibleTabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActive(tab.key)}
-              className={`relative rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
+              className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
                 active === tab.key
-                  ? "bg-white text-orac-blue shadow-[0_-2px_4px_rgba(0,0,0,0.05)] border-t border-l border-r border-gray-200 z-10 -mb-px"
-                  : "bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-orac-slate border border-transparent"
+                  ? "bg-orac-navy text-white shadow-sm"
+                  : "text-gray-600 hover:bg-white hover:text-orac-navy hover:shadow-sm"
               }`}
             >
               {tab.label}

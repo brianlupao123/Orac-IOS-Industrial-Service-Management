@@ -3,26 +3,13 @@ import { NavLink } from "react-router-dom";
 import UserProfileDropdown from "../components/UserProfileDropdown.jsx";
 import NotificationBell from "../components/NotificationBell.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
+import { visibleNavigation } from "../accessPolicy.js";
 
 /**
  * Production portal layout shell.
  * Adapted from 1-feedback-system AUDashboardFrame + DashboardHeader patterns.
  * Features: branded header bar, role-gated navigation, notification bell, user dropdown.
  */
-
-const NAV_ITEMS = [
-  { path: "/", label: "Dashboard", roles: null },
-  { path: "/portal", label: "Client Portal", roles: ["Client Viewer"] },
-  { path: "/worksheets", label: "Worksheets", roles: ["Admin", "Operations", "Supervisor", "Technician", "Management"] },
-  { path: "/inventory", label: "Inventory", roles: ["Admin", "Management", "Operations"] },
-  { path: "/reports", label: "Reports", roles: ["Admin", "Management", "Finance"] },
-  { path: "/admin", label: "Admin", roles: ["Admin"] },
-];
-
-function isVisible(item, role) {
-  if (!item.roles) return true;
-  return item.roles.includes(role);
-}
 
 export default function PortalLayout({ user, onLogout, children }) {
   return (
@@ -32,10 +19,22 @@ export default function PortalLayout({ user, onLogout, children }) {
         <div className="flex items-center justify-between px-6 py-3">
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <img src="/images/orac-systems-logo.png" alt="Orac Systems" className="h-10 w-10 rounded-full bg-white object-contain" />
+            {/* Inline SVG — 6-toothed gear logo mark */}
+            <svg viewBox="0 0 48 48" className="h-10 w-10 shrink-0" aria-hidden="true">
+              <circle cx="24" cy="24" r="20" fill="#00488C"/>
+              <circle cx="24" cy="24" r="10" fill="none" stroke="#2FA2E3" strokeWidth="3"/>
+              {/* 6 gear teeth */}
+              {[0, 60, 120, 180, 240, 300].map((angle) => (
+                <rect key={angle} x="22" y="2" width="4" height="8" rx="1.5" fill="#2FA2E3"
+                  transform={`rotate(${angle} 24 24)`}/>
+              ))}
+              {/* Inner wave accent */}
+              <path d="M18 26 Q21 20 24 26 Q27 32 30 26" fill="none" stroke="#2FA2E3" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
             <div>
-              <div className="text-sm font-bold tracking-wide text-orac-slate">ORAC-IOS</div>
-              <div className="text-[10px] uppercase tracking-widest text-gray-500">Orac Systems operations portal</div>
+              <div className="text-sm font-bold tracking-wide text-orac-slate">ORAC SYSTEMS</div>
+              <div className="text-[10px] uppercase tracking-widest text-orac-cyan font-semibold">Operational Portal</div>
+              <div className="text-[9px] text-gray-400 tracking-wide">A Product of Handon Enterprises (Pvt) Ltd</div>
             </div>
           </div>
 
@@ -59,18 +58,18 @@ export default function PortalLayout({ user, onLogout, children }) {
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex gap-1 overflow-x-auto border-t border-gray-100 px-6 py-0">
-          {NAV_ITEMS.filter((item) => isVisible(item, user.role)).map((item) => (
+        {/* Navigation — clean segmented control bar */}
+        <nav className="flex items-center gap-1 overflow-x-auto border-t border-gray-100 bg-gray-50/60 px-6 py-1.5">
+          {visibleNavigation(user.role).map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               end={item.path === "/"}
               className={({ isActive }) =>
-                `relative whitespace-nowrap px-3 py-2.5 text-sm font-medium transition-colors ${
+                `whitespace-nowrap rounded-md px-3.5 py-1.5 text-sm font-medium transition-all ${
                   isActive
-                    ? "text-orac-blue after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-orac-blue"
-                    : "text-gray-500 hover:text-orac-slate"
+                    ? "bg-orac-navy text-white shadow-sm"
+                    : "text-gray-600 hover:bg-white hover:text-orac-navy hover:shadow-sm"
                 }`
               }
             >
@@ -85,7 +84,7 @@ export default function PortalLayout({ user, onLogout, children }) {
 
       {/* Footer */}
       <footer className="border-t border-gray-200 bg-white px-6 py-5 text-xs text-gray-500">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><span>Orac-IOS · Orac Systems Integrated Operations &amp; Service Portal</span><span><a className="font-semibold text-orac-navy hover:underline" href="https://oracsystems.co.zw" target="_blank" rel="noreferrer">Company site</a> · <button type="button" onClick={onLogout} className="font-semibold text-orac-navy hover:underline">Sign out</button></span></div>
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><span>Orac-IOS · Orac Industrial Operations System</span><span><a className="font-semibold text-orac-navy hover:underline" href="https://oracsystems.co.zw" target="_blank" rel="noreferrer">Company site</a> · <button type="button" onClick={onLogout} className="font-semibold text-orac-navy hover:underline">Sign out</button></span></div>
         <p className="mx-auto mt-2 max-w-7xl">&copy; {new Date().getFullYear()} Handon Enterprises (Pvt) Ltd, trading as Orac Systems.</p>
       </footer>
     </div>

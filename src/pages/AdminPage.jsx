@@ -229,10 +229,11 @@ export default function AdminPage({ user }) {
                     <td className="px-5 py-4 text-sm">
                       <StatusBadge status={u.is_active ? "Active" : "Inactive"} />
                     </td>
-                    <td className="px-5 py-4 text-sm text-right">
+                    <td className="px-5 py-4 text-sm text-right space-x-3">
                       <button onClick={() => setUserModal({ open: true, data: u })} className="text-orac-navy font-medium hover:text-orac-ink transition-colors opacity-70 group-hover:opacity-100">
                         Edit
                       </button>
+                      <button onClick={async()=>{if(!confirm((u.is_active?"Deactivate ":"Reactivate ")+u.email))return;try{u.is_active?await admin.deactivateEntity("users",u.id):await admin.reactivateEntity("users",u.id);load()}catch(e){alert(e.message)}}} className={`font-medium transition-colors opacity-70 group-hover:opacity-100 ${u.is_active?"text-amber-600 hover:text-amber-800":"text-green-600 hover:text-green-800"}`}>{u.is_active?"Disable":"Enable"}</button>
                     </td>
                   </tr>
                 )}
@@ -270,6 +271,7 @@ export default function AdminPage({ user }) {
                       <button onClick={() => setClientModal({ open: true, data: c })} className="text-orac-navy font-medium hover:text-orac-ink transition-colors opacity-70 group-hover:opacity-100">
                         Edit
                       </button>
+                      <button onClick={async()=>{if(!confirm((c.is_active?"Deactivate ":"Reactivate ")+(c.name||c.email)))return;try{c.is_active?await admin.deactivateEntity("clients",c.id):await admin.reactivateEntity("clients",c.id);load()}catch(e){alert(e.message)}}} className={`font-medium transition-colors opacity-70 group-hover:opacity-100 ${c.is_active?"text-amber-600 hover:text-amber-800":"text-green-600 hover:text-green-800"}`}>{c.is_active?"Disable":"Enable"}</button>
                     </td>
                   </tr>
                 )}
@@ -333,7 +335,7 @@ export default function AdminPage({ user }) {
 
         {activeTab === "entities" && canManageEntities && (
           <div className="pt-4 animate-in fade-in">
-            <AdminEntitiesTab />
+            <AdminEntitiesTab user={user} />
           </div>
         )}
       </div>

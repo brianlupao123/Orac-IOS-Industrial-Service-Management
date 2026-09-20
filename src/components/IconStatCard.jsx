@@ -10,8 +10,29 @@ const TONES = {
 };
 
 export default function IconStatCard({ label, value, iconPath, tone = "neutral", subtitle, onClick, evidenceTarget }) {
+  // §13.4 / §14.5: Zero-value metrics must ALWAYS render neutral — never tinted.
+  // This prevents misleading green/red cards when there's nothing to act on.
+  const numericValue = Number(value);
+  const resolvedTone = (value === 0 || value === "0" || numericValue === 0) ? "neutral" : (tone || "neutral");
+
   const Component = onClick ? "button" : "div";
-  return <Component {...(onClick ? { type: "button", onClick } : {})} id={evidenceTarget || undefined} data-evidence-target={evidenceTarget || undefined} className={`w-full rounded-lg border p-5 text-left shadow-sm transition-all duration-200 ${TONES[tone] || TONES.neutral} ${onClick ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orac-blue/40" : ""}`}>
-    <div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-slate-800">{label}</p><p className="mt-2 text-4xl font-light tabular-nums">{value}</p>{subtitle && <p className="mt-2 text-sm leading-5 text-slate-700">{subtitle}</p>}</div><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white/95 text-orac-blue"><Icon path={iconPath} /></span></div>
-  </Component>;
+  return (
+    <Component
+      {...(onClick ? { type: "button", onClick } : {})}
+      id={evidenceTarget || undefined}
+      data-evidence-target={evidenceTarget || undefined}
+      className={`w-full rounded-lg border p-5 text-left shadow-sm transition-all duration-200 ${TONES[resolvedTone] || TONES.neutral} ${onClick ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orac-blue/40" : ""}`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold text-slate-800">{label}</p>
+          <p className="mt-2 text-4xl font-light tabular-nums">{value}</p>
+          {subtitle && <p className="mt-2 text-sm leading-5 text-slate-700">{subtitle}</p>}
+        </div>
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white/95 text-orac-blue">
+          <Icon path={iconPath} />
+        </span>
+      </div>
+    </Component>
+  );
 }

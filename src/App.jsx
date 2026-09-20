@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { auth, onSessionExpired } from "./api/client.js";
+import { canAccessRoute } from "./accessPolicy.js";
 import LoginPage from "./pages/LoginPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
@@ -12,6 +13,8 @@ import InventoryPage from "./pages/InventoryPage.jsx";
 import ReportsPage from "./pages/ReportsPage.jsx";
 import AdminPage from "./pages/AdminPage.jsx";
 import ClientPortalPage from "./pages/ClientPortalPage.jsx";
+import KioskModePage from "./pages/KioskModePage.jsx";
+import ContractsPage from "./pages/ContractsPage.jsx";
 import PortalLayout from "./layouts/PortalLayout.jsx";
 
 export default function App() {
@@ -56,18 +59,24 @@ export default function App() {
     <PortalLayout user={user} onLogout={() => { auth.logout(); setUser(null); }}>
       <Routes>
         <Route path="/" element={<DashboardPage user={user} />} />
-        {user.role === "Client Viewer" ? (
+        {canAccessRoute(user.role, "/portal") ? (
           <Route path="/portal" element={<ClientPortalPage />} />
         ) : (
           <>
-            <Route path="/worksheets" element={<WorksheetsPage user={user} />} />
-            {(user.role === "Admin" || user.role === "Management" || user.role === "Operations") && (
+            {canAccessRoute(user.role, "/worksheets") && <Route path="/worksheets" element={<WorksheetsPage user={user} />} />}
+            {canAccessRoute(user.role, "/kiosk") && (
+              <>
+              <Route path="/kiosk" element={<KioskModePage user={user} />} />
+              <Route path="/contracts" element={<ContractsPage user={user} />} />
+              </>
+            )}
+            {canAccessRoute(user.role, "/inventory") && (
               <Route path="/inventory" element={<InventoryPage user={user} />} />
             )}
-            {(["Admin", "Management", "Sales", "Finance", "Operations", "Supervisor"].includes(user.role)) && (
+            {canAccessRoute(user.role, "/reports") && (
               <Route path="/reports" element={<ReportsPage user={user} />} />
             )}
-            {(user.role === "Admin" || user.role === "Management" || user.role === "Operations") && (
+            {canAccessRoute(user.role, "/admin") && (
               <Route path="/admin" element={<AdminPage user={user} />} />
             )}
           </>

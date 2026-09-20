@@ -4,12 +4,12 @@
 
  :root {
   --orac-page: #ffffff;
-  --orac-surface: #f7f8f9;
-  --orac-border: #7c8286;
-  --orac-text: #0b1220;
-  --orac-secondary: #54595f;
-  --orac-muted: #6b7176;
-  --orac-heading: #004088;
+  --orac-surface: #F8FAFC;
+  --orac-border: #E2E8F0;
+  --orac-text: #0B0F19;
+  --orac-secondary: #64748B;
+  --orac-muted: #94A3B8;
+  --orac-heading: #00488C;
 }
 
 html[data-theme="dark"] {
@@ -80,7 +80,7 @@ html[data-theme="dark"] .text-orac-blue {
 html[data-theme="dark"] .bg-orac-blue,
 html[data-theme="dark"] .bg-orac-navy,
 html[data-theme="dark"] .bg-orac-slate {
-  background-color: #004088 !important;
+  background-color: #00488C !important;
 }
 
 html[data-theme="dark"] input,

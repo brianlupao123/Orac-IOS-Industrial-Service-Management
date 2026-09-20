@@ -6,11 +6,13 @@ export default {
     extend: {
       colors: {
         orac: {
-          blue: "#004088",
-          gear: "#3890D8",
-          navy: "#004088",
-          slate: "#004088",
-          ink: "#080838"
+          navy: "#00488C",
+          cyan: "#2FA2E3",
+          dark: "#0B0F19",
+          blue: "#00488C",
+          gear: "#2FA2E3",
+          slate: "#00488C",
+          ink: "#0B0F19"
         }
       }
     }

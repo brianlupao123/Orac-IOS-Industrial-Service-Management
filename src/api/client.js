@@ -169,8 +169,11 @@ export const dispatch = {
 };
 
 export const worksheets = {
-  submit(id) {
-    return request(`/field_worksheets/${id}/submit`, { method: "POST" });
+  submit(id, payload = {}) {
+    return request(`/field_worksheets/${id}/submit`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
   },
   review(id, decision, comment = "") {
     return request(`/field_worksheets/${id}/review`, {
@@ -270,7 +273,9 @@ export const admin = {
   createEquipmentTag(payload) { return request("/admin/equipment_tags", { method: "POST", body: JSON.stringify(payload) }); },
   updateEquipmentTag(id, payload) { return request(`/admin/equipment_tags/${id}`, { method: "PATCH", body: JSON.stringify(payload) }); },
   createCatalogItem(payload) { return request("/admin/catalog_items", { method: "POST", body: JSON.stringify(payload) }); },
-  updateCatalogItem(id, payload) { return request(`/admin/catalog_items/${id}`, { method: "PATCH", body: JSON.stringify(payload) }); }
+  updateCatalogItem(id, payload) { return request(`/admin/catalog_items/${id}`, { method: "PATCH", body: JSON.stringify(payload) }); },
+  deactivateEntity(collection, id) { return request(`/admin/${collection}/${id}/deactivate`, { method: "POST" }); },
+  reactivateEntity(collection, id) { return request(`/admin/${collection}/${id}/reactivate`, { method: "POST" }); }
 };
 
 // Attach to the existing `quotes` export rather than redefining it.
