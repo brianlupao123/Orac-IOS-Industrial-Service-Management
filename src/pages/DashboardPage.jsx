@@ -8,6 +8,7 @@ import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import { ErrorBanner } from "../components/PageStates.jsx";
 import { ICONS } from "../components/icons.jsx";
 import AIAssistantPanel from "../components/AIAssistantPanel.jsx";
+import { canAccessRoute } from "../accessPolicy.js";
 
 /**
  * Role-aware operational dashboard.
@@ -196,9 +197,12 @@ export default function DashboardPage({ user }) {
 
   const greeting = ROLE_GREETING[user.role] || "Dashboard";
 
-  const canReports = ["Admin", "Management", "Finance"].includes(user.role);
-  const canWorksheets = ["Admin", "Operations", "Supervisor", "Technician", "Management"].includes(user.role);
-  const canAdmin = user.role === "Admin";
+  const canReports = canAccessRoute(user.role, "/reports");
+  const canWorksheets = canAccessRoute(user.role, "/worksheets");
+  const canAdministration = canAccessRoute(user.role, "/admin");
+  const canManageAccessRequests = user.role === "Admin";
+  const canClientPortal = canAccessRoute(user.role, "/portal");
+  const commercialDestination = canClientPortal ? "/portal" : canReports ? "/reports" : undefined;
   const isFieldDashboard = FIELD_DASHBOARD_ROLES.includes(user.role);
 
   // Build role-specific KPI cards
@@ -214,7 +218,7 @@ export default function DashboardPage({ user }) {
         iconPath={ICONS.users}
         tone={pendingAccessCount > 0 ? "amber" : "neutral"}
         subtitle="Requires authorization"
-        onClick={canAdmin ? () => navigate("/admin") : undefined}
+        onClick={canManageAccessRequests ? () => navigate("/admin") : undefined}
       />
     );
   }
@@ -230,7 +234,7 @@ export default function DashboardPage({ user }) {
         tone={(stats?.blocked_amendments || 0) > 0 ? "red" : "green"}
         subtitle="POs requiring amendment"
         evidenceTarget="evidence-kpi-blocked-amendments"
-        onClick={() => navigate("/reports")}
+        onClick={commercialDestination ? () => navigate(commercialDestination) : undefined}
       />
     );
   }
@@ -356,7 +360,7 @@ export default function DashboardPage({ user }) {
             iconPath={ICONS.building}
             tone="neutral"
             evidenceTarget="evidence-kpi-clients"
-            onClick={canAdmin ? () => navigate("/admin") : (canReports ? () => navigate("/reports") : undefined)}
+            onClick={canAdministration ? () => navigate("/admin") : commercialDestination ? () => navigate(commercialDestination) : undefined}
           />
           <IconStatCard
             label="Active Quotes"
@@ -364,7 +368,7 @@ export default function DashboardPage({ user }) {
             iconPath={ICONS.clipboard}
             tone={stats?.quotes > 0 ? "blue" : "neutral"}
             evidenceTarget="evidence-kpi-quotes"
-            onClick={() => navigate("/reports")}
+            onClick={commercialDestination ? () => navigate(commercialDestination) : undefined}
           />
           <IconStatCard
             label="Dispatches"
@@ -372,7 +376,7 @@ export default function DashboardPage({ user }) {
             iconPath={ICONS.truck}
             tone={stats?.dispatches > 0 ? "amber" : "neutral"}
             evidenceTarget="evidence-kpi-dispatches"
-            onClick={() => navigate(canWorksheets ? "/worksheets" : "/reports")}
+            onClick={() => navigate(canWorksheets ? "/worksheets" : commercialDestination || "/")}
           />
           <IconStatCard
             label="Invoices"
@@ -380,7 +384,7 @@ export default function DashboardPage({ user }) {
             iconPath={ICONS.money}
             tone={stats?.invoices > 0 ? "green" : "neutral"}
             evidenceTarget="evidence-kpi-invoices"
-            onClick={() => navigate("/reports")}
+            onClick={commercialDestination ? () => navigate(commercialDestination) : undefined}
           />
         </div>
       )}

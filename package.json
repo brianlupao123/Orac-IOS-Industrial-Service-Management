@@ -9,7 +9,9 @@
     "build": "vite build",
     "test": "node --test tests/*.test.js",
     "preview": "vite preview",
-    "finalize:handover": "node scripts/finalize-handover.mjs"
+    "finalize:handover": "node scripts/finalize-handover.mjs",
+    "finalize:local": "set ORAC_BASE_URL=http://localhost:5173&& node scripts/finalize-handover.mjs",
+    "maintain": "node scripts/verify-maintenance.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -19,8 +21,10 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.19",
+    "pdf-lib": "^1.17.1",
     "playwright": "^1.63.0",
     "postcss": "^8.4.38",
+    "pptxgenjs": "^4.0.1",
     "tailwindcss": "^3.4.4",
     "vite": "^5.3.1"
   }

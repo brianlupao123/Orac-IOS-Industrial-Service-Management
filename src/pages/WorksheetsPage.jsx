@@ -3,6 +3,7 @@ import { collections, worksheets, dispatch } from "../api/client.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import StatCard from "../components/StatCard.jsx";
 import Modal from "../components/Modal.jsx";
+import SignaturePad from "../components/SignaturePad.jsx";
 
 const REVIEW_ROLES = ["Admin", "Operations", "Supervisor"];
 const SUBMIT_ROLES = ["Admin", "Operations", "Technician", "Supervisor"];
@@ -49,10 +50,19 @@ export default function WorksheetsPage({ user }) {
 
   useEffect(() => { load(); }, []);
 
-  async function handleSubmit(id) {
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [signatureTarget, setSignatureTarget] = useState(null);
+
+  async function handleSubmitTrigger(id) {
+    setSignatureTarget(id);
+    setShowSignatureModal(true);
+  }
+
+  async function confirmSubmit(signatureDataUrl) {
     try {
-      await worksheets.submit(id);
+      await worksheets.submit(signatureTarget, { signature: signatureDataUrl });
       await load();
+      setShowSignatureModal(false);
     } catch (err) {
       setError(err.message);
     }
@@ -223,7 +233,7 @@ export default function WorksheetsPage({ user }) {
                 
                 {canSubmit && (ws.status === "Draft" || ws.status === "Returned_For_Correction") && (
                   <button
-                    onClick={() => handleSubmit(ws.id)}
+                    onClick={() => handleSubmitTrigger(ws.id)}
                     className="shrink-0 rounded-lg bg-gray-900 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-gray-800 focus:ring-2 focus:ring-gray-900/20"
                   >
                     Submit for Review
@@ -372,6 +382,17 @@ export default function WorksheetsPage({ user }) {
           </div>
         </form>
       </Modal>
+      {showSignatureModal && (
+        <Modal title="Client Representative Sign-Off" onClose={() => setShowSignatureModal(false)}>
+          <div className="p-4">
+            <p className="text-sm text-orac-slate mb-4">Please have the client representative sign below to confirm the work log.</p>
+            <SignaturePad
+               onSave={confirmSubmit}
+               onCancel={() => setShowSignatureModal(false)}
+            />
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

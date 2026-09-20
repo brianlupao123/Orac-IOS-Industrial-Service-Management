@@ -12,8 +12,10 @@ const ENTITIES = [
   { key: "catalog_items", label: "Catalog Items", columns: ["Part Number", "Description", "Unit Price", "Status", "Actions"] },
 ];
 
-export default function AdminEntitiesTab() {
-  const [activeEntity, setActiveEntity] = useState("mine_sites");
+export default function AdminEntitiesTab({ user }) {
+  const canManageCatalog = ["Admin", "Management"].includes(user.role);
+  const visibleEntities = ENTITIES.filter((entity) => entity.key !== "catalog_items" || canManageCatalog);
+  const [activeEntity, setActiveEntity] = useState(visibleEntities[0].key);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -73,7 +75,7 @@ export default function AdminEntitiesTab() {
     }
   }
 
-  const currentConfig = ENTITIES.find(e => e.key === activeEntity);
+  const currentConfig = visibleEntities.find(e => e.key === activeEntity);
 
   return (
     <div className="flex flex-col md:flex-row gap-6 animate-in fade-in">
@@ -84,7 +86,7 @@ export default function AdminEntitiesTab() {
             <h3 className="font-semibold text-orac-slate">Entities</h3>
           </div>
           <div className="flex flex-col p-2">
-            {ENTITIES.map(ent => (
+            {visibleEntities.map(ent => (
               <button
                 key={ent.key}
                 onClick={() => setActiveEntity(ent.key)}
@@ -171,12 +173,30 @@ export default function AdminEntitiesTab() {
                   <td className="px-5 py-4 text-sm">
                     <StatusBadge status={row.is_active ? "Active" : "Inactive"} />
                   </td>
-                  <td className="px-5 py-4 text-sm text-right">
+                  <td className="px-5 py-4 text-sm text-right space-x-3">
                     <button
                       onClick={() => setModal({ open: true, item: row })}
                       className="text-orac-slate font-medium hover:text-gray-900 transition-colors opacity-0 group-hover:opacity-100"
                     >
                       Edit
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!confirm(`${row.is_active ? "Deactivate" : "Reactivate"} this record?`)) return;
+                        try {
+                          if (row.is_active) {
+                            await admin.deactivateEntity(activeEntity, row.id);
+                          } else {
+                            await admin.reactivateEntity(activeEntity, row.id);
+                          }
+                          loadData();
+                        } catch (err) { alert("Error: " + err.message); }
+                      }}
+                      className={`font-medium transition-colors opacity-0 group-hover:opacity-100 ${
+                        row.is_active ? "text-amber-600 hover:text-amber-800" : "text-green-600 hover:text-green-800"
+                      }`}
+                    >
+                      {row.is_active ? "Disable" : "Enable"}
                     </button>
                   </td>
                 </tr>
