@@ -16,6 +16,7 @@ export const ROUTE_ACCESS = Object.freeze({
   "/worksheets": [...operationalRoles, ROLES.TECHNICIAN],
   "/inventory": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],
   "/reports": [...operationalRoles, ROLES.SALES, ROLES.FINANCE],
+  "/operational-data": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE],
   "/admin": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],
   "/kiosk": operationalRoles,
   "/contracts": operationalRoles
@@ -27,6 +28,7 @@ export const NAV_ITEMS = Object.freeze([
   { path: "/worksheets", label: "Worksheets" },
   { path: "/inventory", label: "Inventory" },
   { path: "/reports", label: "Reports" },
+  { path: "/operational-data", label: "Operational Data" },
   { path: "/admin", label: "Administration" }
 ]);
 

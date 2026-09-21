@@ -17,6 +17,7 @@ import KioskModePage from "./pages/KioskModePage.jsx";
 import ContractsPage from "./pages/ContractsPage.jsx";
 import PortalLayout from "./layouts/PortalLayout.jsx";
 import AccessDeniedPage from "./pages/AccessDeniedPage.jsx";
+import OperationalDataPage from "./pages/OperationalDataPage.jsx";
 
 function GuardedRoute({ user, path, children }) {
   return canAccessRoute(user.role, path) ? children : <AccessDeniedPage />;
@@ -72,6 +73,7 @@ export default function App() {
         <Route path="/contracts" element={<GuardedRoute user={user} path="/contracts"><ContractsPage user={user} /></GuardedRoute>} />
         <Route path="/inventory" element={<GuardedRoute user={user} path="/inventory"><InventoryPage user={user} /></GuardedRoute>} />
         <Route path="/reports" element={<GuardedRoute user={user} path="/reports"><ReportsPage user={user} /></GuardedRoute>} />
+        <Route path="/operational-data" element={<GuardedRoute user={user} path="/operational-data"><OperationalDataPage user={user} /></GuardedRoute>} />
         <Route path="/admin" element={<GuardedRoute user={user} path="/admin"><AdminPage user={user} /></GuardedRoute>} />
         <Route path="*" element={<AccessDeniedPage />} />
       </Routes>
