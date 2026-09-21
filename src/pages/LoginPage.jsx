@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { auth } from "../api/client.js";
+import SessionExpiredBanner from "../components/SessionExpiredBanner.jsx";
 
-export default function LoginPage({ onLogin }) {
+export default function LoginPage({ onLogin, sessionExpired = false }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -41,6 +42,8 @@ export default function LoginPage({ onLogin }) {
             <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-2">Sign in to your account</h1>
             <p className="text-sm text-gray-500">Enter your credentials to access the portal.</p>
           </div>
+
+          {sessionExpired && <div data-evidence="session-expired-state" className="mb-6"><SessionExpiredBanner /></div>}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>

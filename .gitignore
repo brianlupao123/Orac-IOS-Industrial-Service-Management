@@ -13,3 +13,4 @@ phase-stabilize-frontend-sync-*.ps1
 deliverables/
 orac-ppt-render/
 .orac-document-build/
+evidence/uat/
