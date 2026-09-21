@@ -168,6 +168,18 @@ export const dispatch = {
   }
 };
 
+export const kiosk = {
+  roster(dispatchId) {
+    return request(`/kiosk/dispatch_cards/${dispatchId}/roster`);
+  },
+  submitTimesheets(dispatchId, payload) {
+    return request(`/kiosk/dispatch_cards/${dispatchId}/timesheets`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+  }
+};
+
 export const worksheets = {
   submit(id, payload = {}) {
     return request(`/field_worksheets/${id}/submit`, {

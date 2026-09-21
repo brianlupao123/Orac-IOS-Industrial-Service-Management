@@ -29,3 +29,10 @@ test("eight roles retain their expected role-specific routes", () => {
   assert.ok(!canAccessRoute(ROLES.SALES, "/inventory"));
   assert.ok(!canAccessRoute(ROLES.CLIENT_VIEWER, "/reports"));
 });
+
+test("kiosk batch entry is restricted to accountable operations roles", () => {
+  assert.ok(canAccessRoute(ROLES.ADMIN, "/kiosk"));
+  assert.ok(canAccessRoute(ROLES.OPERATIONS, "/kiosk"));
+  assert.ok(!canAccessRoute(ROLES.SUPERVISOR, "/kiosk"));
+  assert.ok(!canAccessRoute(ROLES.MANAGEMENT, "/kiosk"));
+});

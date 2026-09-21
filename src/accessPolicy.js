@@ -19,7 +19,7 @@ export const ROUTE_ACCESS = Object.freeze({
   "/operational-data": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE],
   "/documents": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE, ROLES.CLIENT_VIEWER],
   "/admin": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],
-  "/kiosk": operationalRoles,
+  "/kiosk": [ROLES.ADMIN, ROLES.OPERATIONS],
   "/contracts": operationalRoles
 });
 
