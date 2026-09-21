@@ -30,7 +30,7 @@ function redact(value) { return String(value || "").replace(/https?:\/\/[^\s?]+\
 function assertSafeWorkspace(envFile) {
   if (git("status", "--porcelain")) throw new Error("Workspace is dirty. Commit or stash reviewed work before UAT capture.");
   if (!isGitIgnored(envFile)) throw new Error(`${envFile} must be ignored by Git.`);
-  if (!isGitIgnored("evidence/uat")) throw new Error("evidence/uat must be ignored by Git.");
+  if (!isGitIgnored("evidence/uat/.gitignore-probe")) throw new Error("evidence/uat must be ignored by Git.");
 }
 
 async function loginAndCapture(browser, baseUrl, role, key, env, captureDir, entries) {
