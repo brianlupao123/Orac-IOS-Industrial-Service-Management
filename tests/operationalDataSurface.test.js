@@ -7,6 +7,7 @@ const read = (file) => readFileSync(new URL(`../${file}`, import.meta.url), "utf
 test("operational data UI uses only preview and review endpoints", () => {
   const client = read("src/api/client.js");
   assert.match(client, /\/imports\/leads\/preview/);
+  assert.match(client, /\/imports\/leads\/commit/);
   assert.match(client, /\/exports\/pastel-review\/quotes\.csv/);
   assert.match(client, /\/analytics\/operational/);
   assert.doesNotMatch(client, /pastel.*post/i);
@@ -17,4 +18,5 @@ test("operational data page declares visible evidence states", () => {
   assert.match(page, /data-evidence="operational-data-ready"/);
   assert.match(page, /data-evidence="operational-analytics-result"/);
   assert.match(page, /data-evidence="lead-preview-result"/);
+  assert.match(page, /data-evidence="lead-import-complete"/);
 });
