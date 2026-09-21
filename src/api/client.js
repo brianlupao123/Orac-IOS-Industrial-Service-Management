@@ -333,3 +333,30 @@ export const operationalData = {
     return downloadCsv("/exports/pastel-review/invoice-ready.csv");
   }
 };
+
+export const documents = {
+  download(type, id) {
+    const paths = {
+      quotes: `/documents/quotes/${id}.pdf`,
+      dispatch_cards: `/documents/job-cards/${id}.pdf`,
+      field_worksheets: `/documents/worksheets/${id}.pdf`,
+      invoices: `/documents/invoices/${id}.pdf`,
+      purchase_orders: `/documents/purchase-orders/${id}.pdf`
+    };
+    if (!paths[type]) throw new Error("Unsupported document type.");
+    return downloadFile(paths[type], `${type}-${id}.pdf`);
+  }
+};
+
+async function downloadFile(path, fallbackName) {
+  const res = await fetch(`${BASE}${path}`, { headers: { Authorization: `Bearer ${getToken()}` } });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || `Download failed (${res.status})`);
+  }
+  const blob = await res.blob();
+  const filename = /filename=([^;]+)/i.exec(res.headers.get("content-disposition") || "")?.[1]?.replace(/["']/g, "") || fallbackName;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url);
+}
