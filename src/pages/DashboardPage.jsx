@@ -345,7 +345,7 @@ export default function DashboardPage({ user }) {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div data-evidence="dashboard-ready" className="space-y-6 animate-in fade-in duration-500">
       <PageHeaderBanner eyebrow={user.role} title={greeting} subtitle={`Welcome back, ${user.name || user.email}`} iconPath={ICONS.dashboard} aside={new Date().toLocaleDateString("en-ZA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} />
 
       <AIAssistantPanel user={user} />

@@ -16,10 +16,16 @@ import ClientPortalPage from "./pages/ClientPortalPage.jsx";
 import KioskModePage from "./pages/KioskModePage.jsx";
 import ContractsPage from "./pages/ContractsPage.jsx";
 import PortalLayout from "./layouts/PortalLayout.jsx";
+import AccessDeniedPage from "./pages/AccessDeniedPage.jsx";
+
+function GuardedRoute({ user, path, children }) {
+  return canAccessRoute(user.role, path) ? children : <AccessDeniedPage />;
+}
 
 export default function App() {
   const [user, setUser] = useState(auth.getCachedUser());
   const [checking, setChecking] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
     auth.restoreSession().then((restored) => {
@@ -32,6 +38,7 @@ export default function App() {
     return onSessionExpired(() => {
       setUser(null);
       setChecking(false);
+      setSessionExpired(true);
     });
   }, []);
 
@@ -46,11 +53,11 @@ export default function App() {
     return (
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage onLogin={setUser} />} />
+        <Route path="/login" element={<LoginPage onLogin={(nextUser) => { setSessionExpired(false); setUser(nextUser); }} sessionExpired={sessionExpired} />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/request-access" element={<RequestAccess />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
   }
@@ -59,29 +66,14 @@ export default function App() {
     <PortalLayout user={user} onLogout={() => { auth.logout(); setUser(null); }}>
       <Routes>
         <Route path="/" element={<DashboardPage user={user} />} />
-        {canAccessRoute(user.role, "/portal") ? (
-          <Route path="/portal" element={<ClientPortalPage />} />
-        ) : (
-          <>
-            {canAccessRoute(user.role, "/worksheets") && <Route path="/worksheets" element={<WorksheetsPage user={user} />} />}
-            {canAccessRoute(user.role, "/kiosk") && (
-              <>
-              <Route path="/kiosk" element={<KioskModePage user={user} />} />
-              <Route path="/contracts" element={<ContractsPage user={user} />} />
-              </>
-            )}
-            {canAccessRoute(user.role, "/inventory") && (
-              <Route path="/inventory" element={<InventoryPage user={user} />} />
-            )}
-            {canAccessRoute(user.role, "/reports") && (
-              <Route path="/reports" element={<ReportsPage user={user} />} />
-            )}
-            {canAccessRoute(user.role, "/admin") && (
-              <Route path="/admin" element={<AdminPage user={user} />} />
-            )}
-          </>
-        )}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/portal" element={<GuardedRoute user={user} path="/portal"><ClientPortalPage /></GuardedRoute>} />
+        <Route path="/worksheets" element={<GuardedRoute user={user} path="/worksheets"><WorksheetsPage user={user} /></GuardedRoute>} />
+        <Route path="/kiosk" element={<GuardedRoute user={user} path="/kiosk"><KioskModePage user={user} /></GuardedRoute>} />
+        <Route path="/contracts" element={<GuardedRoute user={user} path="/contracts"><ContractsPage user={user} /></GuardedRoute>} />
+        <Route path="/inventory" element={<GuardedRoute user={user} path="/inventory"><InventoryPage user={user} /></GuardedRoute>} />
+        <Route path="/reports" element={<GuardedRoute user={user} path="/reports"><ReportsPage user={user} /></GuardedRoute>} />
+        <Route path="/admin" element={<GuardedRoute user={user} path="/admin"><AdminPage user={user} /></GuardedRoute>} />
+        <Route path="*" element={<AccessDeniedPage />} />
       </Routes>
     </PortalLayout>
   );

@@ -22,6 +22,7 @@ export default function ReportsPage({ user }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const canExport = Boolean(data) && (Array.isArray(data) ? data.length > 0 : Object.keys(data).length > 0);
 
   useEffect(() => {
     if (!visibleTabs.some((tab) => tab.key === active)) {
@@ -101,14 +102,14 @@ export default function ReportsPage({ user }) {
   }
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col gap-4 animate-in fade-in duration-500">
+    <div data-evidence="reports-page" className="flex h-[calc(100vh-8rem)] flex-col gap-4 animate-in fade-in duration-500">
       {/* Header and Controls */}
       <div>
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-stretch">
           <PageHeaderBanner className="min-w-0" eyebrow="Operational intelligence" title="Operational Reports" subtitle="View and export system metrics." iconPath={ICONS.report} />
           <button
             onClick={handleExportCsv}
-            disabled={loading || !data || data.length === 0}
+            disabled={loading || !canExport}
             className="flex items-center justify-center gap-2 rounded-lg bg-orac-blue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-500 disabled:opacity-50"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -141,11 +142,11 @@ export default function ReportsPage({ user }) {
       
       <div className="flex-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm flex flex-col relative z-0">
         {loading ? (
-          <div className="flex flex-1 items-center justify-center text-gray-400">Loading report data...</div>
+          <div data-evidence="reports-loading" className="flex flex-1 items-center justify-center text-gray-400">Loading report data...</div>
         ) : (
           <div className="flex-1 overflow-auto">
             {!data || (Array.isArray(data) && data.length === 0) ? (
-              <div className="flex h-full items-center justify-center text-sm text-gray-400">No data found for this report.</div>
+              <div data-evidence="reports-empty" className="flex h-full items-center justify-center text-sm text-gray-400">No data found for this report.</div>
             ) : renderStructuredReport() ? (
               renderStructuredReport()
             ) : Array.isArray(data) ? (
