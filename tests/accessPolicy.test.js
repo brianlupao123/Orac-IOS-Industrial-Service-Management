@@ -23,6 +23,8 @@ test("eight roles retain their expected role-specific routes", () => {
   assert.ok(canAccessRoute(ROLES.TECHNICIAN, "/worksheets"));
   assert.ok(canAccessRoute(ROLES.FINANCE, "/reports"));
   assert.ok(canAccessRoute(ROLES.OPERATIONS, "/inventory"));
+  assert.ok(canAccessRoute(ROLES.TECHNICIAN, "/operational-data"));
+  assert.ok(canAccessRoute(ROLES.SALES, "/operational-data"));
   assert.ok(canAccessRoute(ROLES.MANAGEMENT, "/admin"));
   assert.ok(!canAccessRoute(ROLES.SALES, "/inventory"));
   assert.ok(!canAccessRoute(ROLES.CLIENT_VIEWER, "/reports"));

@@ -301,3 +301,35 @@ export const leads = {
     return request("/leads", { method: "POST", body: JSON.stringify(payload) });
   }
 };
+
+async function downloadCsv(path) {
+  const res = await fetch(`${BASE}${path}`, { headers: { Authorization: `Bearer ${getToken()}` } });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || `Export failed (${res.status})`);
+  }
+  const blob = await res.blob();
+  const disposition = res.headers.get("content-disposition") || "";
+  const filename = /filename=([^;]+)/i.exec(disposition)?.[1]?.replace(/["']/g, "") || "orac-export.csv";
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export const operationalData = {
+  previewLeads(csv_content) {
+    return request("/imports/leads/preview", { method: "POST", body: JSON.stringify({ csv_content }) });
+  },
+  analytics(from, to) {
+    return request(`/analytics/operational?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+  },
+  exportPastelReviewQuotes() {
+    return downloadCsv("/exports/pastel-review/quotes.csv");
+  },
+  exportPastelReviewInvoiceReady() {
+    return downloadCsv("/exports/pastel-review/invoice-ready.csv");
+  }
+};
