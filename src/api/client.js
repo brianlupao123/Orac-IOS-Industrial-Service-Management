@@ -323,6 +323,9 @@ export const operationalData = {
   previewLeads(csv_content) {
     return request("/imports/leads/preview", { method: "POST", body: JSON.stringify({ csv_content }) });
   },
+  commitLeads(csv_content) {
+    return request("/imports/leads/commit", { method: "POST", body: JSON.stringify({ csv_content, confirmation: "IMPORT_LEADS" }) });
+  },
   analytics(from, to) {
     return request(`/analytics/operational?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
   },
