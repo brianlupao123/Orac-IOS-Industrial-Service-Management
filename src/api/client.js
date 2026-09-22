@@ -445,3 +445,32 @@ export const serviceRequests = {
     return request(`/service-requests/${encodeURIComponent(id)}/convert-lead`, { method: "POST", body: JSON.stringify({}) });
   }
 };
+
+// --- Contracts & preventative maintenance (pilot) ----------------------------
+// Explicit endpoints only: there is no delete and no generic collection route.
+// request() already unwraps { success, data }, so these resolve to the record
+// or array itself. Server-owned fields (id, contract_number, creator, timestamps)
+// are never sent.
+export const contracts = {
+  list() {
+    return request("/contracts");
+  },
+  create(payload) {
+    return request("/contracts", { method: "POST", body: JSON.stringify(payload) });
+  },
+  update(id, payload) {
+    return request(`/contracts/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(payload) });
+  }
+};
+
+export const maintenanceSchedules = {
+  list() {
+    return request("/maintenance-schedules");
+  },
+  create(payload) {
+    return request("/maintenance-schedules", { method: "POST", body: JSON.stringify(payload) });
+  },
+  update(id, payload) {
+    return request(`/maintenance-schedules/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(payload) });
+  }
+};
