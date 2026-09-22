@@ -4,6 +4,7 @@ dist/
 .env.*
 !.env.example
 !.env.uat.local.example
+!.env.uat
 *.log
 
 # Local recovery artifacts; never deploy or commit these.
@@ -15,3 +16,5 @@ deliverables/
 orac-ppt-render/
 .orac-document-build/
 evidence/uat/
+
+dist-uat/
