@@ -13,6 +13,7 @@ const operationalRoles = [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES
 
 export const ROUTE_ACCESS = Object.freeze({
   "/portal": [ROLES.CLIENT_VIEWER],
+  "/service-requests": [ROLES.SALES, ROLES.OPERATIONS],
   "/worksheets": [...operationalRoles, ROLES.TECHNICIAN],
   "/inventory": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],
   "/reports": [...operationalRoles, ROLES.SALES, ROLES.FINANCE],
@@ -26,6 +27,7 @@ export const ROUTE_ACCESS = Object.freeze({
 export const NAV_ITEMS = Object.freeze([
   { path: "/", label: "Dashboard" },
   { path: "/portal", label: "Client Portal" },
+  { path: "/service-requests", label: "Service Requests" },
   { path: "/worksheets", label: "Worksheets" },
   { path: "/inventory", label: "Inventory" },
   { path: "/reports", label: "Reports" },
