@@ -417,3 +417,31 @@ async function downloadFile(path, fallbackName) {
   const link = document.createElement("a");
   link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url);
 }
+
+// --- Client Service Requests -------------------------------------------------
+// Client Viewer request -> Sales/Operations triage -> one explicit lead.
+// The server derives client, creator, status, triager and lead linkage; none of
+// those are ever sent from here. create() copies only the fields below.
+export const serviceRequests = {
+  create({ title, service_need, urgency, mine_site_id, equipment_tag_id, requested_date } = {}) {
+    const body = { title, service_need, urgency };
+    if (mine_site_id) body.mine_site_id = mine_site_id;
+    if (equipment_tag_id) body.equipment_tag_id = equipment_tag_id;
+    if (requested_date) body.requested_date = requested_date;
+    return request("/service-requests", { method: "POST", body: JSON.stringify(body) });
+  },
+  mine() {
+    return request("/service-requests/mine");
+  },
+  triage(status) {
+    return request(`/service-requests/triage${status ? `?status=${encodeURIComponent(status)}` : ""}`);
+  },
+  triageDecision(id, decision, note) {
+    const body = { decision };
+    if (typeof note === "string" && note.trim()) body.note = note.trim();
+    return request(`/service-requests/${encodeURIComponent(id)}/triage`, { method: "POST", body: JSON.stringify(body) });
+  },
+  convertToLead(id) {
+    return request(`/service-requests/${encodeURIComponent(id)}/convert-lead`, { method: "POST", body: JSON.stringify({}) });
+  }
+};
