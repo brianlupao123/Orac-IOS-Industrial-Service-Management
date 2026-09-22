@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../api/client.js";
 import SessionExpiredBanner from "../components/SessionExpiredBanner.jsx";
 
 export default function LoginPage({ onLogin, sessionExpired = false }) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -20,6 +21,7 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
     try {
       const user = await auth.login(targetEmail, targetPassword);
       onLogin(user);
+      navigate("/", { replace: true });
     } catch (err) {
       setError(err.message);
       setBusy(false);
