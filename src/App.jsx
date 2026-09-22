@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { auth, onSessionExpired } from "./api/client.js";
+import { auth, onSessionExpired, uatState } from "./api/client.js";
 import { canAccessRoute } from "./accessPolicy.js";
 import LoginPage from "./pages/LoginPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
@@ -43,6 +43,17 @@ export default function App() {
       setSessionExpired(true);
     });
   }, []);
+
+  useEffect(() => {
+    // Test-only, UAT-closure capture: after the real session restore check
+    // has settled, replay the app's own real session-expiry pathway (see
+    // client.js uatState.simulateSessionExpired). A no-op unless the build
+    // was produced with VITE_UAT_STATE_MODE=true and the page was opened
+    // with ?uatState=session-expired.
+    if (!checking && uatState.isEnabled() && uatState.mode() === "session-expired") {
+      uatState.simulateSessionExpired();
+    }
+  }, [checking]);
 
   if (checking) {
     return <div className="p-8 text-orac-slate">Loading Orac-IOS...</div>;

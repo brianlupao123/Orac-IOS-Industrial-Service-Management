@@ -7,8 +7,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:uat": "vite build --mode uat --outDir dist-uat",
     "test": "node --test tests/*.test.js",
     "preview": "vite preview",
+    "preview:uat": "vite preview --outDir dist-uat",
     "finalize:handover": "node scripts/finalize-handover.mjs",
     "finalize:local": "set ORAC_BASE_URL=http://localhost:5173&& node scripts/finalize-handover.mjs",
     "maintain": "node scripts/verify-maintenance.mjs"

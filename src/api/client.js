@@ -39,7 +39,61 @@ export function onSessionExpired(listener) {
   return () => sessionExpiredListeners.delete(listener);
 }
 
+// --- Test-only UAT state gate (UAT Closure phase) ------------------------
+// Compiles to `false` unless a build is deliberately produced with
+// VITE_UAT_STATE_MODE=true (see .env.uat / package.json "build:uat"). The
+// ordinary `npm run build` (production) does not define this flag, so it
+// is absent from normal and deployed-production builds by construction,
+// not by a runtime check that could be bypassed. When enabled, it may only
+// short-circuit read requests to a deterministic, already-existing UI
+// state or replay the app's own real session-expiry pathway below. It
+// never mutates backend data, never issues a request in "error"/"empty"
+// mode, and never touches role or auth-decision logic.
+const UAT_STATE_MODE_ENABLED = import.meta.env.VITE_UAT_STATE_MODE === "true";
+
+// Read paths this file's own exports (collections.list, notifications.list,
+// inventory.listStockItems/listSuppliers, accessRequests.list) are known to
+// resolve to an array. Object-shaped reads (e.g. /summary, /reports/:name)
+// are intentionally excluded: forcing an unverified object shape to `[]`
+// risks a page crash rather than a genuine empty state, so those remain
+// out of scope until the consuming page source can be reviewed (see
+// FINAL_DELIVERY_READINESS.md).
+const UAT_EMPTY_ARRAY_PATH_PREFIXES = ["/notifications", "/inventory/stock_items", "/inventory/suppliers", "/access_requests"];
+function isKnownArrayReadPath(path) {
+  return UAT_EMPTY_ARRAY_PATH_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
+
+function uatStateFromUrl() {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get("uatState");
+}
+
+export const uatState = {
+  isEnabled() { return UAT_STATE_MODE_ENABLED; },
+  mode() { return UAT_STATE_MODE_ENABLED ? uatStateFromUrl() : null; },
+  // Test-only: replays the app's real session-expiry pathway (the same
+  // clearSession + listener notification restoreSession/401 handling
+  // already uses below), rather than fabricating a separate UI. A no-op
+  // whenever the build-time flag is absent.
+  simulateSessionExpired() {
+    if (!UAT_STATE_MODE_ENABLED) return;
+    notifySessionExpired();
+  }
+};
+
 async function request(path, options = {}) {
+  if (UAT_STATE_MODE_ENABLED) {
+    const mode = uatStateFromUrl();
+    if (mode === "error") {
+      // Test-only: no fetch is made. The same thrown-Error shape a real
+      // failed request already produces is replayed so each page's own
+      // existing error UI renders against real component code.
+      throw new Error("Simulated UAT error state (test-only; no backend contact was made).");
+    }
+    if (mode === "empty" && (!options.method || options.method === "GET") && isKnownArrayReadPath(path)) {
+      return [];
+    }
+  }
   if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
     throw new Error("The service is not connected yet. Please try again later.");
   }
