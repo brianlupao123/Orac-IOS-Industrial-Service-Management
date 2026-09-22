@@ -237,6 +237,13 @@ export const worksheets = {
   }
 };
 
+export const kiosk = {
+  roster(dispatchId) { return request(`/kiosk/dispatch_cards/${dispatchId}/roster`); },
+  submit(dispatchId, payload) {
+    return request(`/kiosk/dispatch_cards/${dispatchId}/timesheets`, { method: "POST", body: JSON.stringify(payload) });
+  }
+};
+
 export const notifications = {
   list() {
     return request("/notifications");

@@ -10,6 +10,7 @@ import Modal from "../components/Modal.jsx";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import { ErrorBanner } from "../components/PageStates.jsx";
 import { ICONS } from "../components/icons.jsx";
+import { TECHNICIAN_TRADES } from "../constants/trades.js";
 
 export default function AdminPage({ user }) {
   const [users, setUsers] = useState([]);
@@ -372,6 +373,14 @@ export default function AdminPage({ user }) {
             <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Client ID (For Client Viewers)</label>
             <input name="client_id" defaultValue={userModal.data?.client_id || ""} placeholder="e.g. c_zimplats" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
             <p className="mt-1 text-[10px] text-gray-400">Only required if role is Client Viewer.</p>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Trade / Specialty</label>
+            <select name="trade" defaultValue={userModal.data?.trade || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 bg-white">
+              <option value="">Not assigned</option>
+              {TECHNICIAN_TRADES.map((trade) => <option key={trade} value={trade}>{trade}</option>)}
+            </select>
+            <p className="mt-1 text-[10px] text-gray-400">Assign only to Technician accounts. This groups operational timesheets without changing access rights.</p>
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Account Status</label>
