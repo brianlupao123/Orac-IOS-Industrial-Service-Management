@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Icon, ICONS } from "../components/icons.jsx";
-import { collections, worksheets } from "../api/client.js";
+import { collections, kiosk } from "../api/client.js";
+import { displayTrade } from "../constants/trades.js";
 
 export default function KioskModePage({ user }) {
   const [technicians, setTechnicians] = useState([]);
@@ -17,19 +18,9 @@ export default function KioskModePage({ user }) {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const usersData = await collections.list("users");
-        const techs = (usersData || []).filter(u => u.role === "Technician" && u.is_active);
-        setTechnicians(techs);
-
         const jobsData = await collections.list("dispatch_cards");
         const active = (jobsData || []).filter(j => j.status === "Dispatched" || j.status === "In_Progress");
         setActiveJobs(active);
-
-        const initialHours = {};
-        techs.forEach(t => {
-          initialHours[t.id] = { normal: 0, ot15: 0, ot20: 0, description: "" };
-        });
-        setCrewHours(initialHours);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -38,6 +29,31 @@ export default function KioskModePage({ user }) {
     };
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (!selectedJob) {
+      setTechnicians([]);
+      setCrewHours({});
+      return;
+    }
+    const loadRoster = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await kiosk.roster(selectedJob);
+        const roster = data?.technicians || [];
+        setTechnicians(roster);
+        setCrewHours(Object.fromEntries(roster.map((tech) => [tech.id, { normal: 0, ot15: 0, ot20: 0, description: "" }])));
+      } catch (err) {
+        setTechnicians([]);
+        setCrewHours({});
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadRoster();
+  }, [selectedJob]);
 
   const handleHourChange = (techId, field, value) => {
     const num = parseFloat(value) || 0;
@@ -57,7 +73,7 @@ export default function KioskModePage({ user }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedJob) {
-      alert("Please select a Job Card.");
+      setError("Select an active dispatch card first.");
       return;
     }
 
@@ -66,28 +82,20 @@ export default function KioskModePage({ user }) {
       const entries = Object.entries(crewHours).filter(([_, h]) => h.normal > 0 || h.ot15 > 0 || h.ot20 > 0);
       
       if (entries.length === 0) {
-        alert("Please enter hours for at least one crew member.");
+        setError("Enter hours for at least one assigned technician.");
         setLoading(false);
         return;
       }
 
-      // Submit batch timesheets — each crew member gets their own entry
-      for (const [techId, hours] of entries) {
-        const totalWeighted = hours.normal + (hours.ot15 * 1.5) + (hours.ot20 * 2.0);
-        // POST /dispatch_cards/:id/timesheets
-        await fetch(`${import.meta.env.VITE_API_BASE_URL || ""}/api/dispatch_cards/${selectedJob}/timesheets`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`
-          },
-          body: JSON.stringify({
-            technician_id: techId,
-            hours_logged: totalWeighted,
-            hourly_rate: 45
-          })
-        });
-      }
+      await kiosk.submit(selectedJob, {
+        work_date: selectedDate,
+        entries: entries.map(([technician_id, hours]) => ({
+          technician_id,
+          hours_logged: hours.normal + (hours.ot15 * 1.5) + (hours.ot20 * 2.0),
+          hourly_rate: 45,
+          notes: hours.description
+        }))
+      });
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 4000);
@@ -176,6 +184,7 @@ export default function KioskModePage({ user }) {
             <thead className="bg-orac-surface">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-orac-slate uppercase tracking-wider">Crew Member</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-orac-slate uppercase tracking-wider">Trade</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-orac-slate uppercase tracking-wider">Normal Hrs</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-orac-slate uppercase tracking-wider">OT 1.5×</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-orac-slate uppercase tracking-wider">OT 2.0×</th>
@@ -184,10 +193,11 @@ export default function KioskModePage({ user }) {
             </thead>
             <tbody className="bg-white divide-y divide-orac-border">
               {technicians.length === 0 ? (
-                <tr><td colSpan={5} className="px-6 py-8 text-center text-orac-secondary text-sm">No active technicians found.</td></tr>
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-orac-secondary text-sm">Select a dispatch card to load its assigned technician roster.</td></tr>
               ) : technicians.map(tech => (
                 <tr key={tech.id} className="hover:bg-orac-surface/50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-orac-slate">{tech.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-orac-secondary">{displayTrade(tech.trade)}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <input type="number" min="0" step="0.5" max="24"
                       value={crewHours[tech.id]?.normal || ""}

@@ -4,6 +4,7 @@ import StatusBadge from "../components/StatusBadge.jsx";
 import StatCard from "../components/StatCard.jsx";
 import Modal from "../components/Modal.jsx";
 import SignaturePad from "../components/SignaturePad.jsx";
+import { displayTrade } from "../constants/trades.js";
 
 const REVIEW_ROLES = ["Admin", "Operations", "Supervisor"];
 const SUBMIT_ROLES = ["Admin", "Operations", "Technician", "Supervisor"];
@@ -15,6 +16,7 @@ export default function WorksheetsPage({ user }) {
   const [error, setError] = useState("");
   const [comment, setComment] = useState({});
   const [filter, setFilter] = useState("all");
+  const [tradeFilter, setTradeFilter] = useState("all");
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -114,7 +116,9 @@ export default function WorksheetsPage({ user }) {
     }
   }
 
-  const filtered = filter === "all" ? items : items.filter((ws) => ws.status === filter);
+  const statusFiltered = filter === "all" ? items : items.filter((ws) => ws.status === filter);
+  const tradeOptions = [...new Set(items.map((ws) => displayTrade(ws.technician_trade)))].sort();
+  const filtered = tradeFilter === "all" ? statusFiltered : statusFiltered.filter((ws) => displayTrade(ws.technician_trade) === tradeFilter);
   const counts = {
     total: items.length,
     draft: items.filter((w) => w.status === "Draft").length,
@@ -127,11 +131,10 @@ export default function WorksheetsPage({ user }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-light tracking-tight text-gray-900 mb-2">Field Worksheets</h1>
+          <h1 className="text-3xl font-light tracking-tight text-gray-900 mb-2">Timesheets</h1>
           <p className="text-sm text-gray-500 max-w-3xl leading-relaxed">
-            <strong>Field Worksheets</strong> document the actual work performed on-site, including safety checks and daily outcomes.
-            They are distinct from <em>Timesheets</em>, which only log labor hours, and <em>Dispatch Cards</em>, which represent the overall assignment.
-            Technicians draft and submit Worksheets; Supervisors review and approve them.
+            <strong>Timesheets</strong> record skilled labour, hours, field activity and outcomes against a dispatch card.
+            The technical system record remains a field worksheet; supervisors review and approve submitted timesheets.
           </p>
         </div>
         {canSubmit && (
@@ -142,14 +145,14 @@ export default function WorksheetsPage({ user }) {
             }}
             className="shrink-0 self-start sm:self-auto rounded-lg bg-orac-blue px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-105"
           >
-            + New Worksheet
+            + New Timesheet
           </button>
         )}
       </div>
 
       {/* KPI cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Worksheets" value={counts.total} tone="slate" icon="📝" />
+        <StatCard label="Total Timesheets" value={counts.total} tone="slate" icon="📝" />
         <StatCard label="In Draft" value={counts.draft} tone="slate" icon="✏️" />
         <StatCard label="Awaiting Review" value={counts.submitted} tone="amber" icon="⏳" />
         <StatCard label="Approved" value={counts.approved} tone="green" icon="✅" />
@@ -157,7 +160,7 @@ export default function WorksheetsPage({ user }) {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2 pb-2 border-b border-gray-100">
-        {[["all", "All Worksheets"], ["Draft", "Draft"], ["Submitted", "Submitted"], ["Supervisor_Approved", "Approved"], ["Returned_For_Correction", "Returned"]].map(([key, label]) => (
+        {[["all", "All Timesheets"], ["Draft", "Draft"], ["Submitted", "Submitted"], ["Supervisor_Approved", "Approved"], ["Returned_For_Correction", "Returned"]].map(([key, label]) => (
           <button
             key={key}
             onClick={() => setFilter(key)}
@@ -170,6 +173,17 @@ export default function WorksheetsPage({ user }) {
             {label}
           </button>
         ))}
+        {tradeOptions.length > 1 && (
+          <select
+            aria-label="Filter timesheets by trade"
+            value={tradeFilter}
+            onChange={(event) => setTradeFilter(event.target.value)}
+            className="ml-auto rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600"
+          >
+            <option value="all">All trades</option>
+            {tradeOptions.map((trade) => <option key={trade} value={trade}>{trade}</option>)}
+          </select>
+        )}
       </div>
 
       {error && (
@@ -179,14 +193,14 @@ export default function WorksheetsPage({ user }) {
       )}
 
       {loading ? (
-        <div className="py-12 text-center text-gray-400">Loading worksheets...</div>
+        <div className="py-12 text-center text-gray-400">Loading timesheets...</div>
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-gray-100 bg-white px-4 py-16 flex flex-col items-center justify-center shadow-sm">
           <div className="h-12 w-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-4">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           </div>
-          <p className="text-sm font-medium text-gray-500">No field worksheets found.</p>
-          <p className="mt-1 text-xs text-gray-400">Adjust your filters or create a new worksheet from a dispatch card.</p>
+          <p className="text-sm font-medium text-gray-500">No timesheets found.</p>
+          <p className="mt-1 text-xs text-gray-400">Adjust your filters or create a new timesheet from a dispatch card.</p>
           {canSubmit && (
             <button
               onClick={() => {
@@ -195,7 +209,7 @@ export default function WorksheetsPage({ user }) {
               }}
               className="mt-4 rounded-lg bg-orac-blue px-4 py-2 text-xs font-semibold text-white shadow-sm hover:brightness-105 transition-all"
             >
-              + Create Worksheet
+              + Create Timesheet
             </button>
           )}
         </div>
@@ -206,7 +220,7 @@ export default function WorksheetsPage({ user }) {
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="font-semibold text-gray-900 tracking-tight text-lg">{ws.activity || "Worksheet"}</span>
+                    <span className="font-semibold text-gray-900 tracking-tight text-lg">{ws.activity || "Timesheet"}</span>
                     <StatusBadge status={ws.status} />
                   </div>
                   
@@ -221,6 +235,10 @@ export default function WorksheetsPage({ user }) {
                         {ws.technician_name}
                       </div>
                     )}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Trade</span>
+                      {displayTrade(ws.technician_trade)}
+                    </div>
                   </div>
                   
                   {ws.outcomes && (
@@ -256,7 +274,7 @@ export default function WorksheetsPage({ user }) {
                       onClick={() => handleReview(ws.id, "approve")}
                       className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700"
                     >
-                      Approve Worksheet
+                      Approve Timesheet
                     </button>
                     <button
                       onClick={() => handleReview(ws.id, "return")}
@@ -272,9 +290,9 @@ export default function WorksheetsPage({ user }) {
         </div>
       )}
 
-      {/* New Worksheet Modal */}
+      {/* New Timesheet Modal */}
       <Modal
-        title="Create Field Worksheet"
+        title="Create Timesheet"
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
@@ -377,7 +395,7 @@ export default function WorksheetsPage({ user }) {
               disabled={modalSubmitting}
               className="px-5 py-2 bg-orac-blue text-white text-sm font-semibold rounded-lg hover:brightness-105 shadow-sm disabled:opacity-50"
             >
-              {modalSubmitting ? "Creating..." : "Create Worksheet"}
+              {modalSubmitting ? "Creating..." : "Create Timesheet"}
             </button>
           </div>
         </form>
