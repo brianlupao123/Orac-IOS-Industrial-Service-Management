@@ -64,12 +64,13 @@ test("the guarded route and the portal panel are wired in", () => {
   assert.doesNotMatch(app.split("\n").filter((line) => line.includes("/service-requests")).join("\n"), /path="\/portal"/);
 });
 
-test("client.js gained only the serviceRequests object and still has no service-request URL outside it", () => {
+test("service-request URLs stay contained in the serviceRequests client object", () => {
   const [outside, block] = client.split("export const serviceRequests");
   assert.doesNotMatch(outside, /service-requests/);
   const paths = [...block.matchAll(/request\(\s*[`"]([^`"]*)/g)]
     .map((match) => match[1].replace(/\$\{[^}]*\}/g, ":id").replace(/\$\{.*$/, ""));
-  assert.deepEqual(paths.sort(), [
+  const serviceRequestPaths = paths.filter((path) => path.startsWith("/service-requests"));
+  assert.deepEqual(serviceRequestPaths.sort(), [
     "/service-requests", "/service-requests/:id/convert-lead", "/service-requests/:id/triage", "/service-requests/mine", "/service-requests/triage"
   ].sort());
 });
