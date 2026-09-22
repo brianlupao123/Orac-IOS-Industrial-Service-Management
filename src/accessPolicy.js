@@ -21,7 +21,10 @@ export const ROUTE_ACCESS = Object.freeze({
   "/documents": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE, ROLES.CLIENT_VIEWER],
   "/admin": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],
   "/kiosk": operationalRoles,
-  "/contracts": operationalRoles
+  // Mirrors the backend viewContracts policy. Supervisor is excluded because
+  // contracts have no supervisor-assignment relation to scope against, and a
+  // Client Viewer only ever receives its own client's records from the API.
+  "/contracts": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.CLIENT_VIEWER]
 });
 
 export const NAV_ITEMS = Object.freeze([
