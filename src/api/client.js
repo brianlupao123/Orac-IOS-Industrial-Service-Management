@@ -102,9 +102,23 @@ async function request(path, options = {}) {
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const res = await fetch(`${BASE}${path}`, { ...options, headers });
-  const body = await res.json().catch(() => ({}));
+  const contentType = res.headers?.get?.("content-type") || "";
+  const canReadText = typeof res.text === "function";
+  const rawBody = canReadText ? await res.text() : "";
+  let body;
+  try {
+    body = canReadText ? (rawBody ? JSON.parse(rawBody) : null) : await res.json();
+  } catch {
+    body = null;
+  }
 
-  if (!res.ok || body.success === false) {
+  const isJsonContent = !contentType || contentType.toLowerCase().includes("application/json");
+  if (!isJsonContent || !body) {
+    const responseKind = rawBody.trimStart().startsWith("<") ? "HTML" : "non-JSON data";
+    throw new Error(`The service returned ${responseKind} instead of API data. Check the service connection and try again.`);
+  }
+
+  if (!res.ok || body.success !== true) {
     const message = body.message || `Request failed (${res.status})`;
     if (res.status === 401) {
       notifySessionExpired();
