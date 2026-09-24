@@ -6,6 +6,7 @@ import StatusBadge from "../components/StatusBadge.jsx";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import { ErrorBanner } from "../components/PageStates.jsx";
 import { ICONS } from "../components/icons.jsx";
+import { csvCell } from "../csvSafe.js";
 
 const REPORT_TABS = [
   { key: "pipeline", label: "Pipeline", roles: ["Admin", "Management", "Sales"] },
@@ -68,9 +69,7 @@ export default function ReportsPage({ user }) {
     const columnNames = [...new Set(rowsToExport.flatMap((row) => Object.keys(row)))];
     const headers = columnNames.join(",");
     const rows = rowsToExport.map((row) => columnNames.map((column) => {
-      const value = row[column];
-      const text = typeof value === "object" ? JSON.stringify(value) : String(value ?? "");
-      return `"${text.replace(/"/g, '""')}"`;
+      return csvCell(row[column]);
     }).join(","));
     const csv = [headers, ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });

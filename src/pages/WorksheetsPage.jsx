@@ -401,7 +401,7 @@ export default function WorksheetsPage({ user }) {
         </form>
       </Modal>
       {showSignatureModal && (
-        <Modal title="Client Representative Sign-Off" onClose={() => setShowSignatureModal(false)}>
+        <Modal title="Client Representative Sign-Off" isOpen={showSignatureModal} onClose={() => setShowSignatureModal(false)}>
           <div className="p-4">
             <p className="text-sm text-orac-slate mb-4">Please have the client representative sign below to confirm the work log.</p>
             <SignaturePad
