@@ -14,7 +14,7 @@ export default function InventoryPage({ user }) {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("stock");
   
-  const [form, setForm] = useState({ stock_item_id: "", movement_type: "in", quantity: "", reason: "" });
+  const [form, setForm] = useState({ stock_item_id: "", movement_type: "in", quantity: "", reason: "", override_negative: false });
 
   const [itemModal, setItemModal] = useState({ open: false, data: null });
   const [supplierModal, setSupplierModal] = useState({ open: false, data: null });
@@ -48,9 +48,13 @@ export default function InventoryPage({ user }) {
         stock_item_id: form.stock_item_id,
         movement_type: form.movement_type,
         quantity: Number(form.quantity),
-        reason: form.reason
+        reason: form.reason,
+        // Only meaningful when movement_type is "out" or a negative "adjustment", and only
+        // Admin/Operations are permitted to use it; the backend re-checks role and always
+        // has final say (see inventoryController.recordStockMovement).
+        override_negative: form.override_negative
       });
-      setForm({ stock_item_id: "", movement_type: "in", quantity: "", reason: "" });
+      setForm({ stock_item_id: "", movement_type: "in", quantity: "", reason: "", override_negative: false });
       await load();
     } catch (err) {
       // Gracefully show negative stock blocks from backend
@@ -190,6 +194,20 @@ export default function InventoryPage({ user }) {
                         required
                       />
                     </div>
+                    {(form.movement_type === "out" || form.movement_type === "adjustment") && (
+                      <label className="flex items-start gap-2 text-xs text-gray-600">
+                        <input
+                          type="checkbox"
+                          checked={form.override_negative}
+                          onChange={(e) => setForm({ ...form, override_negative: e.target.checked })}
+                          className="mt-0.5 rounded border-gray-300 text-orac-blue focus:ring-orac-blue/20"
+                        />
+                        <span>
+                          Allow this movement to take stock below zero.
+                          <span className="block text-gray-400">Only Admin or Operations accounts can use this; the server will reject it otherwise.</span>
+                        </span>
+                      </label>
+                    )}
                     <button type="submit" className="w-full rounded-lg bg-orac-blue py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-orac-blue/90 mt-2">
                       Submit Movement
                     </button>
