@@ -14,6 +14,10 @@ const operationalRoles = [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES
 export const ROUTE_ACCESS = Object.freeze({
   "/portal": [ROLES.CLIENT_VIEWER],
   "/service-requests": [ROLES.SALES, ROLES.OPERATIONS],
+  // Staff-to-staff coordination. Admin keeps read-only audit by id in the
+  // backend only, and Client Viewer has no internal access, so neither gets a
+  // route or a navigation entry here. The server still decides every action.
+  "/internal-requests": [ROLES.MANAGEMENT, ROLES.SALES, ROLES.FINANCE, ROLES.OPERATIONS, ROLES.SUPERVISOR, ROLES.TECHNICIAN],
   "/worksheets": [...operationalRoles, ROLES.TECHNICIAN],
   "/inventory": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],
   "/reports": [...operationalRoles, ROLES.SALES, ROLES.FINANCE],
@@ -31,6 +35,7 @@ export const NAV_ITEMS = Object.freeze([
   { path: "/", label: "Dashboard" },
   { path: "/portal", label: "Client Portal" },
   { path: "/service-requests", label: "Service Requests" },
+  { path: "/internal-requests", label: "Internal Requests" },
   { path: "/worksheets", label: "Worksheets" },
   { path: "/inventory", label: "Inventory" },
   { path: "/reports", label: "Reports" },

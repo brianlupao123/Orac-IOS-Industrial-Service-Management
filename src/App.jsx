@@ -14,6 +14,7 @@ import ReportsPage from "./pages/ReportsPage.jsx";
 import AdminPage from "./pages/AdminPage.jsx";
 import ClientPortalPage from "./pages/ClientPortalPage.jsx";
 import ServiceRequestTriagePage from "./pages/ServiceRequestTriagePage.jsx";
+import InternalRequestsPage from "./pages/InternalRequestsPage.jsx";
 import KioskModePage from "./pages/KioskModePage.jsx";
 import ContractsPage from "./pages/ContractsPage.jsx";
 import PortalLayout from "./layouts/PortalLayout.jsx";
@@ -82,6 +83,7 @@ export default function App() {
         <Route path="/" element={<DashboardPage user={user} />} />
         <Route path="/portal" element={<GuardedRoute user={user} path="/portal"><ClientPortalPage /></GuardedRoute>} />
         <Route path="/service-requests" element={<GuardedRoute user={user} path="/service-requests"><ServiceRequestTriagePage /></GuardedRoute>} />
+        <Route path="/internal-requests" element={<GuardedRoute user={user} path="/internal-requests"><InternalRequestsPage user={user} /></GuardedRoute>} />
         <Route path="/worksheets" element={<GuardedRoute user={user} path="/worksheets"><WorksheetsPage user={user} /></GuardedRoute>} />
         <Route path="/kiosk" element={<GuardedRoute user={user} path="/kiosk"><KioskModePage user={user} /></GuardedRoute>} />
         <Route path="/contracts" element={<GuardedRoute user={user} path="/contracts"><ContractsPage user={user} /></GuardedRoute>} />

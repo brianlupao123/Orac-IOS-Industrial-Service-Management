@@ -124,9 +124,14 @@ async function request(path, options = {}) {
       notifySessionExpired();
       const error = new Error(message);
       error.sessionExpired = true;
+      error.status = res.status;
       throw error;
     }
-    throw new Error(message);
+    // The status lets a page tell "not allowed" or "changed under you" from a
+    // generic failure without parsing the message text.
+    const error = new Error(message);
+    error.status = res.status;
+    throw error;
   }
   // Every backend response is { success: true, data: ... } â€” always unwrap.
   return body.data;
@@ -464,6 +469,48 @@ export const serviceRequests = {
   },
   convertToLead(id) {
     return request(`/service-requests/${encodeURIComponent(id)}/convert-lead`, { method: "POST", body: JSON.stringify({}) });
+  }
+};
+
+// --- Internal Work Requests (staff to staff coordination) ---------------------
+// Dedicated endpoints only. The server derives the sender, role, client, status,
+// assignee, history and timestamps and validates every pairing and action; none
+// of those are ever sent from here. Bodies are built from fixed whitelists
+// because the server schemas are strict. request() unwraps { success, data }.
+const internalRequestBase = "/internal-work-requests";
+const internalRequestListPath = (name, status) =>
+  `${internalRequestBase}/${name}${status ? `?status=${encodeURIComponent(status)}` : ""}`;
+
+export const internalWorkRequests = {
+  options() {
+    return request(`${internalRequestBase}/options`);
+  },
+  outbox(status) {
+    return request(internalRequestListPath("outbox", status));
+  },
+  inbox(status) {
+    return request(internalRequestListPath("inbox", status));
+  },
+  detail(id) {
+    return request(`${internalRequestBase}/${encodeURIComponent(id)}`);
+  },
+  create({ request_type, subject, description, priority, recipient_role, related_entity_type, related_entity_id } = {}) {
+    const body = { request_type, subject, description };
+    if (priority) body.priority = priority;
+    if (recipient_role) body.recipient_role = recipient_role;
+    if (related_entity_type && related_entity_id) {
+      body.related_entity_type = related_entity_type;
+      body.related_entity_id = related_entity_id;
+    }
+    return request(internalRequestBase, { method: "POST", body: JSON.stringify(body) });
+  },
+  acknowledge(id) {
+    return request(`${internalRequestBase}/${encodeURIComponent(id)}/acknowledge`, { method: "POST", body: JSON.stringify({}) });
+  },
+  transition(id, action, note) {
+    const body = { action };
+    if (typeof note === "string" && note.trim()) body.note = note.trim();
+    return request(`${internalRequestBase}/${encodeURIComponent(id)}/transition`, { method: "POST", body: JSON.stringify(body) });
   }
 };
 
