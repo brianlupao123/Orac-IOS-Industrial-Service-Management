@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { NAV_ITEMS, ROLES, ROUTE_ACCESS, canAccessRoute, visibleNavigation } from "../src/accessPolicy.js";
 
 const ROUTE = "/internal-requests";
-const ALLOWED = [ROLES.MANAGEMENT, ROLES.SALES, ROLES.FINANCE, ROLES.OPERATIONS, ROLES.SUPERVISOR, ROLES.TECHNICIAN];
+const ALLOWED = [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.SALES, ROLES.FINANCE, ROLES.OPERATIONS, ROLES.SUPERVISOR, ROLES.TECHNICIAN];
 
-test("/internal-requests is restricted to the six approved staff roles by the central route policy", () => {
+test("/internal-requests is restricted to the seven approved staff roles by the central route policy", () => {
   assert.deepEqual([...ROUTE_ACCESS[ROUTE]].sort(), [...ALLOWED].sort());
   assert.equal(new Set(ROUTE_ACCESS[ROUTE]).size, ROUTE_ACCESS[ROUTE].length, "no duplicate roles");
   for (const role of Object.values(ROLES)) {
@@ -13,11 +13,11 @@ test("/internal-requests is restricted to the six approved staff roles by the ce
   }
 });
 
-test("Admin and Client Viewer get neither a route nor a navigation entry", () => {
-  for (const role of [ROLES.ADMIN, ROLES.CLIENT_VIEWER]) {
-    assert.equal(canAccessRoute(role, ROUTE), false, `${role} route`);
-    assert.equal(visibleNavigation(role).some((item) => item.path === ROUTE), false, `${role} navigation`);
-  }
+test("Admin can access the team inbox while Client Viewer gets neither a route nor a navigation entry", () => {
+  assert.equal(canAccessRoute(ROLES.ADMIN, ROUTE), true, "Admin route");
+  assert.equal(visibleNavigation(ROLES.ADMIN).some((item) => item.path === ROUTE), true, "Admin navigation");
+  assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, ROUTE), false, "Client Viewer route");
+  assert.equal(visibleNavigation(ROLES.CLIENT_VIEWER).some((item) => item.path === ROUTE), false, "Client Viewer navigation");
 });
 
 test("navigation lists Internal Requests once, derived from the same policy as the route", () => {
