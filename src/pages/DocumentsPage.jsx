@@ -13,7 +13,7 @@ const access = {
   invoices: ["Admin", "Management", "Finance", "Client Viewer"]
 };
 
-const labels = { quotes: "Quotes", purchase_orders: "Purchase Orders", dispatch_cards: "Job Cards", field_worksheets: "Field Worksheets", invoices: "Invoices" };
+const labels = { quotes: "Quotes", purchase_orders: "Purchase Orders", dispatch_cards: "Job Cards", field_worksheets: "Timesheets", invoices: "Invoices" };
 
 export default function DocumentsPage({ user }) {
   const available = Object.keys(access).filter((name) => access[name].includes(user.role));

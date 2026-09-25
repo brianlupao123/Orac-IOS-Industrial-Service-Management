@@ -36,9 +36,9 @@ const ROLE_CHART_METRICS = {
   Management: [["clients", "Clients"], ["quotes", "Quotes"], ["dispatches", "Dispatches"], ["invoices", "Invoices"], ["pending_review", "Awaiting review"]],
   Sales: [["clients", "Clients"], ["quotes", "Active quotes"]],
   Finance: [["quotes", "Active quotes"], ["invoices", "Invoices"], ["pending_po", "Awaiting PO"], ["blocked_amendments", "Blocked amendments"]],
-  Operations: [["dispatches", "Dispatches"], ["worksheets", "Worksheets"], ["pending_review", "Awaiting review"], ["returned_for_correction", "Returned work"]],
+  Operations: [["dispatches", "Dispatches"], ["worksheets", "Timesheets"], ["pending_review", "Awaiting review"], ["returned_for_correction", "Returned work"]],
   Supervisor: [["dispatches", "Review-scope dispatches"], ["pending_review", "Awaiting review"], ["returned_for_correction", "Returned work"]],
-  Technician: [["dispatches", "My dispatches"], ["worksheets", "My worksheets"], ["pending_review", "Awaiting review"]],
+  Technician: [["dispatches", "My dispatches"], ["worksheets", "My timesheets"], ["pending_review", "Awaiting review"]],
   "Client Viewer": [["quotes", "My quotes"], ["dispatches", "My dispatches"], ["invoices", "My invoices"]]
 };
 
@@ -239,7 +239,7 @@ export default function DashboardPage({ user }) {
     );
   }
 
-  // Supervisor: Worksheets Pending Review
+  // Supervisor: Timesheets pending review
   if (user.role === "Supervisor" || user.role === "Admin" || user.role === "Operations") {
     const pendingReviewCount = user.role === "Operations"
       ? (stats?.pending_review ?? 0)
@@ -247,7 +247,7 @@ export default function DashboardPage({ user }) {
     roleCards.push(
       <IconStatCard
         key="worksheets_review"
-        label="Worksheets Pending Review"
+        label="Timesheets Pending Review"
         value={pendingReviewCount}
         iconPath={ICONS.clock}
         tone={pendingReviewCount > 0 ? "amber" : "neutral"}
@@ -262,7 +262,7 @@ export default function DashboardPage({ user }) {
     roleCards.push(
       <IconStatCard
         key="field_worksheets"
-        label="Field Worksheets"
+        label="Timesheets"
         value={stats?.worksheets ?? 0}
         iconPath={ICONS.clipboard}
         tone={(stats?.worksheets || 0) > 0 ? "blue" : "neutral"}
@@ -323,7 +323,7 @@ export default function DashboardPage({ user }) {
       />,
       <IconStatCard
         key="my_worksheets"
-        label="My Worksheets"
+        label="My Timesheets"
         value={stats?.worksheets ?? 0}
         iconPath={ICONS.clipboard}
         tone={(stats?.worksheets || 0) > 0 ? "blue" : "neutral"}
@@ -476,14 +476,14 @@ export default function DashboardPage({ user }) {
         )}
       </div>
 
-      {/* Worksheets (for operations roles) */}
+      {/* Timesheets (for operational roles) */}
       {user.role !== "Client Viewer" && user.role !== "Finance" && worksheets.length > 0 && (
         <div id="evidence-section-worksheets" data-evidence-target="evidence-section-worksheets">
         <DataTable
-          title="Field Worksheets"
+          title="Timesheets"
           columns={["Activity", "Hours", "Status", "Technician"]}
           rows={worksheets.slice(0, 6)}
-          emptyText="No worksheets"
+          emptyText="No timesheets"
           renderRow={(ws) => (
             <tr key={ws.id} className="transition-colors hover:bg-gray-50">
               <td className="px-4 py-2.5 font-medium text-orac-slate">{ws.activity || "—"}</td>

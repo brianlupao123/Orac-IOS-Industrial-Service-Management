@@ -14,7 +14,7 @@ const stages = [
 
 const checkpoints = [
   ["PO control", "A normal dispatch requires a verified purchase order. Urgent work remains flagged until the commercial record is complete."],
-  ["Field evidence", "A supervisor-approved worksheet is required before invoice processing can continue."],
+  ["Field evidence", "A supervisor-approved Timesheet is required before invoice processing can continue."],
   ["Client isolation", "Client records are server-scoped so a client only sees work belonging to its organisation."]
 ];
 

@@ -85,7 +85,7 @@ export default function AdminAnalyticsPage() {
         <StatCard label="Invoices" value={stats.invoices} />
         <StatCard label="Pending PO" value={stats.pending_po} />
         <StatCard label="Amendments blocked" value={stats.blocked_amendments} />
-        <StatCard label="Worksheets awaiting review" value={worksheetReport?.pending_review?.length ?? 0} />
+        <StatCard label="Timesheets awaiting review" value={worksheetReport?.pending_review?.length ?? 0} />
         <StatCard label="Total PO variance" value={totalVariance} />
       </div>
 

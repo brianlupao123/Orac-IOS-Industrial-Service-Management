@@ -116,19 +116,21 @@ export default function InternalRequestsPage({ user }) {
 
   return (
     <div className="space-y-6" data-evidence="internal-requests-page">
-      <PageHeaderBanner eyebrow="Staff coordination" title="Internal Requests" subtitle="Ask another team for information or help, and answer requests sent to you. Every step is recorded." iconPath={ICONS.clipboard} />
+      <PageHeaderBanner eyebrow="Staff coordination" title="Internal Requests" subtitle="Coordinate with another team and respond to requests sent to you. Every step is recorded." iconPath={ICONS.clipboard} />
       <p data-evidence="coordination-notice" className="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">{COORDINATION_ONLY_NOTICE}</p>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <section aria-label="Raise a request" className="lg:col-span-1">
           {optionsState.loading ? (
             <div className="py-12 text-center text-gray-400">Loading request options...</div>
+          ) : optionsState.forbidden ? (
+            <div data-evidence="internal-requests-read-only" className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
+              New internal requests are not available to your role. Use the Team Inbox to review and respond to requests sent to your team.
+            </div>
           ) : optionsState.error ? (
             <div className="space-y-3">
-              <div data-evidence={optionsState.forbidden ? "forbidden-state" : undefined}><ErrorBanner message={optionsState.error} /></div>
-              {!optionsState.forbidden && (
-                <button type="button" onClick={loadOptions} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-orac-slate hover:bg-gray-50">Try again</button>
-              )}
+              <ErrorBanner message={optionsState.error} />
+              <button type="button" onClick={loadOptions} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-orac-slate hover:bg-gray-50">Try again</button>
             </div>
           ) : (
             <InternalRequestForm options={options} requesterRole={user?.role} onCreate={create} />
