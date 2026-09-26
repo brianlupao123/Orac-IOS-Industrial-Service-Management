@@ -31,50 +31,6 @@ const QUOTE_DASHBOARD_ROLES = ["Admin", "Management", "Sales", "Finance", "Opera
 const OPERATIONAL_DASHBOARD_ROLES = ["Admin", "Management", "Operations", "Supervisor", "Technician"];
 const FIELD_DASHBOARD_ROLES = ["Supervisor", "Technician"];
 
-const ROLE_CHART_METRICS = {
-  Admin: [["clients", "Clients"], ["quotes", "Quotes"], ["dispatches", "Dispatches"], ["invoices", "Invoices"], ["blocked_amendments", "Blocked amendments"]],
-  Management: [["clients", "Clients"], ["quotes", "Quotes"], ["dispatches", "Dispatches"], ["invoices", "Invoices"], ["pending_review", "Awaiting review"]],
-  Sales: [["clients", "Clients"], ["quotes", "Active quotes"]],
-  Finance: [["quotes", "Active quotes"], ["invoices", "Invoices"], ["pending_po", "Awaiting PO"], ["blocked_amendments", "Blocked amendments"]],
-  Operations: [["dispatches", "Dispatches"], ["worksheets", "Timesheets"], ["pending_review", "Awaiting review"], ["returned_for_correction", "Returned work"]],
-  Supervisor: [["dispatches", "Review-scope dispatches"], ["pending_review", "Awaiting review"], ["returned_for_correction", "Returned work"]],
-  Technician: [["dispatches", "My dispatches"], ["worksheets", "My timesheets"], ["pending_review", "Awaiting review"]],
-  "Client Viewer": [["quotes", "My quotes"], ["dispatches", "My dispatches"], ["invoices", "My invoices"]]
-};
-
-function RoleMetricChart({ role, stats }) {
-  const items = (ROLE_CHART_METRICS[role] || []).map(([key, label]) => ({ key, label, value: Number(stats?.[key] || 0) }));
-  const maximum = Math.max(1, ...items.map((item) => item.value));
-
-  if (items.length === 0) return null;
-
-  return (
-    <section id="evidence-chart-role-summary" className="border-y border-slate-200 bg-white py-5" aria-label="Role dashboard summary chart">
-      <div className="mx-auto max-w-5xl px-1">
-        <div className="mb-4 flex items-baseline justify-between gap-4">
-          <div>
-            <h2 className="text-base font-semibold text-orac-slate">Role dashboard summary</h2>
-            <p className="mt-1 text-sm text-slate-600">Current role-scoped operational indicators</p>
-          </div>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => (
-            <div key={item.key} className="min-w-0">
-              <div className="mb-1 flex justify-between gap-3 text-sm text-slate-700">
-                <span className="truncate">{item.label}</span>
-                <span className="shrink-0 font-semibold tabular-nums text-orac-slate">{item.value}</span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-sky-500 transition-[width] duration-500" style={{ width: `${Math.round((item.value / maximum) * 100)}%` }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export default function DashboardPage({ user }) {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
@@ -348,55 +304,56 @@ export default function DashboardPage({ user }) {
     <div data-evidence="dashboard-ready" className="space-y-6 animate-in fade-in duration-500">
       <PageHeaderBanner eyebrow={user.role} title={greeting} subtitle={`Welcome back, ${user.name || user.email}`} iconPath={ICONS.dashboard} aside={new Date().toLocaleDateString("en-ZA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} />
 
-      <AIAssistantPanel user={user} />
-
-      <RoleMetricChart role={user.role} stats={stats} />
-
-      {!isFieldDashboard && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <IconStatCard
-            label={user.role === "Client Viewer" ? "My Organization" : "Total Clients"}
-            value={stats?.clients}
-            iconPath={ICONS.building}
-            tone="neutral"
-            evidenceTarget="evidence-kpi-clients"
-            onClick={canAdministration ? () => navigate("/admin") : commercialDestination ? () => navigate(commercialDestination) : undefined}
-          />
-          <IconStatCard
-            label="Active Quotes"
-            value={stats?.quotes}
-            iconPath={ICONS.clipboard}
-            tone={stats?.quotes > 0 ? "blue" : "neutral"}
-            evidenceTarget="evidence-kpi-quotes"
-            onClick={commercialDestination ? () => navigate(commercialDestination) : undefined}
-          />
-          <IconStatCard
-            label="Dispatches"
-            value={stats?.dispatches}
-            iconPath={ICONS.truck}
-            tone={stats?.dispatches > 0 ? "amber" : "neutral"}
-            evidenceTarget="evidence-kpi-dispatches"
-            onClick={() => navigate(canWorksheets ? "/worksheets" : commercialDestination || "/")}
-          />
-          <IconStatCard
-            label="Invoices"
-            value={stats?.invoices}
-            iconPath={ICONS.money}
-            tone={stats?.invoices > 0 ? "green" : "neutral"}
-            evidenceTarget="evidence-kpi-invoices"
-            onClick={commercialDestination ? () => navigate(commercialDestination) : undefined}
-          />
-        </div>
-      )}
-
-      {/* Role-specific KPI row */}
+      {/* Urgent / actionable work comes first, ahead of general totals, so the
+          most important next step is visible without scrolling past low-priority
+          counts. Order follows: role title -> priorities -> overview -> secondary. */}
       {roleCards.length > 0 && (
         <div id="evidence-section-role-priorities" data-evidence-target="evidence-section-role-priorities" className="space-y-2">
           <div className="text-sm font-semibold text-orac-slate">
-            Role priorities and action items
+            Priorities and action items
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {roleCards}
+          </div>
+        </div>
+      )}
+
+      {!isFieldDashboard && (
+        <div className="space-y-2">
+          <div className="text-sm font-semibold text-orac-slate">Overview</div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <IconStatCard
+              label={user.role === "Client Viewer" ? "My Organization" : "Total Clients"}
+              value={stats?.clients}
+              iconPath={ICONS.building}
+              tone="neutral"
+              evidenceTarget="evidence-kpi-clients"
+              onClick={canAdministration ? () => navigate("/admin") : commercialDestination ? () => navigate(commercialDestination) : undefined}
+            />
+            <IconStatCard
+              label="Active Quotes"
+              value={stats?.quotes}
+              iconPath={ICONS.clipboard}
+              tone={stats?.quotes > 0 ? "blue" : "neutral"}
+              evidenceTarget="evidence-kpi-quotes"
+              onClick={commercialDestination ? () => navigate(commercialDestination) : undefined}
+            />
+            <IconStatCard
+              label="Dispatches"
+              value={stats?.dispatches}
+              iconPath={ICONS.truck}
+              tone={stats?.dispatches > 0 ? "amber" : "neutral"}
+              evidenceTarget="evidence-kpi-dispatches"
+              onClick={() => navigate(canWorksheets ? "/worksheets" : commercialDestination || "/")}
+            />
+            <IconStatCard
+              label="Invoices"
+              value={stats?.invoices}
+              iconPath={ICONS.money}
+              tone={stats?.invoices > 0 ? "green" : "neutral"}
+              evidenceTarget="evidence-kpi-invoices"
+              onClick={commercialDestination ? () => navigate(commercialDestination) : undefined}
+            />
           </div>
         </div>
       )}
@@ -495,6 +452,10 @@ export default function DashboardPage({ user }) {
         />
         </div>
       )}
+
+      {/* Fixed-position widget: placed last in the tree for natural tab order.
+          Rendering here has no visual effect since it is fixed to the viewport. */}
+      <AIAssistantPanel user={user} />
     </div>
   );
 }
