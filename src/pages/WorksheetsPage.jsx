@@ -135,6 +135,7 @@ export default function WorksheetsPage({ user }) {
           <p className="text-sm text-gray-500 max-w-3xl leading-relaxed">
             <strong>Timesheets</strong> record skilled labour, hours, field activity and outcomes against a dispatch card.
             The technical system record remains a field worksheet; supervisors review and approve submitted timesheets.
+            This is separate from an <strong>Internal Request</strong>, which only coordinates between teams and never logs field hours.
           </p>
         </div>
         {canSubmit && (
@@ -306,81 +307,93 @@ export default function WorksheetsPage({ user }) {
             </div>
           )}
 
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
-              Dispatch Card
-            </label>
-            <select
-              required
-              value={form.dispatch_card_id}
-              onChange={(e) => setForm({ ...form, dispatch_card_id: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 bg-white"
-            >
-              <option value="">Select dispatch card...</option>
-              {dispatches.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.dispatch_number || d.id} {d.status ? `(${d.status})` : ""} {d.site_name ? `— ${d.site_name}` : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
+          <fieldset className="space-y-4">
+            <legend className="text-xs font-semibold uppercase tracking-wider text-gray-500">Dispatch &amp; date</legend>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
-                Work Date
+              <label htmlFor="ws-dispatch" className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+                Dispatch Card
+              </label>
+              <select
+                id="ws-dispatch"
+                required
+                value={form.dispatch_card_id}
+                onChange={(e) => setForm({ ...form, dispatch_card_id: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 bg-white"
+              >
+                <option value="">Select dispatch card...</option>
+                {dispatches.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.dispatch_number || d.id} {d.status ? `(${d.status})` : ""} {d.site_name ? `— ${d.site_name}` : ""}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">This timesheet is created against the field worksheet record for the selected dispatch.</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="ws-date" className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+                  Work Date
+                </label>
+                <input
+                  id="ws-date"
+                  type="date"
+                  required
+                  value={form.work_date}
+                  onChange={(e) => setForm({ ...form, work_date: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20"
+                />
+              </div>
+              <div>
+                <label htmlFor="ws-hours" className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+                  Hours
+                </label>
+                <input
+                  id="ws-hours"
+                  type="number"
+                  step="0.5"
+                  min="0.5"
+                  required
+                  placeholder="e.g. 8"
+                  value={form.hours}
+                  onChange={(e) => setForm({ ...form, hours: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20"
+                />
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset className="space-y-4 border-t border-gray-100 pt-4">
+            <legend className="text-xs font-semibold uppercase tracking-wider text-gray-500">Work details</legend>
+            <div>
+              <label htmlFor="ws-activity" className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+                Activity
               </label>
               <input
-                type="date"
+                id="ws-activity"
+                type="text"
                 required
-                value={form.work_date}
-                onChange={(e) => setForm({ ...form, work_date: e.target.value })}
+                placeholder="e.g. Ceramic liner replacement"
+                value={form.activity}
+                onChange={(e) => setForm({ ...form, activity: e.target.value })}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20"
               />
             </div>
+
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
-                Hours
+              <label htmlFor="ws-outcomes" className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+                Outcomes
               </label>
-              <input
-                type="number"
-                step="0.5"
-                min="0.5"
-                required
-                placeholder="e.g. 8"
-                value={form.hours}
-                onChange={(e) => setForm({ ...form, hours: e.target.value })}
+              <textarea
+                id="ws-outcomes"
+                rows={3}
+                placeholder="Summary of work completed and observations"
+                value={form.outcomes}
+                onChange={(e) => setForm({ ...form, outcomes: e.target.value })}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
-              Activity
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Ceramic liner replacement"
-              value={form.activity}
-              onChange={(e) => setForm({ ...form, activity: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
-              Outcomes
-            </label>
-            <textarea
-              rows={3}
-              placeholder="Summary of work completed and observations"
-              value={form.outcomes}
-              onChange={(e) => setForm({ ...form, outcomes: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20"
-            />
-          </div>
+          </fieldset>
 
           <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
             <button
