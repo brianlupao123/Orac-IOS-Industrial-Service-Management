@@ -406,29 +406,41 @@ export default function ContractsPage({ user }) {
                   />
                 </div>
               ) : (
-                <ul className="divide-y divide-gray-200">
-                  {contractRows.map((contract) => (
-                    <li key={contract.id} className="p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="font-semibold text-orac-navy">{contract.contract_number}</h3>
-                          <p className="text-sm text-gray-800">{contract.title}</p>
-                          <p className="text-sm text-gray-600">{clientNames.get(contract.client_id) || "Client unavailable"}</p>
-                        </div>
-                        <StatusPill status={contract.status} />
-                      </div>
-                      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                        <div><dt className="text-gray-500">Period</dt><dd className="text-gray-800">{contract.start_date} to {contract.end_date}</dd></div>
-                        <div><dt className="text-gray-500">Total value</dt><dd className="text-gray-800">{formatMoney(contract.total_value)}</dd></div>
-                      </dl>
-                      {manageContracts && isContractOpen(contract) && (
-                        <button type="button" className={`${secondaryButton} mt-3`} onClick={() => openContractForm("edit", contract)} aria-label={`Edit contract ${contract.contract_number}`}>
-                          Edit
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50">
+                      <tr className="text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        <th scope="col" className="px-4 py-3">Contract</th>
+                        <th scope="col" className="px-4 py-3">Client</th>
+                        <th scope="col" className="px-4 py-3">Period</th>
+                        <th scope="col" className="px-4 py-3">Total value</th>
+                        <th scope="col" className="px-4 py-3">Status</th>
+                        <th scope="col" className="px-4 py-3"><span className="sr-only">Actions</span></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {contractRows.map((contract) => (
+                        <tr key={contract.id} className="align-top">
+                          <td className="px-4 py-4">
+                            <p className="font-semibold text-orac-navy">{contract.contract_number}</p>
+                            <p className="text-sm text-gray-800">{contract.title}</p>
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-600">{clientNames.get(contract.client_id) || "Client unavailable"}</td>
+                          <td className="px-4 py-4 text-sm text-gray-800 whitespace-nowrap">{contract.start_date} to {contract.end_date}</td>
+                          <td className="px-4 py-4 text-sm text-gray-800 whitespace-nowrap">{formatMoney(contract.total_value)}</td>
+                          <td className="px-4 py-4"><StatusPill status={contract.status} /></td>
+                          <td className="px-4 py-4 text-right">
+                            {manageContracts && isContractOpen(contract) && (
+                              <button type="button" className={secondaryButton} onClick={() => openContractForm("edit", contract)} aria-label={`Edit contract ${contract.contract_number}`}>
+                                Edit
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </section>
 
@@ -472,38 +484,53 @@ export default function ContractsPage({ user }) {
                   />
                 </div>
               ) : (
-                <ul className="divide-y divide-gray-200">
-                  {scheduleRows.map((schedule) => {
-                    const contract = contractById.get(schedule.contract_id);
-                    const overdue = isOverdue(schedule, contract, today);
-                    return (
-                      <li key={schedule.id} className="p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h3 className="font-semibold text-orac-slate">{contract ? `${contract.contract_number} ${contract.title}` : "Contract unavailable"}</h3>
-                            <p className="text-sm text-gray-600">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50">
+                      <tr className="text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        <th scope="col" className="px-4 py-3">Contract</th>
+                        <th scope="col" className="px-4 py-3">Equipment</th>
+                        <th scope="col" className="px-4 py-3">Frequency</th>
+                        <th scope="col" className="px-4 py-3">Next due</th>
+                        <th scope="col" className="px-4 py-3"><span className="sr-only">Actions</span></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {scheduleRows.map((schedule) => {
+                        const contract = contractById.get(schedule.contract_id);
+                        const overdue = isOverdue(schedule, contract, today);
+                        return (
+                          <tr key={schedule.id} className="align-top">
+                            <td className="px-4 py-4">
+                              <p className="font-semibold text-orac-slate">{contract ? `${contract.contract_number} ${contract.title}` : "Contract unavailable"}</p>
+                              {contract && !isContractOpen(contract) && (
+                                <p className="mt-1 text-xs text-gray-500">This contract is {contract.status}, so the schedule is read-only.</p>
+                              )}
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-600">
                               {schedule.equipment_tag_code || (schedule.equipment_tag_id ? "Equipment tag unavailable" : "Whole contract")}
-                            </p>
-                          </div>
-                          <span className="shrink-0 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-800">{schedule.frequency}</span>
-                        </div>
-                        <p className="mt-3 text-sm text-gray-800">
-                          Next due {schedule.next_due_date}
-                          {overdue && <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">Overdue</span>}
-                        </p>
-                        {schedule.notes && <p className="mt-1 text-sm text-gray-600">{schedule.notes}</p>}
-                        {contract && !isContractOpen(contract) && (
-                          <p className="mt-1 text-xs text-gray-500">This contract is {contract.status}, so the schedule is read-only.</p>
-                        )}
-                        {manageSchedules && isContractOpen(contract) && (
-                          <button type="button" className={`${secondaryButton} mt-3`} onClick={() => openScheduleForm("edit", schedule)} aria-label={`Edit schedule for ${contract.contract_number}`}>
-                            Edit
-                          </button>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
+                            </td>
+                            <td className="px-4 py-4">
+                              <span className="shrink-0 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-800">{schedule.frequency}</span>
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-800 whitespace-nowrap">
+                              Next due {schedule.next_due_date}
+                              {overdue && <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">Overdue</span>}
+                              {schedule.notes && <p className="mt-1 text-sm text-gray-600 whitespace-normal">{schedule.notes}</p>}
+                            </td>
+                            <td className="px-4 py-4 text-right">
+                              {manageSchedules && isContractOpen(contract) && (
+                                <button type="button" className={secondaryButton} onClick={() => openScheduleForm("edit", schedule)} aria-label={`Edit schedule for ${contract.contract_number}`}>
+                                  Edit
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </section>
           </div>
