@@ -34,9 +34,9 @@ export default function PortalLayout({ user, onLogout, children }) {
               <path d="M18 26 Q21 20 24 26 Q27 32 30 26" fill="none" stroke="#2FA2E3" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             <div className="min-w-0">
-              <div className="truncate text-sm font-bold tracking-wide text-orac-slate">ORAC SYSTEMS</div>
-              <div className="truncate text-[10px] uppercase tracking-widest text-orac-cyan font-semibold">Operational Portal</div>
-              <div className="hidden truncate text-[9px] text-gray-400 tracking-wide sm:block">A Product of Handon Enterprises (Pvt) Ltd</div>
+              <div className="truncate text-base font-bold text-orac-slate">ORAC SYSTEMS</div>
+              <div className="truncate text-xs font-semibold text-orac-cyan">Operational Portal</div>
+              <div className="hidden truncate text-xs text-gray-500 sm:block">A Product of Handon Enterprises (Pvt) Ltd</div>
             </div>
           </div>
 
@@ -45,7 +45,7 @@ export default function PortalLayout({ user, onLogout, children }) {
             {/* Live status indicator */}
             <div className="hidden items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 md:flex">
               <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Online</span>
+              <span className="text-xs font-bold text-emerald-700">Online</span>
             </div>
             <ThemeToggle />
             <NotificationBell />
@@ -85,7 +85,7 @@ export default function PortalLayout({ user, onLogout, children }) {
       <main className="flex-1 p-4 sm:p-6">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white px-4 py-5 text-xs text-gray-500 sm:px-6">
+      <footer className="border-t border-gray-200 bg-white px-4 py-5 text-sm text-gray-500 sm:px-6">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><span>Orac-IOS · Orac Industrial Operations System</span><span><a className="font-semibold text-orac-blue hover:underline" href="https://oracsystems.co.zw" target="_blank" rel="noreferrer">Company site</a> · <button type="button" onClick={onLogout} className="font-semibold text-orac-blue hover:underline">Sign out</button></span></div>
         <p className="mx-auto mt-2 max-w-7xl">&copy; {new Date().getFullYear()} Handon Enterprises (Pvt) Ltd, trading as Orac Systems.</p>
       </footer>

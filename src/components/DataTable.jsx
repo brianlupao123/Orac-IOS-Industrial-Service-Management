@@ -2,10 +2,10 @@ import React from "react";
 
 export default function DataTable({ title, columns, rows, renderRow, emptyText = "No data", action }) {
   return (
-    <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+    <div className="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm">
       {(title || action) && (
         <div className="flex items-center justify-between border-b border-gray-50 bg-gray-50/30 px-5 py-4">
-          {title && <h3 className="text-sm font-semibold text-gray-900 tracking-tight">{title}</h3>}
+          {title && <h3 className="text-base font-semibold text-gray-900">{title}</h3>}
           {action && <div>{action}</div>}
         </div>
       )}
@@ -20,7 +20,7 @@ export default function DataTable({ title, columns, rows, renderRow, emptyText =
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50/50">
-              <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <tr className="border-b border-gray-100 text-left text-sm font-semibold text-gray-600">
                 {columns.map((col, i) => (
                   <th key={i} className="px-5 py-3.5 whitespace-nowrap">{col}</th>
                 ))}

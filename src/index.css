@@ -89,6 +89,19 @@ html,
 body {
   background-color: var(--orac-canvas);
   color: var(--orac-text-primary);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Operational screens prioritise fast, fatigue-resistant reading. Components
+   may vary weight and size, but should not depend on stretched lettering. */
+body *,
+button,
+input,
+select,
+textarea {
+  letter-spacing: 0 !important;
 }
 
 /* Native form controls follow the token set in both themes, including the
@@ -100,6 +113,7 @@ textarea {
   background-color: var(--orac-canvas);
   border-color: var(--orac-border-strong);
   color: var(--orac-text-primary);
+  font: inherit;
 }
 
 input::placeholder,
