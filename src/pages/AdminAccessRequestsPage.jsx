@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { accessRequests, collections } from "../api/client.js";
 import SearchableSelect from "../components/SearchableSelect.jsx";
+import StatusBadge from "../components/StatusBadge.jsx";
+import { ErrorBanner } from "../components/PageStates.jsx";
 
 const ALL_ROLES = [
   "Admin", "Management", "Sales", "Finance",
@@ -74,13 +76,11 @@ export default function AdminAccessRequestsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-orac-slate">Access Requests</h1>
-      {error && (
-        <p className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">{error}</p>
-      )}
+      <h1 className="text-xl font-semibold text-orac-blue">Access Requests</h1>
+      {error && <ErrorBanner message={error} />}
 
       <section className="rounded border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 font-medium text-orac-slate">
+        <h2 className="mb-3 font-medium text-orac-blue">
           Pending ({pending.length})
         </h2>
         {pending.length === 0 && <p className="text-sm text-gray-400">Nothing waiting on review.</p>}
@@ -93,7 +93,7 @@ export default function AdminAccessRequestsPage() {
               <div key={r.id} className="rounded border border-gray-100 p-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-medium text-orac-slate">{r.name}</p>
+                    <p className="font-medium text-orac-blue">{r.name}</p>
                     <p className="text-sm text-gray-500">{r.email}</p>
                     <p className="text-xs text-gray-400 mt-1">
                       Requested: {r.requested_role} &middot; {new Date(r.created_at).toLocaleString()}
@@ -147,25 +147,31 @@ export default function AdminAccessRequestsPage() {
       </section>
 
       <section className="rounded border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 font-medium text-orac-slate">History</h2>
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100 text-left">
-            <tr>
-              <th className="p-2">Name</th><th className="p-2">Email</th>
-              <th className="p-2">Requested</th><th className="p-2">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {resolved.map((r) => (
-              <tr key={r.id} className="border-t border-gray-100">
-                <td className="p-2">{r.name}</td>
-                <td className="p-2">{r.email}</td>
-                <td className="p-2">{r.requested_role}</td>
-                <td className="p-2">{r.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <h2 className="mb-3 font-medium text-orac-blue">History</h2>
+        {resolved.length === 0 ? (
+          <p className="text-sm text-gray-400">No decided requests yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-100 text-left">
+                <tr>
+                  <th className="p-2">Name</th><th className="p-2">Email</th>
+                  <th className="p-2">Requested</th><th className="p-2">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {resolved.map((r) => (
+                  <tr key={r.id} className="border-t border-gray-100">
+                    <td className="p-2">{r.name}</td>
+                    <td className="p-2">{r.email}</td>
+                    <td className="p-2">{r.requested_role}</td>
+                    <td className="p-2"><StatusBadge status={r.status} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   );
