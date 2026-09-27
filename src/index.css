@@ -2,97 +2,398 @@
 @tailwind components;
 @tailwind utilities;
 
- :root {
-  --orac-page: #ffffff;
-  --orac-surface: #F8FAFC;
-  --orac-border: #E2E8F0;
-  --orac-text: #0B0F19;
-  --orac-secondary: #64748B;
-  --orac-muted: #94A3B8;
-  --orac-heading: #00488C;
+/* =========================================================================
+   ORAC-IOS SEMANTIC DESIGN TOKENS
+   ---------------------------------------------------------------------
+   Single source of truth for color in both themes. Every value below is
+   contrast-checked against WCAG 2.2 AA (4.5:1 body text, 3:1 large text /
+   essential icons & UI-component borders). See VISUAL_AUDIT.md for the
+   full computed matrix. Theme is toggled by ThemeToggle.jsx, which sets
+   html[data-theme="light"|"dark"].
+   ========================================================================= */
+
+:root {
+  /* Surfaces */
+  --orac-canvas: #ffffff;         /* page background */
+  --orac-surface: #f8fafc;        /* raised panels, cards, header, table head */
+  --orac-surface-muted: #eef2f7;  /* nested/muted panels, hover rows, chips */
+
+  /* Text */
+  --orac-text-primary: #0b0f19;
+  --orac-text-secondary: #3d4a5c;
+  --orac-text-muted: #5b6b80;
+
+  /* Borders */
+  --orac-border: #e2e8f0;         /* decorative dividers */
+  --orac-border-strong: #64748b;  /* inputs, table rules, essential boundaries (>=3:1) */
+
+  /* Brand / accent */
+  --orac-accent: #00488c;         /* links, headings, icons on light surfaces */
+  --orac-accent-strong: #003c74;  /* filled buttons (bg), hover of accent */
+  --orac-focus-ring: #00488c;
+
+  /* Status */
+  --orac-success-text: #047857;
+  --orac-success-bg: #ecfdf5;
+  --orac-success-border: #047857;
+  --orac-danger-text: #b91c1c;
+  --orac-danger-bg: #fef2f2;
+  --orac-danger-border: #b91c1c;
+  --orac-warning-text: #92400e;
+  --orac-warning-bg: #fffbeb;
+  --orac-warning-border: #92400e;
+  --orac-info-text: #0369a1;
+  --orac-info-bg: #f0f9ff;
+  --orac-info-border: #0369a1;
+
+  color-scheme: light;
 }
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  --orac-page: #080838;
-  --orac-surface: #0f1b4a;
-  --orac-border: #5964a0;
-  --orac-text: #f5f7fa;
-  --orac-secondary: #b8c2cc;
-  --orac-muted: #8a94a0;
-  --orac-heading: #8fc4ea;
+
+  --orac-canvas: #0b0f19;
+  --orac-surface: #141b2c;
+  --orac-surface-muted: #1c2438;
+
+  --orac-text-primary: #f3f6fa;
+  --orac-text-secondary: #c3ccda;
+  --orac-text-muted: #93a0b4;
+
+  --orac-border: #2a3348;
+  --orac-border-strong: #7c849a;
+
+  --orac-accent: #8fc4ea;
+  --orac-accent-strong: #00488c;   /* filled buttons keep brand navy in both themes */
+  --orac-focus-ring: #8fc4ea;
+
+  --orac-success-text: #6fdda5;
+  --orac-success-bg: #123524;
+  --orac-success-border: #2a7a50;
+  --orac-danger-text: #ff9aa8;
+  --orac-danger-bg: #3a1620;
+  --orac-danger-border: #c94a5c;
+  --orac-warning-text: #f5c15b;
+  --orac-warning-bg: #3a2b0e;
+  --orac-warning-border: #b08624;
+  --orac-info-text: #7fc4f5;
+  --orac-info-bg: #12283f;
+  --orac-info-border: #3f8cc2;
 }
 
-html[data-theme="dark"] body {
-  background: var(--orac-page);
+/* =========================================================================
+   GLOBAL BASE STYLES
+   ========================================================================= */
+
+html,
+body {
+  background-color: var(--orac-canvas);
+  color: var(--orac-text-primary);
 }
 
+/* Native form controls follow the token set in both themes, including the
+   accessible border-strong boundary (fixes light-mode inputs previously
+   sitting on a 1.2:1 border and dark-mode inputs previously hard-coded). */
+input,
+select,
+textarea {
+  background-color: var(--orac-canvas);
+  border-color: var(--orac-border-strong);
+  color: var(--orac-text-primary);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--orac-text-muted);
+  opacity: 1;
+}
+
+/* Consistent keyboard focus visibility in both themes, on top of whatever
+   focus:ring-* utility a component already uses. */
+:focus-visible {
+  outline: 2px solid var(--orac-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Respect the OS-level reduced-motion preference across every animation
+   and transition utility used in the app (animate-pulse, animate-bounce,
+   animate-spin, animate-in, transition-*, hover:-translate-y-1, etc.). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+  }
+}
+
+/* =========================================================================
+   DARK-MODE RETROFIT BRIDGE
+   ---------------------------------------------------------------------
+   The app's JSX is authored with fixed Tailwind gray/slate/status utility
+   classes (page-JSX is out of scope for this chat). Every rule below maps
+   an already-in-use class, verified against the current source, to the
+   token set above so dark mode reads correctly without any component
+   edits. Each block only lists classes that actually occur in src/**.
+   ========================================================================= */
+
+  /* ---- Surfaces -------------------------------------------------- */
+  /* Raised panels: cards, header, modal, portal chrome */
 html[data-theme="dark"] .bg-white,
-html[data-theme="dark"] .bg-white\/95 {
+html[data-theme="dark"] .bg-white\/95,
+html[data-theme="dark"] .bg-white\/80 {
   background-color: var(--orac-surface) !important;
-}
+  }
+html[data-theme="dark"] .bg-white\/20 {
+  background-color: rgba(243, 246, 250, 0.12) !important;
+  }
 
+  /* Canvas-level neutral backgrounds (nav strip, section wash) */
 html[data-theme="dark"] .bg-gray-50,
 html[data-theme="dark"] .bg-slate-50,
 html[data-theme="dark"] .bg-gray-50\/30,
 html[data-theme="dark"] .bg-gray-50\/50,
-html[data-theme="dark"] .bg-gray-50\/70 {
-  background-color: var(--orac-page) !important;
-}
+html[data-theme="dark"] .bg-gray-50\/60,
+html[data-theme="dark"] .bg-gray-50\/70,
+html[data-theme="dark"] .bg-gray-50\/80,
+html[data-theme="dark"] .bg-gray-100\/50 {
+  background-color: var(--orac-canvas) !important;
+  }
 
+  /* Muted/nested surfaces: table head, hover rows, chips, kiosk panels */
 html[data-theme="dark"] .bg-gray-100,
-html[data-theme="dark"] .bg-slate-100 {
-  background-color: #182658 !important;
-}
+html[data-theme="dark"] .bg-slate-100,
+html[data-theme="dark"] .bg-gray-200,
+html[data-theme="dark"] .bg-gray-200\/50,
+html[data-theme="dark"] .bg-gray-200\/80,
+html[data-theme="dark"] .bg-gray-300,
+html[data-theme="dark"] .bg-orac-surface,
+html[data-theme="dark"] .bg-orac-surface\/50 {
+  background-color: var(--orac-surface-muted) !important;
+  }
 
-html[data-theme="dark"] .border-gray-50,
-html[data-theme="dark"] .border-gray-100,
-html[data-theme="dark"] .border-gray-200,
-html[data-theme="dark"] .border-slate-200,
-html[data-theme="dark"] .border-slate-300 {
-  border-color: var(--orac-border) !important;
-}
+  /* Modal/panel scrims stay dark and translucent in both themes */
+html[data-theme="dark"] .bg-gray-900\/40,
+html[data-theme="dark"] .bg-slate-950\/20 {
+  background-color: rgba(0, 0, 0, 0.55) !important;
+  }
 
+  /* ---- Text -------------------------------------------------------- */
 html[data-theme="dark"] .text-gray-900,
+html[data-theme="dark"] .text-gray-800,
 html[data-theme="dark"] .text-slate-900,
 html[data-theme="dark"] .text-slate-950,
-html[data-theme="dark"] .text-orac-slate {
-  color: var(--orac-text) !important;
-}
+html[data-theme="dark"] .text-slate-800,
+html[data-theme="dark"] .text-orac-slate,
+html[data-theme="dark"] .text-orac-ink,
+html[data-theme="dark"] .text-orac-heading {
+  color: var(--orac-text-primary) !important;
+  }
 
 html[data-theme="dark"] .text-gray-700,
-html[data-theme="dark"] .text-slate-700,
 html[data-theme="dark"] .text-gray-600,
-html[data-theme="dark"] .text-slate-600 {
-  color: var(--orac-secondary) !important;
-}
+html[data-theme="dark"] .text-slate-700,
+html[data-theme="dark"] .text-slate-600,
+html[data-theme="dark"] .text-orac-secondary {
+  color: var(--orac-text-secondary) !important;
+  }
 
 html[data-theme="dark"] .text-gray-500,
 html[data-theme="dark"] .text-gray-400,
-html[data-theme="dark"] .text-slate-500 {
-  color: var(--orac-muted) !important;
-}
+html[data-theme="dark"] .text-gray-300,
+html[data-theme="dark"] .text-slate-500,
+html[data-theme="dark"] .text-slate-300 {
+  color: var(--orac-text-muted) !important;
+  }
 
-html[data-theme="dark"] .text-orac-blue {
-  color: var(--orac-heading) !important;
-}
+html[data-theme="dark"] .text-orac-blue,
+html[data-theme="dark"] .text-orac-navy {
+  color: var(--orac-accent) !important;
+  }
 
+  /* ---- Borders / dividers ------------------------------------------ */
+html[data-theme="dark"] .border-gray-50,
+html[data-theme="dark"] .border-gray-100,
+html[data-theme="dark"] .border-gray-200,
+html[data-theme="dark"] .border-gray-300,
+html[data-theme="dark"] .border-slate-200,
+html[data-theme="dark"] .border-slate-300,
+html[data-theme="dark"] .border-orac-border,
+html[data-theme="dark"] .divide-gray-50,
+html[data-theme="dark"] .divide-gray-100,
+html[data-theme="dark"] .divide-gray-200,
+html[data-theme="dark"] .divide-orac-border {
+  border-color: var(--orac-border) !important;
+  }
+
+  /* Table rules and other boundaries called out as an observed defect
+     (low separation in dark mode) get the AA-checked stronger border. */
+html[data-theme="dark"] table,
+html[data-theme="dark"] thead,
+html[data-theme="dark"] tbody,
+html[data-theme="dark"] tr,
+html[data-theme="dark"] th,
+html[data-theme="dark"] td {
+  border-color: var(--orac-border-strong);
+  }
+
+  /* ---- Brand fills: keep the same navy across themes --------------- */
 html[data-theme="dark"] .bg-orac-blue,
 html[data-theme="dark"] .bg-orac-navy,
 html[data-theme="dark"] .bg-orac-slate {
-  background-color: #00488C !important;
-}
+  background-color: var(--orac-accent-strong) !important;
+  }
+html[data-theme="dark"] .border-orac-blue,
+html[data-theme="dark"] .border-orac-navy {
+  border-color: var(--orac-accent) !important;
+  }
+html[data-theme="dark"] .ring-orac-blue,
+html[data-theme="dark"] .ring-orac-navy {
+  --tw-ring-color: var(--orac-accent) !important;
+  }
+html[data-theme="dark"] .ring-orac-blue\/10 { --tw-ring-color: rgba(143, 196, 234, 0.10) !important; }
+html[data-theme="dark"] .ring-orac-blue\/20 { --tw-ring-color: rgba(143, 196, 234, 0.20) !important; }
+html[data-theme="dark"] .ring-orac-blue\/30 { --tw-ring-color: rgba(143, 196, 234, 0.30) !important; }
+html[data-theme="dark"] .ring-orac-blue\/40 { --tw-ring-color: rgba(143, 196, 234, 0.40) !important; }
+html[data-theme="dark"] .ring-orac-blue\/50 { --tw-ring-color: rgba(143, 196, 234, 0.50) !important; }
 
-html[data-theme="dark"] input,
-html[data-theme="dark"] select,
-html[data-theme="dark"] textarea {
-  background-color: #080838 !important;
-  border-color: var(--orac-border) !important;
-  color: var(--orac-text) !important;
-}
+  /* Subtle card definition rings (StatCard, AiAssistant panel) — near-
+     invisible dark-on-dark in the previous implementation. */
+html[data-theme="dark"] .ring-gray-900\/5,
+html[data-theme="dark"] .ring-gray-900\/20,
+html[data-theme="dark"] .ring-black\/5,
+html[data-theme="dark"] .border-black\/5,
+html[data-theme="dark"] .border-white {
+  --tw-ring-color: rgba(243, 246, 250, 0.10) !important;
+  border-color: rgba(243, 246, 250, 0.14) !important;
+  }
 
+  /* ---- Status semantics: success (emerald/green) -------------------- */
+html[data-theme="dark"] .bg-emerald-50,
+html[data-theme="dark"] .bg-emerald-50\/50,
+html[data-theme="dark"] .bg-emerald-100,
+html[data-theme="dark"] .bg-emerald-100\/80,
+html[data-theme="dark"] .bg-green-50 {
+  background-color: var(--orac-success-bg) !important;
+  }
+html[data-theme="dark"] .text-emerald-600,
+html[data-theme="dark"] .text-emerald-700,
+html[data-theme="dark"] .text-emerald-800,
+html[data-theme="dark"] .text-emerald-900,
+html[data-theme="dark"] .text-emerald-950,
+html[data-theme="dark"] .text-green-600,
+html[data-theme="dark"] .text-green-700,
+html[data-theme="dark"] .text-green-800 {
+  color: var(--orac-success-text) !important;
+  }
+html[data-theme="dark"] .border-emerald-100,
+html[data-theme="dark"] .border-emerald-200,
+html[data-theme="dark"] .border-emerald-300,
+html[data-theme="dark"] .border-emerald-500,
+html[data-theme="dark"] .border-green-200 {
+  border-color: var(--orac-success-border) !important;
+  }
+html[data-theme="dark"] .ring-emerald-900\/5 { --tw-ring-color: rgba(111, 221, 165, 0.18) !important; }
+html[data-theme="dark"] .bg-emerald-400,
+html[data-theme="dark"] .bg-emerald-500,
+html[data-theme="dark"] .bg-emerald-600,
+html[data-theme="dark"] .bg-emerald-700,
+html[data-theme="dark"] .bg-green-600 {
+  background-color: var(--orac-success-text) !important;
+  }
+
+  /* ---- Status semantics: danger (red/rose) -------------------------- */
+html[data-theme="dark"] .bg-red-50,
+html[data-theme="dark"] .bg-red-50\/30,
+html[data-theme="dark"] .bg-red-50\/50,
+html[data-theme="dark"] .bg-red-50\/80,
+html[data-theme="dark"] .bg-red-100,
+html[data-theme="dark"] .bg-red-100\/80 {
+  background-color: var(--orac-danger-bg) !important;
+  }
+html[data-theme="dark"] .text-red-600,
+html[data-theme="dark"] .text-red-700,
+html[data-theme="dark"] .text-red-800,
+html[data-theme="dark"] .text-red-900,
+html[data-theme="dark"] .text-red-950 {
+  color: var(--orac-danger-text) !important;
+  }
+html[data-theme="dark"] .border-red-100,
+html[data-theme="dark"] .border-red-200,
+html[data-theme="dark"] .border-red-300,
+html[data-theme="dark"] .border-red-400 {
+  border-color: var(--orac-danger-border) !important;
+  }
+html[data-theme="dark"] .ring-red-900\/5 { --tw-ring-color: rgba(255, 154, 168, 0.18) !important; }
+html[data-theme="dark"] .bg-red-500,
+html[data-theme="dark"] .bg-red-600 {
+  background-color: var(--orac-danger-text) !important;
+  }
+
+  /* ---- Status semantics: warning (amber/yellow/orange) -------------- */
+html[data-theme="dark"] .bg-amber-50,
+html[data-theme="dark"] .bg-amber-50\/50,
+html[data-theme="dark"] .bg-amber-100,
+html[data-theme="dark"] .bg-amber-100\/80,
+html[data-theme="dark"] .bg-orange-100 {
+  background-color: var(--orac-warning-bg) !important;
+  }
+html[data-theme="dark"] .text-amber-600,
+html[data-theme="dark"] .text-amber-800,
+html[data-theme="dark"] .text-amber-900,
+html[data-theme="dark"] .text-amber-950,
+html[data-theme="dark"] .text-orange-800 {
+  color: var(--orac-warning-text) !important;
+  }
+html[data-theme="dark"] .border-amber-100,
+html[data-theme="dark"] .border-amber-200,
+html[data-theme="dark"] .border-amber-300,
+html[data-theme="dark"] .border-amber-500 {
+  border-color: var(--orac-warning-border) !important;
+  }
+html[data-theme="dark"] .ring-amber-900\/5 { --tw-ring-color: rgba(245, 193, 91, 0.18) !important; }
+html[data-theme="dark"] .bg-amber-700,
+html[data-theme="dark"] .bg-amber-800 {
+  background-color: var(--orac-warning-text) !important;
+  }
+
+  /* ---- Status semantics: info (sky/blue/indigo) --------------------- */
+html[data-theme="dark"] .bg-sky-50,
+html[data-theme="dark"] .bg-sky-50\/50,
+html[data-theme="dark"] .bg-sky-100,
+html[data-theme="dark"] .bg-sky-100\/80,
+html[data-theme="dark"] .bg-indigo-100 {
+  background-color: var(--orac-info-bg) !important;
+  }
+html[data-theme="dark"] .text-sky-300,
+html[data-theme="dark"] .text-sky-700,
+html[data-theme="dark"] .text-sky-800,
+html[data-theme="dark"] .text-sky-900,
+html[data-theme="dark"] .text-sky-950,
+html[data-theme="dark"] .text-blue-700,
+html[data-theme="dark"] .text-indigo-800 {
+  color: var(--orac-info-text) !important;
+  }
+html[data-theme="dark"] .border-sky-100,
+html[data-theme="dark"] .border-sky-200,
+html[data-theme="dark"] .border-sky-300,
+html[data-theme="dark"] .border-sky-500 {
+  border-color: var(--orac-info-border) !important;
+  }
+html[data-theme="dark"] .ring-sky-900\/5,
+html[data-theme="dark"] .ring-sky-100 {
+  --tw-ring-color: rgba(127, 196, 245, 0.18) !important;
+  }
+html[data-theme="dark"] .bg-sky-500,
+html[data-theme="dark"] .bg-sky-700 {
+  background-color: var(--orac-info-text) !important;
+  }
+
+  /* ---- Theme toggle control ----------------------------------------- */
 html[data-theme="dark"] .theme-toggle {
   background-color: var(--orac-surface) !important;
-  border-color: var(--orac-border) !important;
-  color: var(--orac-text) !important;
-}
+  border-color: var(--orac-border-strong) !important;
+  color: var(--orac-text-primary) !important;
+  }

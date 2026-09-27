@@ -97,6 +97,40 @@ export default function ReportsPage({ user }) {
     if (active === "worksheets" && Array.isArray(data?.pending_review) && Array.isArray(data?.returned_for_correction) && typeof data?.approved_count === "number") {
       return <div className="space-y-6 p-5"><div className="grid gap-3 sm:grid-cols-3"><StatCard label="Approved" value={data.approved_count} tone="green" /><StatCard label="Pending Review" value={data.pending_review.length} tone={data.pending_review.length ? "amber" : "slate"} /><StatCard label="Returned" value={data.returned_for_correction.length} tone={data.returned_for_correction.length ? "red" : "slate"} /></div><DataTable title="Timesheets Pending Review" columns={["Timesheet", "Dispatch", "Date", "Hours"]} rows={data.pending_review} emptyText="No timesheets are pending review." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5">{row.id}</td><td className="px-5 py-3.5">{row.dispatch_card_id}</td><td className="px-5 py-3.5">{row.work_date || "-"}</td><td className="px-5 py-3.5">{row.hours ?? "-"}</td></tr>} /><DataTable title="Timesheets Returned for Correction" columns={["Timesheet", "Dispatch", "Comment"]} rows={data.returned_for_correction} emptyText="No timesheets have been returned." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5">{row.id}</td><td className="px-5 py-3.5">{row.dispatch_card_id}</td><td className="px-5 py-3.5">{row.supervisor_comment || "-"}</td></tr>} /></div>;
     }
+    if (active === "dispatch" && Array.isArray(data)) {
+      const startedBeforePoCount = data.filter((row) => row.started_before_po).length;
+      return <div className="space-y-6 p-5">
+        <div className="grid gap-3 sm:grid-cols-3"><StatCard label="Dispatches" value={data.length} tone="blue" /><StatCard label="Started Before PO" value={startedBeforePoCount} tone={startedBeforePoCount ? "amber" : "slate"} /><StatCard label="Fully Approved" value={data.filter((row) => row.worksheet_count > 0 && row.approved_worksheet_count === row.worksheet_count).length} tone="green" /></div>
+        <DataTable title="Dispatch Cards" columns={["Dispatch", "Status", "Scheduled Start", "Timesheets", "PO Risk"]} rows={data} emptyText="No dispatch cards found." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50">
+          <td className="px-5 py-3.5 font-medium">{row.dispatch_number || row.id}</td>
+          <td className="px-5 py-3.5"><StatusBadge status={row.status} /></td>
+          <td className="px-5 py-3.5">{row.scheduled_start || "-"}</td>
+          <td className="px-5 py-3.5">{row.approved_worksheet_count ?? 0} of {row.worksheet_count ?? 0} approved</td>
+          <td className="px-5 py-3.5">{row.started_before_po ? <span data-evidence="dispatch-started-before-po" className="inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">Started before PO</span> : <span className="text-gray-400">-</span>}</td>
+        </tr>} />
+      </div>;
+    }
+    if (active === "invoice-ready" && Array.isArray(data)) {
+      return <div className="space-y-6 p-5">
+        <div className="grid gap-3 sm:grid-cols-1"><StatCard label="Ready to Invoice" value={data.length} tone={data.length ? "green" : "slate"} /></div>
+        <DataTable title="Dispatches Ready to Invoice" columns={["Dispatch", "Quotation"]} rows={data} emptyText="No dispatches are ready to invoice." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5 font-medium">{row.dispatch_number || row.id}</td><td className="px-5 py-3.5">{row.quotation_id || "-"}</td></tr>} />
+      </div>;
+    }
+    if (active === "variance" && Array.isArray(data)) {
+      const totalVariance = data.reduce((sum, row) => sum + Number(row.variance || 0), 0);
+      return <div className="space-y-6 p-5">
+        <div className="grid gap-3 sm:grid-cols-2"><StatCard label="Purchase Orders Over Budget" value={data.length} tone={data.length ? "red" : "slate"} /><StatCard label="Total Variance" value={`R ${totalVariance.toLocaleString()}`} tone={totalVariance > 0 ? "red" : "slate"} /></div>
+        <DataTable title="PO Variance (Logged Value vs PO Amount)" columns={["PO", "PO Amount", "Logged Value", "Variance"]} rows={data} emptyText="No purchase orders have a variance." renderRow={(row) => {
+          const variance = Number(row.variance || 0);
+          return <tr key={row.id} className="hover:bg-gray-50">
+            <td className="px-5 py-3.5 font-medium">{row.po_reference || row.id}</td>
+            <td className="px-5 py-3.5">R {Number(row.po_amount || 0).toLocaleString()}</td>
+            <td className="px-5 py-3.5">R {Number(row.logged_value || 0).toLocaleString()}</td>
+            <td className="px-5 py-3.5"><span data-evidence="variance-amount" className={`font-semibold ${variance > 0 ? "text-red-600" : variance < 0 ? "text-emerald-600" : "text-gray-500"}`}>{variance > 0 ? "+" : ""}R {variance.toLocaleString()}</span></td>
+          </tr>;
+        }} />
+      </div>;
+    }
     return null;
   }
 
@@ -105,7 +139,7 @@ export default function ReportsPage({ user }) {
       {/* Header and Controls */}
       <div>
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-stretch">
-          <PageHeaderBanner className="min-w-0" eyebrow="Operational intelligence" title="Operational Reports" subtitle="View and export system metrics." iconPath={ICONS.report} />
+          <PageHeaderBanner className="min-w-0" eyebrow="Operational intelligence" title="Operational Reports" subtitle="Read-only views and exports. Reports do not change quotes, purchase orders, dispatches, stock, or invoices." iconPath={ICONS.report} />
           <button
             onClick={handleExportCsv}
             disabled={loading || !canExport}

@@ -5,6 +5,10 @@ import {
 } from "../internalWorkRequestModel.js";
 
 const buttonClass = "rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50";
+// Presentation-only accent so a busy inbox can be scanned at a glance; the
+// server's priority value drives it, nothing here changes behaviour or order.
+const PRIORITY_ACCENT = { Urgent: "border-l-4 border-l-red-400", High: "border-l-4 border-l-amber-300" };
+const priorityAccent = (priority) => PRIORITY_ACCENT[priority] || "border-l-4 border-l-transparent";
 
 // One request. Everything shown, including the buttons, is what the server
 // returned for this viewer: allowed_actions is the only source of actions.
@@ -16,7 +20,7 @@ export default function InternalRequestCard({ item, mode, open, detail, note, no
   const noteId = `iwr-note-${item.id}`;
 
   return (
-    <li data-evidence="internal-request-item" className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+    <li data-evidence="internal-request-item" className={`rounded-lg border border-gray-200 bg-white p-5 shadow-sm ${priorityAccent(view.priority)}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-orac-slate">{view.subject}</h3>

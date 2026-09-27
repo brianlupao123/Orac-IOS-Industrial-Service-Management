@@ -68,6 +68,10 @@ export default function ServiceRequestTriagePage() {
   }
 
   const buttonClass = "rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50";
+  // Presentation-only accent so an urgent queue can be scanned at a glance; the
+  // server's urgency value drives it, nothing here changes behaviour or order.
+  const URGENCY_ACCENT = { urgent_downtime: "border-l-4 border-l-red-400", planned_shutdown: "border-l-4 border-l-amber-300", standard: "border-l-4 border-l-transparent" };
+  const urgencyAccent = (urgency) => URGENCY_ACCENT[urgency] || URGENCY_ACCENT.standard;
 
   return (
     <div className="space-y-6">
@@ -99,7 +103,7 @@ export default function ServiceRequestTriagePage() {
             const actions = triageActionsFor(item.status);
             const busy = busyId === item.id;
             return (
-              <li key={item.id} className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+              <li key={item.id} className={`rounded-lg border border-gray-200 bg-white p-5 shadow-sm ${urgencyAccent(item.urgency)}`}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h2 className="text-base font-semibold text-orac-slate">{item.title}</h2>

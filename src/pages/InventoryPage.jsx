@@ -13,6 +13,7 @@ export default function InventoryPage({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("stock");
+  const [lowStockOnly, setLowStockOnly] = useState(false);
   
   const [form, setForm] = useState({ stock_item_id: "", movement_type: "in", quantity: "", reason: "", override_negative: false });
 
@@ -104,6 +105,7 @@ export default function InventoryPage({ user }) {
 
   const lowStockCount = items.filter((i) => i.quantity_on_hand <= i.reorder_level).length;
   const totalValue = items.reduce((sum, i) => sum + (i.quantity_on_hand * Number(i.unit_cost || 0)), 0);
+  const visibleItems = lowStockOnly ? items.filter((i) => i.quantity_on_hand <= i.reorder_level) : items;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -218,7 +220,16 @@ export default function InventoryPage({ user }) {
 
             {/* Stock List */}
             <div className={canManage ? "lg:col-span-1" : "lg:col-span-2"}>
-              <div className="flex justify-end mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={lowStockOnly}
+                    onChange={(e) => setLowStockOnly(e.target.checked)}
+                    className="rounded border-gray-300 text-orac-blue focus:ring-orac-blue/20"
+                  />
+                  Show reorder attention only ({lowStockCount})
+                </label>
                 {canManage && (
                   <button onClick={() => setItemModal({ open: true, data: null })} className="px-4 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg shadow-sm hover:bg-slate-700 transition-all">
                     + New Stock Item
@@ -226,32 +237,46 @@ export default function InventoryPage({ user }) {
                 )}
               </div>
               {loading ? (
-                <div className="py-12 text-center text-gray-400">Loading inventory...</div>
+                <div data-evidence="inventory-stock-loading" className="py-12 text-center text-gray-400">Loading inventory...</div>
+              ) : lowStockOnly && visibleItems.length === 0 ? (
+                <div data-evidence="inventory-stock-filter-empty" className="rounded-xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-500 shadow-sm">
+                  No items currently need reorder attention.
+                </div>
               ) : (
                 <DataTable
                   title="Current Stock Levels"
-                  columns={["Code", "Name", "On Hand", "Reorder", "Actions"]}
-                  rows={items}
+                  columns={["Code", "Name", "On Hand", "Reorder Level", "Status", "Actions"]}
+                  rows={visibleItems}
                   emptyText="No inventory items found."
-                  renderRow={(i) => (
-                    <tr key={i.id} className={`transition-colors hover:bg-gray-50/80 group ${i.quantity_on_hand <= i.reorder_level ? "bg-red-50/30" : ""}`}>
-                      <td className="px-5 py-4 text-sm font-medium text-orac-slate">{i.item_code}</td>
-                      <td className="px-5 py-4 text-sm text-gray-600">{i.item_name}</td>
-                      <td className="px-5 py-4 text-sm tabular-nums">
-                        <span className={i.quantity_on_hand <= i.reorder_level ? "font-bold text-red-600" : "font-medium text-gray-900"}>
-                          {i.quantity_on_hand} {i.unit_of_measure}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-sm tabular-nums text-gray-400">{i.reorder_level}</td>
-                      <td className="px-5 py-4 text-sm text-right">
-                        {canManage && (
-                          <button onClick={() => setItemModal({ open: true, data: i })} className="text-orac-navy font-medium hover:text-orac-ink opacity-70 group-hover:opacity-100 transition-all">
-                            Edit
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  )}
+                  renderRow={(i) => {
+                    const needsReorder = i.quantity_on_hand <= i.reorder_level;
+                    return (
+                      <tr key={i.id} className={`transition-colors hover:bg-gray-50/80 group ${needsReorder ? "bg-red-50/30" : ""}`}>
+                        <td className="px-5 py-4 text-sm font-medium text-orac-slate">{i.item_code}</td>
+                        <td className="px-5 py-4 text-sm text-gray-600">{i.item_name}</td>
+                        <td className="px-5 py-4 text-sm tabular-nums">
+                          <span className={needsReorder ? "font-bold text-red-600" : "font-medium text-gray-900"}>
+                            {i.quantity_on_hand} {i.unit_of_measure}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-sm tabular-nums text-gray-400">{i.reorder_level}</td>
+                        <td className="px-5 py-4 text-sm">
+                          {needsReorder ? (
+                            <span data-evidence="inventory-reorder-badge" className="inline-block rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">Reorder now</span>
+                          ) : (
+                            <span className="inline-block rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600">OK</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-4 text-sm text-right">
+                          {canManage && (
+                            <button onClick={() => setItemModal({ open: true, data: i })} className="text-orac-navy font-medium hover:text-orac-ink opacity-70 group-hover:opacity-100 transition-all">
+                              Edit
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  }}
                 />
               )}
             </div>
