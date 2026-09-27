@@ -125,7 +125,7 @@ test("index.css defines a reduced-motion guard covering the animation/transition
 
 test("index.css gives native form controls an accessible (>=3:1) border in both themes via --orac-border-strong", () => {
   const css = fs.readFileSync(CSS_PATH, "utf8");
-  const inputRuleStart = css.indexOf("input,\nselect,\ntextarea {");
+  const inputRuleStart = css.indexOf("input,\nselect,\ntextarea {\n  background-color:");
   assert.ok(inputRuleStart !== -1, "expected a shared input/select/textarea base rule");
   const rule = css.slice(inputRuleStart, css.indexOf("}", inputRuleStart));
   assert.ok(rule.includes("var(--orac-border-strong)"));
