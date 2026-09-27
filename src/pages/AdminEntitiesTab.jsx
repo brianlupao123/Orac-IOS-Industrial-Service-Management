@@ -3,6 +3,7 @@ import { collections, admin } from "../api/client.js";
 import DataTable from "../components/DataTable.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import Modal from "../components/Modal.jsx";
+import { ErrorBanner } from "../components/PageStates.jsx";
 
 const ENTITIES = [
   { key: "mine_sites", label: "Mine Sites", columns: ["Name", "Location", "Client ID", "Status", "Actions"] },
@@ -83,7 +84,7 @@ export default function AdminEntitiesTab({ user }) {
       <div className="w-full md:w-64 flex-shrink-0">
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50/50">
-            <h3 className="font-semibold text-orac-slate">Entities</h3>
+            <h3 className="font-semibold text-orac-blue">Entities</h3>
           </div>
           <div className="flex flex-col p-2">
             {visibleEntities.map(ent => (
@@ -107,7 +108,7 @@ export default function AdminEntitiesTab({ user }) {
       <div className="flex-1 space-y-4">
         <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-200">
           <div>
-            <h2 className="text-lg font-semibold text-orac-slate">{currentConfig.label}</h2>
+            <h2 className="text-lg font-semibold text-orac-blue">{currentConfig.label}</h2>
             <p className="text-sm text-gray-500">Manage all records for this entity.</p>
           </div>
           <button
@@ -118,11 +119,7 @@ export default function AdminEntitiesTab({ user }) {
           </button>
         </div>
 
-        {error && (
-          <div className="rounded-xl border border-red-100 bg-red-50/80 px-4 py-3 text-sm text-red-600 shadow-sm">
-            {error}
-          </div>
-        )}
+        {error && <ErrorBanner message={error} />}
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           {loading ? (
@@ -138,20 +135,20 @@ export default function AdminEntitiesTab({ user }) {
                   {/* Common Render logic, dynamically handled based on entity */}
                   {activeEntity === "mine_sites" && (
                     <>
-                      <td className="px-5 py-4 text-sm font-medium text-orac-slate">{row.name}</td>
+                      <td className="px-5 py-4 text-sm font-medium text-orac-blue">{row.name}</td>
                       <td className="px-5 py-4 text-sm text-gray-500">{row.location || "—"}</td>
                       <td className="px-5 py-4 text-sm text-gray-500">{row.client_id}</td>
                     </>
                   )}
                   {activeEntity === "plants" && (
                     <>
-                      <td className="px-5 py-4 text-sm font-medium text-orac-slate">{row.name}</td>
+                      <td className="px-5 py-4 text-sm font-medium text-orac-blue">{row.name}</td>
                       <td className="px-5 py-4 text-sm text-gray-500">{row.mine_site_id}</td>
                     </>
                   )}
                   {activeEntity === "plant_sections" && (
                     <>
-                      <td className="px-5 py-4 text-sm font-medium text-orac-slate">{row.name}</td>
+                      <td className="px-5 py-4 text-sm font-medium text-orac-blue">{row.name}</td>
                       <td className="px-5 py-4 text-sm text-gray-500">{row.plant_id}</td>
                     </>
                   )}
@@ -161,7 +158,7 @@ export default function AdminEntitiesTab({ user }) {
                           equipment_name (see schemas.js AdminCreateEquipmentTagSchema
                           and curatedDemoData.js), not tag_number/name. The old
                           bindings rendered blank cells for every real record. */}
-                      <td className="px-5 py-4 text-sm font-medium text-orac-slate">{row.tag_code}</td>
+                      <td className="px-5 py-4 text-sm font-medium text-orac-blue">{row.tag_code}</td>
                       <td className="px-5 py-4 text-sm text-gray-500">{row.equipment_name}</td>
                       <td className="px-5 py-4 text-sm text-gray-500">{row.plant_section_id}</td>
                     </>
@@ -171,7 +168,7 @@ export default function AdminEntitiesTab({ user }) {
                       {/* FIX: backend/schema field names are item_code and
                           item_name (see schemas.js AdminCreateCatalogItemSchema
                           and curatedDemoData.js), not part_number/description. */}
-                      <td className="px-5 py-4 text-sm font-medium text-orac-slate">{row.item_code}</td>
+                      <td className="px-5 py-4 text-sm font-medium text-orac-blue">{row.item_code}</td>
                       <td className="px-5 py-4 text-sm text-gray-500">{row.item_name}</td>
                       <td className="px-5 py-4 text-sm text-gray-500">${row.unit_price}</td>
                     </>
@@ -183,7 +180,7 @@ export default function AdminEntitiesTab({ user }) {
                   <td className="px-5 py-4 text-sm text-right space-x-3">
                     <button
                       onClick={() => setModal({ open: true, item: row })}
-                      className="text-orac-slate font-medium hover:text-gray-900 transition-colors opacity-0 group-hover:opacity-100"
+                      className="text-orac-blue font-medium hover:underline transition-colors opacity-70 group-hover:opacity-100 group-focus-within:opacity-100"
                     >
                       Edit
                     </button>
@@ -199,8 +196,8 @@ export default function AdminEntitiesTab({ user }) {
                           loadData();
                         } catch (err) { alert("Error: " + err.message); }
                       }}
-                      className={`font-medium transition-colors opacity-0 group-hover:opacity-100 ${
-                        row.is_active ? "text-amber-600 hover:text-amber-800" : "text-green-600 hover:text-green-800"
+                      className={`font-medium transition-colors opacity-70 group-hover:opacity-100 group-focus-within:opacity-100 ${
+                        row.is_active ? "text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300" : "text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
                       }`}
                     >
                       {row.is_active ? "Disable" : "Enable"}

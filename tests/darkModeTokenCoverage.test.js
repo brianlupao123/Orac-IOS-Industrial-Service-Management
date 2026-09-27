@@ -38,10 +38,20 @@ function listJsxFiles(dir) {
 }
 
 function collectUsedColorClasses() {
-  const classes = new Set();
+  const classes = new Map();
   for (const file of listJsxFiles(SRC_DIR)) {
     const text = fs.readFileSync(file, "utf8");
-    for (const match of text.matchAll(COLOR_CLASS_RE)) classes.add(match[0]);
+    for (const match of text.matchAll(COLOR_CLASS_RE)) {
+      const className = match[0];
+      const usage = classes.get(className) || { hasBaseUse: false, hasDarkUse: false };
+      const prefix = text.slice(Math.max(0, match.index - 32), match.index);
+      // Tailwind variants can be chained, for example dark:hover:text-amber-300.
+      // Only the current class-token prefix matters here, not earlier page text.
+      const tokenPrefix = prefix.slice(Math.max(prefix.lastIndexOf(" "), prefix.lastIndexOf("\""), prefix.lastIndexOf("'"), prefix.lastIndexOf("`")) + 1);
+      if (tokenPrefix.includes("dark:")) usage.hasDarkUse = true;
+      else usage.hasBaseUse = true;
+      classes.set(className, usage);
+    }
   }
   return classes;
 }
@@ -54,7 +64,10 @@ test("every fixed-shade Tailwind color class used in src/**/*.jsx is either mapp
 
   const used = collectUsedColorClasses();
   const missing = [];
-  for (const cls of used) {
+  for (const [cls, usage] of used) {
+    // A dark:-only utility is an explicit dark-theme companion, not an
+    // unmapped base colour. Any base use still needs a semantic bridge.
+    if (!usage.hasBaseUse && usage.hasDarkUse) continue;
     if (INTENTIONALLY_UNMAPPED.has(cls)) continue;
     const cssSelectorForm = `.${cls.replace(/\//g, "\\/")}`;
     if (!bridge.includes(cssSelectorForm)) missing.push(cls);

@@ -191,46 +191,46 @@ export default function AIAssistantPanel({ user }) {
 
     {open && <>
       <button type="button" className="fixed inset-0 z-40 cursor-default bg-slate-950/20" onClick={() => setOpen(false)} aria-label="Close assistant" />
-      <aside id="dashboard-assistant-panel" role="dialog" aria-modal="true" aria-labelledby="assistant-title" className="fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col border-l border-slate-200 bg-white shadow-2xl">
-        <header className="border-b border-slate-200 px-5 py-4">
+      <aside id="dashboard-assistant-panel" role="dialog" aria-modal="true" aria-labelledby="assistant-title" className="fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col border-l border-slate-200 bg-white shadow-2xl dark:border-slate-700">
+        <header className="border-b border-slate-200 px-5 py-4 dark:border-slate-700">
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 <p className="text-xs font-semibold uppercase tracking-wide text-orac-blue">{user.role}</p>
               </div>
-              <h2 id="assistant-title" className="mt-1 text-xl font-semibold text-orac-slate">Dashboard assistant</h2>
-              <p className="mt-1 text-sm text-slate-500">Role-scoped dashboard evidence</p>
+              <h2 id="assistant-title" className="mt-1 text-xl font-semibold text-orac-blue">Dashboard assistant</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Role-scoped dashboard evidence</p>
             </div>
-            <button type="button" onClick={() => setOpen(false)} className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Close</button>
+            <button type="button" onClick={() => setOpen(false)} className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Close</button>
           </div>
         </header>
 
-        <div className="border-b border-slate-200 px-5 py-4">
+        <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-700">
           <div className="grid gap-2 sm:grid-cols-2">
-            {copy.quick.map((action) => <button key={action.label} type="button" disabled={loading} onClick={() => runQuick(action)} className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-semibold text-slate-700 hover:border-orac-blue hover:bg-sky-50 disabled:opacity-60">{action.label}</button>)}
+            {copy.quick.map((action) => <button key={action.label} type="button" disabled={loading} onClick={() => runQuick(action)} className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-semibold text-slate-700 hover:border-orac-blue hover:bg-sky-50 disabled:opacity-60 dark:border-slate-700 dark:bg-transparent dark:text-slate-200 dark:hover:bg-sky-950/40">{action.label}</button>)}
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-5">
-          {messages.length === 0 && <div className="rounded-lg border border-sky-100 bg-sky-50 p-4 text-sm leading-6 text-slate-700"><p className="font-semibold text-slate-800">How can I help?</p><p className="mt-1">Ask about the numbers on this dashboard. I will answer using only evidence available to your role.</p></div>}
+          {messages.length === 0 && <div className="rounded-lg border border-sky-100 bg-sky-50 p-4 text-sm leading-6 text-slate-700 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-slate-300"><p className="font-semibold text-slate-800 dark:text-slate-100">How can I help?</p><p className="mt-1">Ask about the numbers on this dashboard. I will answer using only evidence available to your role.</p></div>}
           <div className="mt-4 space-y-4">
-            {messages.map((message) => <div key={message.id} className={message.sender === "user" ? "ml-auto max-w-[85%] rounded-2xl bg-orac-blue px-4 py-3 text-sm leading-6 text-white" : "mr-auto max-w-[92%] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700"}>
+            {messages.map((message) => <div key={message.id} className={message.sender === "user" ? "ml-auto max-w-[85%] rounded-2xl bg-orac-blue px-4 py-3 text-sm leading-6 text-white" : "mr-auto max-w-[92%] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200"}>
               <div className="flex items-start gap-2">
                 <p className="min-w-0 flex-1 whitespace-pre-line">{message.text}</p>
-                {message.sender === "assistant" && message.response?.requestId && <button type="button" onClick={() => flagResponse(message.response.requestId)} disabled={flagged.has(message.response.requestId)} className="shrink-0 rounded-md p-1 text-slate-500 hover:bg-white disabled:opacity-60" title="Flag this answer for review" aria-label="Flag this answer for review"><Icon path={ICONS.flag} className="h-4 w-4" /></button>}
+                {message.sender === "assistant" && message.response?.requestId && <button type="button" onClick={() => flagResponse(message.response.requestId)} disabled={flagged.has(message.response.requestId)} className="shrink-0 rounded-md p-1 text-slate-500 hover:bg-white disabled:opacity-60 dark:text-slate-400 dark:hover:bg-slate-700" title="Flag this answer for review" aria-label="Flag this answer for review"><Icon path={ICONS.flag} className="h-4 w-4" /></button>}
               </div>
-              {message.response?.evidenceRefs?.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{message.response.evidenceRefs.map((ref) => <button key={`${message.id}-${ref.metric}-${ref.targetId}`} type="button" onClick={() => focusEvidence(ref)} className="rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-semibold text-orac-blue hover:bg-sky-50">Show evidence: {ref.label}</button>)}</div>}
+              {message.response?.evidenceRefs?.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{message.response.evidenceRefs.map((ref) => <button key={`${message.id}-${ref.metric}-${ref.targetId}`} type="button" onClick={() => focusEvidence(ref)} className="rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-semibold text-orac-blue hover:bg-sky-50 dark:border-sky-800/60 dark:bg-transparent dark:hover:bg-sky-950/40">Show evidence: {ref.label}</button>)}</div>}
             </div>)}
-            {loading && <div className="mr-auto max-w-sm rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">Checking verified dashboard evidence...</div>}
+            {loading && <div className="mr-auto max-w-sm rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">Checking verified dashboard evidence...</div>}
             <div ref={conversationEnd} />
           </div>
         </div>
 
-        <form className="border-t border-slate-200 p-4" onSubmit={submitQuestion}>
-          {error && <p className="mb-3 text-sm text-red-700">{error}</p>}
+        <form className="border-t border-slate-200 p-4 dark:border-slate-700" onSubmit={submitQuestion}>
+          {error && <p className="mb-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
           <div className="flex gap-3">
-            <input value={input} onChange={(event) => setInput(event.target.value)} maxLength={500} placeholder={copy.placeholder} className="min-w-0 flex-1 rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+            <input value={input} onChange={(event) => setInput(event.target.value)} maxLength={500} placeholder={copy.placeholder} className="min-w-0 flex-1 rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 dark:border-slate-600" />
             <button type="submit" disabled={loading || !input.trim()} className="rounded-lg bg-orac-blue px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">Send</button>
           </div>
         </form>

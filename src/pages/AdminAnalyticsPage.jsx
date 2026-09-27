@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { summary, reports } from "../api/client.js";
+import { ErrorBanner } from "../components/PageStates.jsx";
 
 // Deliberately uses zero external chart dependencies (no recharts/chart.js
 // assumed) since this repo's package.json wasn't available to confirm
@@ -26,7 +27,7 @@ function Bar({ label, value, max }) {
 function StatCard({ label, value }) {
   return (
     <div className="rounded-lg bg-white border border-gray-200 p-4">
-      <div className="text-2xl font-semibold text-orac-slate">{value}</div>
+      <div className="text-2xl font-semibold text-orac-blue">{value}</div>
       <div className="text-xs text-gray-500 mt-1">{label}</div>
     </div>
   );
@@ -60,11 +61,7 @@ export default function AdminAnalyticsPage() {
 
   if (error) {
     return (
-      <p className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">
-        Could not load analytics: {error}. Some of these reports require
-        Admin/Management/Finance/Operations roles depending on the tab — see
-        reportGuards in reportsController.js.
-      </p>
+      <ErrorBanner message={`Could not load analytics: ${error}. Some of these reports are limited to specific roles — you may not have access to every panel below.`} />
     );
   }
 
@@ -76,7 +73,7 @@ export default function AdminAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-orac-slate">Analytics</h1>
+      <h1 className="text-xl font-semibold text-orac-blue">Analytics</h1>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Clients" value={stats.clients} />
@@ -90,7 +87,7 @@ export default function AdminAnalyticsPage() {
       </div>
 
       <section className="rounded-lg border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 font-medium text-orac-slate">Quote pipeline by status</h2>
+        <h2 className="mb-3 font-medium text-orac-blue">Quote pipeline by status</h2>
         {Object.keys(pipelineCounts).length === 0 && (
           <p className="text-sm text-gray-400">No quotes yet.</p>
         )}
@@ -100,13 +97,13 @@ export default function AdminAnalyticsPage() {
       </section>
 
       <section className="rounded-lg border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 font-medium text-orac-slate">PO compliance</h2>
+        <h2 className="mb-3 font-medium text-orac-blue">PO compliance</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 text-sm">
           <div>
             <p className="text-gray-500 mb-1">
               Approved, awaiting PO ({poCompliance?.approved_awaiting_po?.length || 0})
             </p>
-            <ul className="text-orac-slate">
+            <ul className="text-orac-blue">
               {(poCompliance?.approved_awaiting_po || []).slice(0, 5).map((q) => (
                 <li key={q.id}>{q.quote_number}</li>
               ))}
@@ -116,7 +113,7 @@ export default function AdminAnalyticsPage() {
             <p className="text-gray-500 mb-1">
               Requires amendment ({poCompliance?.requires_amendment?.length || 0})
             </p>
-            <ul className="text-orac-slate">
+            <ul className="text-orac-blue">
               {(poCompliance?.requires_amendment || []).slice(0, 5).map((po) => (
                 <li key={po.id}>{po.po_reference} (logged {po.logged_value} vs {po.po_amount})</li>
               ))}
@@ -126,7 +123,7 @@ export default function AdminAnalyticsPage() {
             <p className="text-gray-500 mb-1">
               Urgent, pending verification ({poCompliance?.urgent_pending_verification?.length || 0})
             </p>
-            <ul className="text-orac-slate">
+            <ul className="text-orac-blue">
               {(poCompliance?.urgent_pending_verification || []).slice(0, 5).map((po) => (
                 <li key={po.id}>{po.id}</li>
               ))}
@@ -136,22 +133,22 @@ export default function AdminAnalyticsPage() {
       </section>
 
       <section className="rounded-lg border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 font-medium text-orac-slate">Worksheet backlog</h2>
+        <h2 className="mb-3 font-medium text-orac-blue">Worksheet backlog</h2>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <div className="text-xl font-semibold text-orac-slate">
+            <div className="text-xl font-semibold text-orac-blue">
               {worksheetReport?.pending_review?.length ?? 0}
             </div>
             <div className="text-xs text-gray-500">Pending review</div>
           </div>
           <div>
-            <div className="text-xl font-semibold text-orac-slate">
+            <div className="text-xl font-semibold text-orac-blue">
               {worksheetReport?.returned_for_correction?.length ?? 0}
             </div>
             <div className="text-xs text-gray-500">Returned for correction</div>
           </div>
           <div>
-            <div className="text-xl font-semibold text-orac-slate">
+            <div className="text-xl font-semibold text-orac-blue">
               {worksheetReport?.approved_count ?? 0}
             </div>
             <div className="text-xs text-gray-500">Approved</div>
