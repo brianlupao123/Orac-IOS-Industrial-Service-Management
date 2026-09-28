@@ -40,9 +40,22 @@ test("adding the route did not widen or narrow any pre-existing route", () => {
     "/contracts": ["Admin", "Management", "Operations", "Client Viewer"]
   };
   for (const [path, roles] of Object.entries(expected)) assert.deepEqual([...ROUTE_ACCESS[path]].sort(), [...roles].sort(), path);
-  assert.deepEqual(Object.keys(ROUTE_ACCESS).sort(), [...Object.keys(expected), "/reports", "/operational-data", "/documents", ROUTE].sort());
+  // /quotations was added afterwards (Chat C, commercial flow) mirroring the
+  // backend's createQuote/sendQuote/cancelQuote permission set exactly:
+  // Admin and Sales only. Checked explicitly, same as ROUTE above, rather
+  // than folded into `expected`, to keep this snapshot's original routes
+  // untouched.
+  assert.deepEqual([...ROUTE_ACCESS["/quotations"]].sort(), ["Admin", "Sales"].sort());
+  // /finance mirrors the backend's invoice/approveAmendment permission set.
+  assert.deepEqual([...ROUTE_ACCESS["/finance"]].sort(), ["Admin", "Finance"].sort());
+  assert.equal(canAccessRoute(ROLES.SALES, "/finance"), false, "Sales must not reach Finance PO/invoice actions");
+  assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, "/finance"), false);
+  assert.equal(canAccessRoute(ROLES.FINANCE, "/quotations"), false, "Finance must not draft/send quotes");
+  assert.deepEqual(Object.keys(ROUTE_ACCESS).sort(), [...Object.keys(expected), "/reports", "/operational-data", "/documents", "/quotations", "/finance", ROUTE].sort());
   assert.equal(canAccessRoute(ROLES.SALES, "/inventory"), false);
   assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, "/reports"), false);
+  assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, "/quotations"), false, "Client Viewer must never see internal quote drafting");
+  assert.equal(canAccessRoute(ROLES.OPERATIONS, "/quotations"), false, "Operations approves a sent quote but does not draft/send/cancel one");
 });
 
 test("the dashboard root stays open to everyone and the new route does not change that", () => {

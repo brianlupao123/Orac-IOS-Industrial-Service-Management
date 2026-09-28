@@ -14,6 +14,15 @@ const operationalRoles = [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES
 export const ROUTE_ACCESS = Object.freeze({
   "/portal": [ROLES.CLIENT_VIEWER],
   "/service-requests": [ROLES.SALES, ROLES.OPERATIONS],
+  // Mirrors the backend's createQuote/sendQuote/cancelQuote permission set
+  // (permissions.js) exactly: Admin and Sales only. Operations/Management can
+  // approve a sent quote but do not create, edit, send or cancel one, so they
+  // are deliberately not granted this route.
+  "/quotations": [ROLES.ADMIN, ROLES.SALES],
+  // Mirrors the backend's invoice / approveAmendment permission set (Admin,
+  // Finance). verifyPo also allows Operations server-side, but Operations'
+  // own workspace is outside this route; no API access is widened or narrowed.
+  "/finance": [ROLES.ADMIN, ROLES.FINANCE],
   // Admin can receive and respond to team requests but cannot create them.
   // Client Viewer has no internal-request access. The server still decides
   // every action, including request creation and lifecycle transitions.
@@ -35,6 +44,8 @@ export const NAV_ITEMS = Object.freeze([
   { path: "/", label: "Dashboard" },
   { path: "/portal", label: "Client Portal" },
   { path: "/service-requests", label: "Service Requests" },
+  { path: "/quotations", label: "Quotations" },
+  { path: "/finance", label: "PO & Invoicing" },
   { path: "/internal-requests", label: "Internal Requests" },
   { path: "/worksheets", label: "Timesheets" },
   { path: "/inventory", label: "Inventory" },
