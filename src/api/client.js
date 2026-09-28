@@ -307,6 +307,16 @@ export const inventory = {
   lowStockReport() {
     return request("/inventory/reports/low-stock");
   },
+  // Full ledger (optionally filtered) and one item's history, newest first.
+  listMovements(stockItemId) {
+    const query = stockItemId ? `?stock_item_id=${encodeURIComponent(stockItemId)}` : "";
+    return request(`/inventory/movements${query}`);
+  },
+  itemMovements(id) {
+    // Returns { stock_item, movements } — an object shape, not a bare array,
+    // so this intentionally is not added to UAT_EMPTY_ARRAY_PATH_PREFIXES above.
+    return request(`/inventory/stock_items/${id}/movements`);
+  },
   listSuppliers() {
     return request("/inventory/suppliers");
   },
