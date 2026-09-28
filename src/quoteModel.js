@@ -1,0 +1,145 @@
+// Sales Quotations - pure UI helpers (no React, no network).
+// These only shape what the UI shows and sends. The lifecycle, permissions and
+// tenancy are enforced by the server (see backend/src/stateMachine.js and
+// backend/src/schemas.js); nothing here is a security control. Anything this
+// file cannot safely resolve on its own (catalog pricing, equipment labels)
+// is left out rather than guessed - see ROLE_OWNER_DECISIONS in the delivery
+// packet for why.
+
+// Mirrors backend/src/stateMachine.js `allowedTransitions`. Kept here only so
+// the UI can decide which buttons to show; the server is the sole authority
+// and re-validates every one of these on receipt.
+export const QUOTE_STATUSES = Object.freeze([
+  "Draft", "Sent", "Approved_Pending_PO", "PO_Verified", "Field_Dispatch", "Invoiced", "Cancelled"
+]);
+
+const STATUS_LABELS = Object.freeze({
+  Draft: "Draft",
+  Sent: "Sent",
+  Approved_Pending_PO: "Approved, pending PO",
+  PO_Verified: "PO verified",
+  Field_Dispatch: "Dispatched",
+  Invoiced: "Invoiced",
+  Cancelled: "Cancelled"
+});
+
+export const quoteStatusLabel = (status) => STATUS_LABELS[status] || String(status || "\u2014");
+
+// A quote can only be edited or cancelled while it is still Draft (see
+// quoteController.updateQuote / cancelQuote). Sending requires a client and
+// at least one priced line (stateMachine.js validateTransition "Sent").
+export function quoteActionsFor(quote) {
+  const isDraft = quote?.status === "Draft";
+  return {
+    canEdit: isDraft,
+    canCancel: isDraft,
+    canSend: isDraft
+  };
+}
+
+// Mirrors the server's separation-of-duties check in stateMachine.js
+// (validateTransition, target "Approved_Pending_PO") for UI purposes only:
+// a Sales actor cannot approve the quote they personally sent. The server
+// re-checks this independently and is the sole authority - this only decides
+// whether to show the button. Admin/Operations approving is never blocked
+// here; a quote with no recorded sent_by (sent before this field existed)
+// is treated as approvable, matching the server's fail-safe-for-legacy-data
+// behaviour.
+export function canApproveQuote(quote, actor) {
+  if (quote?.status !== "Sent") return false;
+  if (!actor) return false;
+  if (actor.role === "Sales" && quote.sent_by && quote.sent_by === actor.id) return false;
+  return true;
+}
+
+export const canSendQuote = (quote, lineCount) => quote?.status === "Draft" && Boolean(quote?.client_id) && lineCount > 0;
+
+export const EMPTY_QUOTE_LINE = Object.freeze({ description: "", quantity: 1, unit_price: 0 });
+
+export function lineTotal(line) {
+  const quantity = Number(line?.quantity);
+  const unitPrice = Number(line?.unit_price);
+  if (!Number.isFinite(quantity) || !Number.isFinite(unitPrice)) return 0;
+  return quantity * unitPrice;
+}
+
+export function quoteTotal(lines) {
+  return (Array.isArray(lines) ? lines : []).reduce((sum, line) => sum + lineTotal(line), 0);
+}
+
+// Returns a message for the first problem found, or "" when the form is
+// ready to send to the server. This is a convenience check only - the
+// server (CreateQuoteSchema / UpdateQuoteSchema) is authoritative and
+// re-validates independently.
+export function validateQuoteForm(form) {
+  if (!form?.client_id) return "Choose the client this quotation is for.";
+  const lines = Array.isArray(form.lines) ? form.lines : [];
+  if (lines.length === 0) return "Add at least one line item.";
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const description = String(line?.description ?? "").trim();
+    if (!description) return `Line ${index + 1}: enter a description.`;
+    const quantity = Number(line?.quantity);
+    if (!Number.isFinite(quantity) || quantity <= 0) return `Line ${index + 1}: quantity must be greater than zero.`;
+    const unitPrice = Number(line?.unit_price);
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) return `Line ${index + 1}: unit price cannot be negative.`;
+  }
+  return "";
+}
+
+// Builds a CreateQuoteSchema-shaped body from a fixed whitelist. Anything
+// else on `form` (id, status, sent_by, created_by, quote_number, totals,
+// timestamps...) is never copied - those fields are server-owned.
+export function buildCreateQuotePayload(form = {}) {
+  const payload = { client_id: String(form.client_id || ""), lines: buildLinesPayload(form.lines) };
+  const equipmentTagId = String(form.equipment_tag_id || "").trim();
+  if (equipmentTagId) payload.equipment_tag_id = equipmentTagId;
+  return payload;
+}
+
+// Builds an UpdateQuoteSchema-shaped body. client_id is deliberately omitted:
+// the server's UpdateQuoteSchema does not accept it, and a quote's client is
+// not editable after creation.
+export function buildUpdateQuotePayload(form = {}) {
+  const payload = { lines: buildLinesPayload(form.lines) };
+  const equipmentTagId = String(form.equipment_tag_id || "").trim();
+  if (equipmentTagId) payload.equipment_tag_id = equipmentTagId;
+  return payload;
+}
+
+// Whitelists exactly the fields QuoteLineSchema accepts. catalog_item_id is
+// intentionally always null from this UI: Sales cannot read the catalog
+// collection (see ROLE_OWNER_DECISIONS #C-1), so every line here is a plain,
+// manually-priced line rather than a linked catalog item.
+function buildLinesPayload(lines) {
+  return (Array.isArray(lines) ? lines : []).map((line) => ({
+    catalog_item_id: null,
+    description: String(line?.description ?? "").trim(),
+    quantity: Number(line?.quantity) || 0,
+    unit_price: Number(line?.unit_price) || 0
+  }));
+}
+
+// A lead is offered as a quoting starting point once Sales/Operations has
+// accepted the underlying service request and converted it (service_requests
+// status Accepted -> Converted_To_Lead creates exactly one lead; see
+// serviceRequestsController.convertServiceRequestToLead). The backend has no
+// field marking a lead as "already quoted" (CreateQuoteSchema carries no
+// lead_id), so this list is necessarily a convenience prefill only - see
+// ROLE_OWNER_DECISIONS #C-2 for why a quote cannot be linked back to its
+// originating lead yet.
+export function prefillFromLead(lead) {
+  return {
+    client_id: lead?.client_id || "",
+    equipment_tag_id: lead?.equipment_tag_id || "",
+    lines: [{ ...EMPTY_QUOTE_LINE, description: lead?.service_need ? String(lead.service_need).slice(0, 200) : "" }]
+  };
+}
+
+// Plain 2-decimal amount with no currency symbol. The codebase does not
+// declare a single currency (ClientPortalPage prefixes "R"), so no symbol is
+// invented here - see ROLE_OWNER_DECISIONS #C-5.
+export function formatAmount(value) {
+  const n = Number(value);
+  return (Number.isFinite(n) ? n : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}

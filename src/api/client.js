@@ -203,6 +203,12 @@ export const quotes = {
   create(payload) {
     return request("/quotes", { method: "POST", body: JSON.stringify(payload) });
   },
+  update(id, payload) {
+    return request(`/quotes/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(payload) });
+  },
+  cancel(id) {
+    return request(`/quotes/${encodeURIComponent(id)}/cancel`, { method: "POST", body: JSON.stringify({}) });
+  },
   transition(id, targetState, extra = {}) {
     // Confirmed field name: target_state, not to_status.
     return request(`/quotes/${id}/transition`, {
@@ -215,6 +221,14 @@ export const quotes = {
       method: "POST",
       body: JSON.stringify({ po_reference, po_amount, ...extra })
     });
+  }
+};
+
+export const purchaseOrders = {
+  approveAmendment(poId, { new_amount, reason } = {}) {
+    const body = { new_amount };
+    if (typeof reason === "string" && reason.trim()) body.reason = reason.trim();
+    return request(`/purchase_orders/${encodeURIComponent(poId)}/amendments`, { method: "POST", body: JSON.stringify(body) });
   }
 };
 
