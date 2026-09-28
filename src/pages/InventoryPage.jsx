@@ -7,6 +7,23 @@ import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import { ErrorBanner } from "../components/PageStates.jsx";
 import { ICONS } from "../components/icons.jsx";
 
+// Business wording for the ledger. reference_type (what the movement was
+// for) wins over the raw in/out/adjustment category when present.
+const MOVEMENT_LABELS = { in: "Receipt", out: "Issue / use", adjustment: "Correction" };
+const REFERENCE_LABELS = {
+  supplier: "Supplier receipt",
+  purchase_order: "Purchase order receipt",
+  dispatch_card: "Service dispatch issue",
+  material_usage: "Service dispatch use",
+  direct_sale: "Direct sale issue",
+  return: "Return to stock",
+  scrap: "Scrap / write-off",
+  opening_balance: "Opening balance"
+};
+function movementLabel(m) {
+  return REFERENCE_LABELS[m.reference_type] || MOVEMENT_LABELS[m.movement_type] || "Movement";
+}
+
 export default function InventoryPage({ user }) {
   const [items, setItems] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -15,10 +32,11 @@ export default function InventoryPage({ user }) {
   const [activeTab, setActiveTab] = useState("stock");
   const [lowStockOnly, setLowStockOnly] = useState(false);
   
-  const [form, setForm] = useState({ stock_item_id: "", movement_type: "in", quantity: "", reason: "", override_negative: false });
+  const [form, setForm] = useState({ stock_item_id: "", movement_type: "in", quantity: "", reason: "", category: "", override_negative: false });
 
   const [itemModal, setItemModal] = useState({ open: false, data: null });
   const [supplierModal, setSupplierModal] = useState({ open: false, data: null });
+  const [historyModal, setHistoryModal] = useState({ open: false, item: null, movements: [], loading: false, error: "" });
 
   const canManage = ["Admin", "Management", "Operations"].includes(user.role);
 
@@ -50,16 +68,29 @@ export default function InventoryPage({ user }) {
         movement_type: form.movement_type,
         quantity: Number(form.quantity),
         reason: form.reason,
+        // Optional business category (return / scrap). Omitted when blank so
+        // ordinary receipts, issues and corrections are sent exactly as before.
+        ...(form.category ? { reference_type: form.category } : {}),
         // Only meaningful when movement_type is "out" or a negative "adjustment", and only
         // Admin/Operations are permitted to use it; the backend re-checks role and always
         // has final say (see inventoryController.recordStockMovement).
         override_negative: form.override_negative
       });
-      setForm({ stock_item_id: "", movement_type: "in", quantity: "", reason: "", override_negative: false });
+      setForm({ stock_item_id: "", movement_type: "in", quantity: "", reason: "", category: "", override_negative: false });
       await load();
     } catch (err) {
       // Gracefully show negative stock blocks from backend
       setError(err.message);
+    }
+  }
+
+  async function openHistory(item) {
+    setHistoryModal({ open: true, item, movements: [], loading: true, error: "" });
+    try {
+      const result = await inventory.itemMovements(item.id);
+      setHistoryModal({ open: true, item: result.stock_item || item, movements: result.movements || [], loading: false, error: "" });
+    } catch (err) {
+      setHistoryModal({ open: true, item, movements: [], loading: false, error: err.message });
     }
   }
 
@@ -162,12 +193,12 @@ export default function InventoryPage({ user }) {
                         <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Type</label>
                         <select
                           value={form.movement_type}
-                          onChange={(e) => setForm({ ...form, movement_type: e.target.value })}
+                          onChange={(e) => setForm({ ...form, movement_type: e.target.value, category: "" })}
                           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 bg-white"
                         >
-                          <option value="in">In (+)</option>
-                          <option value="out">Out (-)</option>
-                          <option value="adjustment">Adj</option>
+                          <option value="in">Receipt (increases stock)</option>
+                          <option value="out">Issue / use (decreases stock)</option>
+                          <option value="adjustment">Correction (adjustment)</option>
                         </select>
                       </div>
                       <div>
@@ -196,6 +227,24 @@ export default function InventoryPage({ user }) {
                         required
                       />
                     </div>
+                    {form.movement_type !== "out" && (
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Category (optional)</label>
+                        <select data-evidence="inventory-movement-category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white">
+                          {form.movement_type === "in" ? (
+                            <>
+                              <option value="">Receipt</option>
+                              <option value="return">Return to stock</option>
+                            </>
+                          ) : (
+                            <>
+                              <option value="">Controlled correction</option>
+                              <option value="scrap">Scrap / write-off</option>
+                            </>
+                          )}
+                        </select>
+                      </div>
+                    )}
                     {(form.movement_type === "out" || form.movement_type === "adjustment") && (
                       <label className="flex items-start gap-2 text-xs text-gray-600">
                         <input
@@ -266,8 +315,17 @@ export default function InventoryPage({ user }) {
                           ) : (
                             <span className="inline-block rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600">OK</span>
                           )}
+                          {/* Explains reorder status using only what the server actually knows
+                              (on-hand, reorder level, and supplier lead time when one is
+                              recorded) — never an invented lead time or reference. */}
+                          {i.reorder_explanation && (
+                            <p data-evidence="inventory-reorder-explanation" className="mt-1 max-w-[220px] text-xs text-gray-500">{i.reorder_explanation}</p>
+                          )}
                         </td>
-                        <td className="px-5 py-4 text-sm text-right">
+                        <td className="px-5 py-4 text-sm text-right whitespace-nowrap">
+                          <button onClick={() => openHistory(i)} className="mr-3 text-gray-500 font-medium hover:text-orac-navy opacity-70 group-hover:opacity-100 transition-all">
+                            History
+                          </button>
                           {canManage && (
                             <button onClick={() => setItemModal({ open: true, data: i })} className="text-orac-navy font-medium hover:text-orac-ink opacity-70 group-hover:opacity-100 transition-all">
                               Edit
@@ -364,6 +422,39 @@ export default function InventoryPage({ user }) {
             <button type="submit" className="px-5 py-2 bg-orac-blue text-white text-sm font-medium rounded-lg hover:bg-orac-blue/90 shadow-sm">Save Supplier</button>
           </div>
         </form>
+      </Modal>
+
+      {/* Movement History Modal */}
+      <Modal title={historyModal.item ? `Movement History — ${historyModal.item.item_code}` : "Movement History"} isOpen={historyModal.open} onClose={() => setHistoryModal({ open: false, item: null, movements: [], loading: false, error: "" })}>
+        {historyModal.loading ? (
+          <div data-evidence="inventory-history-loading" className="py-8 text-center text-sm text-gray-400">Loading movement history...</div>
+        ) : historyModal.error ? (
+          <ErrorBanner message={historyModal.error} />
+        ) : historyModal.movements.length === 0 ? (
+          <div data-evidence="inventory-history-empty" className="py-8 text-center text-sm text-gray-500">No movements recorded for this item yet.</div>
+        ) : (
+          <div className="max-h-[60vh] space-y-3 overflow-y-auto">
+            {historyModal.movements.map((m) => (
+              <div key={m.id} data-evidence="inventory-history-row" className="rounded-lg border border-gray-200 p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className={`font-semibold ${m.direction === "increase" ? "text-emerald-700" : "text-red-700"}`}>
+                    {m.direction === "increase" ? "+" : "-"}{Math.abs(m.quantity)} {m.unit_of_measure || m.item_unit_of_measure}
+                  </span>
+                  <span className="text-xs text-gray-400">{new Date(m.created_at).toLocaleString()}</span>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  {m.quantity_before} → {m.quantity_after} {m.unit_of_measure || m.item_unit_of_measure} · {movementLabel(m)}
+                </p>
+                <p className="mt-1 text-gray-700">{m.reason}</p>
+                <p className="mt-1 text-xs text-gray-500">
+                  By {m.actor_name || "Unknown user"}
+                  {m.reference_label ? <> · {m.reference_label}</> : null}
+                  {m.override_negative ? <> · Negative-stock override</> : null}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </Modal>
 
     </div>
