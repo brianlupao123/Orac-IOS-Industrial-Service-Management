@@ -245,8 +245,12 @@ export default function AdminPage({ user }) {
 
         {activeTab === "clients" && canManageClients && (
           <div className="space-y-4">
-            <div className="flex justify-end">
-              <button onClick={() => setClientModal({ open: true, data: null })} className="px-4 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md hover:bg-slate-700 transition-all">
+            <div className="flex justify-between items-center gap-4">
+              <p className="text-xs text-gray-400">
+                Top of the client-owned hierarchy: Client → Mine Site → Plant → Plant Section → Equipment Tag.
+                Manage mine sites, plants, plant sections and equipment tags under Entity Management.
+              </p>
+              <button onClick={() => setClientModal({ open: true, data: null })} className="px-4 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md hover:bg-slate-700 transition-all whitespace-nowrap">
                 + Register Client
               </button>
             </div>
@@ -255,10 +259,20 @@ export default function AdminPage({ user }) {
             ) : (
               <DataTable
                 title="Client Directory"
-                columns={["Client Name", "Type", "Contact Person", "Email", "Actions"]}
+                columns={["Client Name", "Type", "Contact Person", "Email", "Status", "Actions"]}
                 rows={clients}
                 emptyText="No clients found."
-                renderRow={(c) => (
+                renderRow={(c) => {
+                  // FIX: is_active must be read defensively (!== false, not a
+                  // truthy check) — clients created before this field existed
+                  // have no is_active at all, so a plain `c.is_active` read
+                  // treated a fully active client as inactive: no Status
+                  // column was shown at all, and this row's own Disable/
+                  // Enable button read backwards ("Enable" on an active
+                  // client) because of the same gap. See services/
+                  // entityHierarchy.js on the backend for the matching fix.
+                  const isActive = c.is_active !== false;
+                  return (
                   <tr key={c.id} className="transition-colors hover:bg-gray-50/80 group">
                     <td className="px-5 py-4 text-sm font-medium text-orac-blue">{c.name}</td>
                     <td className="px-5 py-4 text-sm">
@@ -268,14 +282,18 @@ export default function AdminPage({ user }) {
                     </td>
                     <td className="px-5 py-4 text-sm text-gray-600">{c.contact_person || "—"}</td>
                     <td className="px-5 py-4 text-sm text-gray-500">{c.email || "—"}</td>
+                    <td className="px-5 py-4 text-sm">
+                      <StatusBadge status={isActive ? "Active" : "Inactive"} />
+                    </td>
                     <td className="px-5 py-4 text-sm text-right">
                       <button onClick={() => setClientModal({ open: true, data: c })} className="text-orac-blue font-medium hover:underline transition-colors opacity-70 group-hover:opacity-100 focus-visible:opacity-100">
                         Edit
                       </button>
-                      <button onClick={async()=>{if(!confirm((c.is_active?"Deactivate ":"Reactivate ")+(c.name||c.email)))return;try{c.is_active?await admin.deactivateEntity("clients",c.id):await admin.reactivateEntity("clients",c.id);load()}catch(e){alert(e.message)}}} className={`font-medium transition-colors opacity-70 group-hover:opacity-100 focus-visible:opacity-100 ${c.is_active?"text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300":"text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"}`}>{c.is_active?"Disable":"Enable"}</button>
+                      <button onClick={async()=>{if(!confirm((isActive?"Deactivate ":"Reactivate ")+(c.name||c.email)))return;try{isActive?await admin.deactivateEntity("clients",c.id):await admin.reactivateEntity("clients",c.id);load()}catch(e){alert(e.message)}}} className={`font-medium transition-colors opacity-70 group-hover:opacity-100 focus-visible:opacity-100 ${isActive?"text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300":"text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"}`}>{isActive?"Disable":"Enable"}</button>
                     </td>
                   </tr>
-                )}
+                  );
+                }}
               />
             )}
           </div>
@@ -285,8 +303,13 @@ export default function AdminPage({ user }) {
           <div className="max-w-2xl mx-auto">
             <form onSubmit={saveProfile} className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
               <div className="mb-6">
-                <h2 className="text-lg font-semibold text-orac-blue">Company Identity</h2>
-                <p className="text-sm text-gray-500">Update your trading name, legal entity, and contact details used on generated documents.</p>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-orac-blue">Company Identity</h2>
+                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold border bg-sky-50 text-sky-700 border-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900/50">
+                    ORAC-owned internal configuration
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500">Update your trading name, legal entity, and contact details used on generated documents. This is ORAC's own record, not a client's — it is not part of the Client → Mine Site → Plant → Plant Section → Equipment Tag hierarchy.</p>
               </div>
               <div className="space-y-5">
                 {[
