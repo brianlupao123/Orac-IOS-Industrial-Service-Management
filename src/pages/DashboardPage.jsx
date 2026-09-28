@@ -331,7 +331,7 @@ export default function DashboardPage({ user }) {
               onClick={canAdministration ? () => navigate("/admin") : commercialDestination ? () => navigate(commercialDestination) : undefined}
             />
             <IconStatCard
-              label="Active Quotes"
+              label="Total Quotes"
               value={stats?.quotes}
               iconPath={ICONS.clipboard}
               tone={stats?.quotes > 0 ? "blue" : "neutral"}
