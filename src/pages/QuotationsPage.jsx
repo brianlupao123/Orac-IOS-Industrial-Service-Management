@@ -198,7 +198,7 @@ export default function QuotationsPage({ user }) {
 
       {openLeads.length > 0 && (
         <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-600">Leads ready to quote</h2>
+          <h2 className="text-base font-semibold text-gray-700">Leads ready to quote</h2>
           <ul className="mt-3 space-y-2">
             {openLeads.map((lead) => (
               <li key={lead.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-gray-100 px-3 py-2">
@@ -272,7 +272,7 @@ export default function QuotationsPage({ user }) {
           {formError && <ErrorBanner message={formError} />}
 
           <div>
-            <label htmlFor="quote-client" className="mb-1 block text-xs font-medium uppercase tracking-wider text-gray-600">Client</label>
+            <label htmlFor="quote-client" className="mb-1 block text-sm font-semibold text-gray-700">Client</label>
             <select
               id="quote-client"
               value={form.client_id}
@@ -288,7 +288,7 @@ export default function QuotationsPage({ user }) {
 
           <div>
             <div className="mb-1 flex items-center justify-between">
-              <span className="text-xs font-medium uppercase tracking-wider text-gray-600">Line items</span>
+              <span className="text-sm font-semibold text-gray-700">Line items</span>
               <button type="button" onClick={addLine} className="text-xs font-semibold text-orac-blue hover:underline">+ Add line</button>
             </div>
             <p className="mb-2 text-xs text-gray-500">Manually priced lines only. Catalog pricing lookup is not yet available to Sales accounts.</p>

@@ -78,7 +78,7 @@ export default function ServiceRequestTriagePage() {
       <PageHeaderBanner eyebrow="Sales and operations" title="Service Requests" subtitle="Triage requests raised by client accounts and convert accepted requests into leads." iconPath={ICONS.clipboard} />
 
       <div className="flex flex-wrap items-center gap-3">
-        <label htmlFor="sr-filter" className="text-xs font-medium uppercase tracking-wider text-gray-600">Status</label>
+        <label htmlFor="sr-filter" className="text-sm font-medium text-gray-600">Status</label>
         <select id="sr-filter" value={filter} onChange={(event) => { setFilter(event.target.value); setConfirmId(""); }} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
           <option value="">All requests</option>
           {SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
@@ -125,7 +125,7 @@ export default function ServiceRequestTriagePage() {
                 {actions.length > 0 && (
                   <div className="mt-4 space-y-3 border-t border-gray-100 pt-4">
                     <div>
-                      <label htmlFor={`note-${item.id}`} className="mb-1 block text-xs font-medium uppercase tracking-wider text-gray-600">Note (optional, internal)</label>
+                      <label htmlFor={`note-${item.id}`} className="mb-1 block text-sm font-medium text-gray-600">Note (optional, internal)</label>
                       <textarea id={`note-${item.id}`} rows={2} value={notes[item.id] || ""} maxLength={SERVICE_REQUEST_LIMITS.note} onChange={(event) => setNotes((current) => ({ ...current, [item.id]: event.target.value }))} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20" />
                     </div>
                     <div className="flex flex-wrap gap-2">

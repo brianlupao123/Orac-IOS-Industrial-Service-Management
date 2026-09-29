@@ -148,7 +148,7 @@ export default function KioskModePage({ user }) {
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-orac-border overflow-hidden">
         {/* Date & Job Selectors */}
         <fieldset className="p-6 border-b border-orac-border bg-orac-surface space-y-4">
-          <legend className="text-xs font-semibold uppercase tracking-wider text-orac-secondary px-0 mb-2">1. Select job and date</legend>
+          <legend className="text-sm font-semibold text-orac-secondary px-0 mb-2">1. Select job and date</legend>
 
           {jobsError && (
             <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 flex items-center justify-between gap-3">
@@ -200,16 +200,16 @@ export default function KioskModePage({ user }) {
 
         {/* Crew Roster Table */}
         <div className="overflow-x-auto">
-          <p className="px-6 pt-4 text-xs font-semibold uppercase tracking-wider text-orac-secondary">2. Enter crew hours</p>
+          <p className="px-6 pt-4 text-sm font-semibold text-orac-secondary">2. Enter crew hours</p>
           <table className="min-w-full divide-y divide-orac-border">
             <thead className="bg-orac-surface">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-orac-slate uppercase tracking-wider">Crew Member</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-orac-slate uppercase tracking-wider">Trade</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-orac-slate uppercase tracking-wider">Normal Hrs</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-orac-slate uppercase tracking-wider">OT 1.5×</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-orac-slate uppercase tracking-wider">OT 2.0×</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-orac-slate uppercase tracking-wider">Activity / Task</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-orac-slate">Crew Member</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-orac-slate">Trade</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-orac-slate">Normal Hrs</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-orac-slate">OT 1.5×</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-orac-slate">OT 2.0×</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-orac-slate">Activity / Task</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-orac-border">

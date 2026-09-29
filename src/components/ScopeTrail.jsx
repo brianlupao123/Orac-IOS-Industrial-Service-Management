@@ -8,11 +8,11 @@ import React from "react";
 export default function ScopeTrail({ items = [] }) {
   if (!items.length) return null;
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-1 text-xs font-semibold uppercase tracking-widest text-gray-400">
+    <div className="mb-4 flex flex-wrap items-center gap-1.5 text-sm font-medium text-gray-500">
       {items.map((item, i) => (
         <React.Fragment key={i}>
-          {i > 0 && <span className="text-gray-300">›</span>}
-          <span className={item.active ? "text-orac-slate" : ""}>{item.label || item.value}</span>
+          {i > 0 && <span className="text-gray-400" aria-hidden="true">›</span>}
+          <span className={item.active ? "font-semibold text-orac-slate" : ""}>{item.label || item.value}</span>
         </React.Fragment>
       ))}
     </div>

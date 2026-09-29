@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { collections, admin } from "../api/client.js";
 import DataTable from "../components/DataTable.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
@@ -8,9 +8,25 @@ import AdminAnalyticsPage from "./AdminAnalyticsPage.jsx";
 import AdminEntitiesTab from "./AdminEntitiesTab.jsx";
 import Modal from "../components/Modal.jsx";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
+import TabNav from "../components/TabNav.jsx";
 import { ErrorBanner } from "../components/PageStates.jsx";
 import { ICONS } from "../components/icons.jsx";
 import { TECHNICIAN_TRADES } from "../constants/trades.js";
+
+function SearchField({ label, value, onChange, placeholder }) {
+  return (
+    <label className="block w-full max-w-sm">
+      <span className="sr-only">{label}</span>
+      <input
+        type="search"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20"
+      />
+    </label>
+  );
+}
 
 export default function AdminPage({ user }) {
   const [users, setUsers] = useState([]);
@@ -30,6 +46,8 @@ export default function AdminPage({ user }) {
 
   const [userModal, setUserModal] = useState({ open: false, data: null });
   const [clientModal, setClientModal] = useState({ open: false, data: null });
+  const [userQuery, setUserQuery] = useState("");
+  const [clientQuery, setClientQuery] = useState("");
 
   const canManageUsers = user.role === "Admin";
   const canManageClients = user.role === "Admin" || user.role === "Management";
@@ -62,6 +80,26 @@ export default function AdminPage({ user }) {
   }
 
   useEffect(() => { load(); }, []);
+
+  const filteredUsers = useMemo(() => {
+    const query = userQuery.trim().toLowerCase();
+    if (!query) return users;
+    return users.filter((entry) =>
+      [entry.name, entry.email, entry.role]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(query))
+    );
+  }, [users, userQuery]);
+
+  const filteredClients = useMemo(() => {
+    const query = clientQuery.trim().toLowerCase();
+    if (!query) return clients;
+    return clients.filter((entry) =>
+      [entry.name, entry.contact_person, entry.email, entry.client_type]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(query))
+    );
+  }, [clients, clientQuery]);
 
   async function saveProfile(e) {
     e.preventDefault();
@@ -122,6 +160,15 @@ export default function AdminPage({ user }) {
     return <div className="p-8 text-center text-gray-500">You do not have administrative access.</div>;
   }
 
+  const tabs = [
+    canManageUsers && { id: "users", label: "User management" },
+    canManageClients && { id: "clients", label: "Client directory" },
+    canManageUsers && { id: "access-requests", label: "Access requests" },
+    (canManageUsers || canManageProfile) && { id: "analytics", label: "Analytics" },
+    canManageEntities && { id: "entities", label: "Entity management" },
+    canManageProfile && { id: "profile", label: "Company profile" },
+  ].filter(Boolean);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="space-y-6">
@@ -138,76 +185,14 @@ export default function AdminPage({ user }) {
 
       {error && <ErrorBanner message={error} />}
 
-      <div className="border-b border-gray-200 overflow-x-auto">
-        <nav className="-mb-px flex space-x-8 min-w-max">
-          {canManageUsers && (
-            <button
-              onClick={() => setActiveTab("users")}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "users" ? "border-orac-blue text-orac-blue" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              User Management
-            </button>
-          )}
-          {canManageClients && (
-            <button
-              onClick={() => setActiveTab("clients")}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "clients" ? "border-orac-blue text-orac-blue" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Client Directory
-            </button>
-          )}
-          {canManageUsers && (
-            <button
-              onClick={() => setActiveTab("access-requests")}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "access-requests" ? "border-orac-blue text-orac-blue" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Access Requests
-            </button>
-          )}
-          {(canManageUsers || canManageProfile) && (
-            <button
-              onClick={() => setActiveTab("analytics")}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "analytics" ? "border-orac-blue text-orac-blue" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Analytics
-            </button>
-          )}
-          {canManageEntities && (
-            <button
-              onClick={() => setActiveTab("entities")}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "entities" ? "border-orac-blue text-orac-blue" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Entity Management
-            </button>
-          )}
-          {canManageProfile && (
-            <button
-              onClick={() => setActiveTab("profile")}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "profile" ? "border-orac-blue text-orac-blue" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Company Profile
-            </button>
-          )}
-        </nav>
-      </div>
+      <TabNav tabs={tabs} activeId={activeTab} onChange={setActiveTab} label="Administration sections" />
 
-      <div className="pt-2">
+      <div className="pt-2" role="tabpanel" id={`panel-${activeTab}`} aria-labelledby={`tab-${activeTab}`} tabIndex={-1}>
 
         {activeTab === "users" && canManageUsers && (
           <div className="space-y-4">
-            <div className="flex justify-end">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <SearchField label="Search users" value={userQuery} onChange={setUserQuery} placeholder="Search users" />
               <button onClick={() => setUserModal({ open: true, data: null })} className="px-4 py-2 bg-orac-blue text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md hover:bg-orac-blue/90 transition-all">
                 + Add New User
               </button>
@@ -218,7 +203,7 @@ export default function AdminPage({ user }) {
               <DataTable
                 title="System Users"
                 columns={["Name", "Email", "Role", "Status", "Actions"]}
-                rows={users}
+                rows={filteredUsers}
                 emptyText="No users found."
                 renderRow={(u) => (
                   <tr key={u.id} className="transition-colors hover:bg-gray-50/80 group">
@@ -245,14 +230,17 @@ export default function AdminPage({ user }) {
 
         {activeTab === "clients" && canManageClients && (
           <div className="space-y-4">
-            <div className="flex justify-between items-center gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <p className="text-xs text-gray-400">
                 Top of the client-owned hierarchy: Client → Mine Site → Plant → Plant Section → Equipment Tag.
                 Manage mine sites, plants, plant sections and equipment tags under Entity Management.
               </p>
-              <button onClick={() => setClientModal({ open: true, data: null })} className="px-4 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md hover:bg-slate-700 transition-all whitespace-nowrap">
-                + Register Client
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <SearchField label="Search clients" value={clientQuery} onChange={setClientQuery} placeholder="Search clients" />
+                <button onClick={() => setClientModal({ open: true, data: null })} className="px-4 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md hover:bg-slate-700 transition-all whitespace-nowrap">
+                  + Register Client
+                </button>
+              </div>
             </div>
             {loading ? (
               <div className="py-12 text-center text-gray-400">Loading clients...</div>
@@ -260,7 +248,7 @@ export default function AdminPage({ user }) {
               <DataTable
                 title="Client Directory"
                 columns={["Client Name", "Type", "Contact Person", "Email", "Status", "Actions"]}
-                rows={clients}
+                rows={filteredClients}
                 emptyText="No clients found."
                 renderRow={(c) => {
                   // FIX: is_active must be read defensively (!== false, not a
@@ -320,14 +308,14 @@ export default function AdminPage({ user }) {
                   { key: "email", label: "Contact Email", type: "email" },
                 ].map((field) => (
                   <div key={field.key}>
-                    <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase tracking-wider">{field.label}</label>
+                    <label className="mb-1 block text-sm font-semibold text-gray-700">{field.label}</label>
                     <input
                       type={field.type || "text"}
                       value={profile[field.key] || ""}
                       onChange={(e) => setProfile({ ...profile, [field.key]: e.target.value })}
                       className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20 transition-all"
                     />
-                    {field.help && <p className="mt-1 text-[11px] text-gray-400">{field.help}</p>}
+                    {field.help && <p className="mt-1 text-xs text-gray-500">{field.help}</p>}
                   </div>
                 ))}
                 <div className="pt-4 border-t border-gray-100 mt-6">
@@ -367,20 +355,20 @@ export default function AdminPage({ user }) {
       <Modal title={userModal.data ? "Edit User" : "Create New User"} isOpen={userModal.open} onClose={() => setUserModal({ open: false, data: null })}>
         <form onSubmit={handleUserSave} className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Full Name</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">Full Name</label>
             <input name="name" defaultValue={userModal.data?.name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Email Address</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">Email Address</label>
             <input name="email" type="email" defaultValue={userModal.data?.email || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">{userModal.data ? "New Password (optional)" : "Temporary Password"}</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">{userModal.data ? "New Password (optional)" : "Temporary Password"}</label>
             <input name="password" type="password" minLength="10" required={!userModal.data} autoComplete="new-password" placeholder={userModal.data ? "Leave blank to keep the existing password" : "At least 10 characters"} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
-            <p className="mt-1 text-[10px] text-gray-400">Share a temporary password securely; the user can change it through the reset flow.</p>
+            <p className="mt-1 text-xs text-gray-500">Share a temporary password securely; the user can change it through the reset flow.</p>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">System Role</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">System Role</label>
             <select name="role" defaultValue={userModal.data?.role || "Technician"} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 bg-white">
               <option value="Admin">Admin</option>
               <option value="Management">Management</option>
@@ -393,20 +381,20 @@ export default function AdminPage({ user }) {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Client ID (For Client Viewers)</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">Client ID (For Client Viewers)</label>
             <input name="client_id" defaultValue={userModal.data?.client_id || ""} placeholder="e.g. c_zimplats" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
-            <p className="mt-1 text-[10px] text-gray-400">Only required if role is Client Viewer.</p>
+            <p className="mt-1 text-xs text-gray-500">Only required if role is Client Viewer.</p>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Trade / Specialty</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">Trade / Specialty</label>
             <select name="trade" defaultValue={userModal.data?.trade || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 bg-white">
               <option value="">Not assigned</option>
               {TECHNICIAN_TRADES.map((trade) => <option key={trade} value={trade}>{trade}</option>)}
             </select>
-            <p className="mt-1 text-[10px] text-gray-400">Assign only to Technician accounts. This groups operational timesheets without changing access rights.</p>
+            <p className="mt-1 text-xs text-gray-500">Assign only to Technician accounts. This groups operational timesheets without changing access rights.</p>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Account Status</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">Account Status</label>
             <select name="is_active" defaultValue={userModal.data ? String(userModal.data.is_active) : "true"} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 bg-white">
               <option value="true">Active</option>
               <option value="false">Inactive / Suspended</option>
@@ -422,22 +410,22 @@ export default function AdminPage({ user }) {
       <Modal title={clientModal.data ? "Edit Client" : "Register Client"} isOpen={clientModal.open} onClose={() => setClientModal({ open: false, data: null })}>
         <form onSubmit={handleClientSave} className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Client Name</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">Client Name</label>
             <input name="name" defaultValue={clientModal.data?.name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Client Type</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">Client Type</label>
             <select name="client_type" defaultValue={clientModal.data?.client_type || "permanent"} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 bg-white">
               <option value="permanent">Permanent Account</option>
               <option value="walk_in">Walk-In / Once-off</option>
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Contact Person</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">Contact Person</label>
             <input name="contact_person" defaultValue={clientModal.data?.contact_person || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Contact Email</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">Contact Email</label>
             <input name="email" type="email" defaultValue={clientModal.data?.email || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
           </div>
           <div className="pt-4 flex justify-end gap-3">

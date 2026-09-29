@@ -16,6 +16,14 @@ export default function PortalLayout({ user, onLogout, children }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
+      {/* Keyboard/screen-reader users can jump straight past the repeated
+          header and navigation into the page content. */}
+      <a
+        href="#main-content"
+        className="sr-only rounded-md bg-orac-navy px-4 py-2 text-sm font-semibold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50"
+      >
+        Skip to content
+      </a>
       {/* Top header bar — sticky so navigation stays reachable while scanning long pages */}
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
@@ -61,14 +69,14 @@ export default function PortalLayout({ user, onLogout, children }) {
         </div>
 
         {/* Navigation — clean segmented control bar, policy-derived (visibleNavigation) */}
-        <nav aria-label="Primary" className="flex items-center gap-1 overflow-x-auto border-t border-gray-100 bg-gray-50/70 px-4 py-1.5 sm:px-6">
+        <nav aria-label="Primary" className="flex items-center gap-1 overflow-x-auto border-t border-gray-100 bg-gray-50/70 px-4 py-2 sm:px-6">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               end={item.path === "/"}
               className={({ isActive }) =>
-                `whitespace-nowrap rounded-md px-3.5 py-1.5 text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
+                `whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
                   isActive
                     ? "bg-orac-navy text-white shadow-sm"
                     : "text-gray-600 hover:bg-white hover:text-orac-slate hover:shadow-sm"
@@ -82,7 +90,7 @@ export default function PortalLayout({ user, onLogout, children }) {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 p-4 sm:p-6">{children}</main>
+      <main id="main-content" className="flex-1 p-4 sm:p-6">{children}</main>
 
       {/* Footer */}
       <footer className="border-t border-gray-200 bg-white px-4 py-5 text-sm text-gray-500 sm:px-6">

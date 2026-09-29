@@ -143,7 +143,7 @@ export default function FinanceCommercialPage() {
       ) : (
         <>
           <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-600">Purchase orders awaiting verification</h2>
+            <h2 className="text-base font-semibold text-gray-700">Purchase orders awaiting verification</h2>
             {pending.length === 0 ? (
               <PageEmptyState iconPath={ICONS.document} title="Nothing to verify" subtitle="Client-submitted purchase orders appear here." />
             ) : (
@@ -189,7 +189,7 @@ export default function FinanceCommercialPage() {
           </section>
 
           <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-600">PO amendments required</h2>
+            <h2 className="text-base font-semibold text-gray-700">PO amendments required</h2>
             {amendments.length === 0 ? (
               <PageEmptyState iconPath={ICONS.document} title="No amendments needed" subtitle="A PO appears here when logged work exceeds its approved amount." />
             ) : (
@@ -225,7 +225,7 @@ export default function FinanceCommercialPage() {
           </section>
 
           <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-600">Ready to invoice</h2>
+            <h2 className="text-base font-semibold text-gray-700">Ready to invoice</h2>
             {ready.length === 0 ? (
               <PageEmptyState iconPath={ICONS.money} title="Nothing ready to invoice" subtitle="Work appears here once its PO is verified, no amendment is outstanding and a supervisor has approved a worksheet." />
             ) : (

@@ -88,7 +88,7 @@ export default function ClientPortalPage() {
               <h2 className="mb-4 text-sm font-semibold text-amber-900 dark:text-amber-300">Submit Purchase Order</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-amber-800 uppercase tracking-wider dark:text-amber-400">Quote</label>
+                  <label className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">Quote</label>
                   <select
                     value={poForm.quoteId}
                     onChange={(e) => setPoForm({ ...poForm, quoteId: e.target.value })}
@@ -102,7 +102,7 @@ export default function ClientPortalPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-amber-800 uppercase tracking-wider dark:text-amber-400">PO Reference</label>
+                  <label className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">PO Reference</label>
                   <input
                     type="text"
                     placeholder="e.g. PO-2026-999"
@@ -113,7 +113,7 @@ export default function ClientPortalPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-amber-800 uppercase tracking-wider dark:text-amber-400">PO Amount (R)</label>
+                  <label className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">PO Amount (R)</label>
                   <input
                     type="number"
                     placeholder="0.00"

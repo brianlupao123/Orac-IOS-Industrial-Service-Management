@@ -21,13 +21,14 @@ export default function IconStatCard({ label, value, iconPath, tone = "neutral",
       {...(onClick ? { type: "button", onClick } : {})}
       id={evidenceTarget || undefined}
       data-evidence-target={evidenceTarget || undefined}
-      className={`w-full rounded-lg border p-5 text-left shadow-sm transition-all duration-200 ${TONES[resolvedTone] || TONES.neutral} ${onClick ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orac-blue/40" : ""}`}
+      className={`w-full rounded-lg border p-5 text-left shadow-sm transition-all duration-200 ${TONES[resolvedTone] || TONES.neutral} ${onClick ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/60" : ""}`}
     >
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm font-semibold text-slate-800">{label}</p>
-          <p className="mt-2 text-4xl font-light tabular-nums">{value}</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums sm:text-4xl">{value}</p>
           {subtitle && <p className="mt-2 text-sm leading-5 text-slate-700">{subtitle}</p>}
+          {onClick && <p className="mt-2 text-sm font-semibold text-orac-blue">View details &rarr;</p>}
         </div>
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white/95 text-orac-blue">
           <Icon path={iconPath} />

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { inventory } from "../api/client.js";
 import DataTable from "../components/DataTable.jsx";
-import IconStatCard from "../components/IconStatCard.jsx";
+import AttentionBand from "../components/AttentionBand.jsx";
 import Modal from "../components/Modal.jsx";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
+import TabNav from "../components/TabNav.jsx";
 import { ErrorBanner } from "../components/PageStates.jsx";
 import { ICONS } from "../components/icons.jsx";
 
@@ -141,30 +142,44 @@ export default function InventoryPage({ user }) {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="space-y-6">
-        <PageHeaderBanner eyebrow="Materials control" title="Inventory Management" subtitle="Track stock levels, record movements, and manage suppliers." iconPath={ICONS.inventory} />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <IconStatCard label="Total Items" value={items.length} iconPath={ICONS.inventory} tone="neutral" />
-          <IconStatCard label="Low Stock Alerts" value={lowStockCount} iconPath={ICONS.warning} tone={lowStockCount > 0 ? "red" : "green"} />
-          <IconStatCard label="Total Value On Hand" value={`$${totalValue.toLocaleString(undefined, {minimumFractionDigits:2})}`} iconPath={ICONS.money} tone="blue" />
-        </div>
-      </div>
+      <PageHeaderBanner
+        eyebrow="Materials control"
+        title="Inventory management"
+        subtitle="Track stock levels, record movements, and manage suppliers."
+        iconPath={ICONS.inventory}
+        meta={[`${items.length} items`, `${suppliers.length} suppliers`]}
+      />
+      <AttentionBand
+        items={[
+          { label: "Total items", value: items.length, iconPath: ICONS.inventory },
+          {
+            label: "Low stock alerts",
+            value: lowStockCount,
+            iconPath: ICONS.warning,
+            attention: lowStockCount > 0,
+          },
+          {
+            label: "Total value on hand",
+            value: `$${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+            iconPath: ICONS.money,
+          },
+        ]}
+      />
 
       {error && <ErrorBanner message={error} />}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          <button onClick={() => setActiveTab("stock")} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "stock" ? "border-orac-blue text-orac-blue" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}>
-            Stock & Movements
-          </button>
-          <button onClick={() => setActiveTab("suppliers")} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "suppliers" ? "border-orac-blue text-orac-blue" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}>
-            Suppliers
-          </button>
-        </nav>
-      </div>
+      <TabNav
+        tabs={[
+          { id: "stock", label: "Stock & movements" },
+          { id: "suppliers", label: "Suppliers" },
+        ]}
+        activeId={activeTab}
+        onChange={setActiveTab}
+        label="Inventory sections"
+      />
 
-      <div className="pt-2">
+      <div role="tabpanel" id={`panel-${activeTab}`} aria-labelledby={`tab-${activeTab}`} tabIndex={-1}>
         {/* STOCK TAB */}
         {activeTab === "stock" && (
           <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
@@ -172,10 +187,10 @@ export default function InventoryPage({ user }) {
             {canManage && (
               <div className="lg:col-span-1">
                 <form onSubmit={handleMovement} className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm sticky top-6">
-                  <h2 className="mb-5 text-sm font-semibold text-orac-slate">Record Movement</h2>
+                  <h2 className="mb-5 text-sm font-semibold text-orac-slate">Record movement</h2>
                   <div className="space-y-4">
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Item</label>
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">Item</label>
                       <select
                         value={form.stock_item_id}
                         onChange={(e) => setForm({ ...form, stock_item_id: e.target.value })}
@@ -190,7 +205,7 @@ export default function InventoryPage({ user }) {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Type</label>
+                        <label className="mb-1 block text-sm font-semibold text-gray-700">Type</label>
                         <select
                           value={form.movement_type}
                           onChange={(e) => setForm({ ...form, movement_type: e.target.value, category: "" })}
@@ -202,7 +217,7 @@ export default function InventoryPage({ user }) {
                         </select>
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Qty</label>
+                        <label className="mb-1 block text-sm font-semibold text-gray-700">Quantity</label>
                         <input
                           type="number"
                           value={form.quantity}
@@ -217,7 +232,7 @@ export default function InventoryPage({ user }) {
                       </div>
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Reason</label>
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">Reason</label>
                       <input
                         type="text"
                         value={form.reason}
@@ -229,7 +244,7 @@ export default function InventoryPage({ user }) {
                     </div>
                     {form.movement_type !== "out" && (
                       <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Category (optional)</label>
+                        <label className="mb-1 block text-sm font-semibold text-gray-700">Category (optional)</label>
                         <select data-evidence="inventory-movement-category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white">
                           {form.movement_type === "in" ? (
                             <>
@@ -246,7 +261,7 @@ export default function InventoryPage({ user }) {
                       </div>
                     )}
                     {(form.movement_type === "out" || form.movement_type === "adjustment") && (
-                      <label className="flex items-start gap-2 text-xs text-gray-600">
+                      <label className="flex items-start gap-2 text-sm text-gray-600">
                         <input
                           type="checkbox"
                           checked={form.override_negative}
@@ -260,7 +275,7 @@ export default function InventoryPage({ user }) {
                       </label>
                     )}
                     <button type="submit" className="w-full rounded-lg bg-orac-blue py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-orac-blue/90 mt-2">
-                      Submit Movement
+                      Submit movement
                     </button>
                   </div>
                 </form>
@@ -281,7 +296,7 @@ export default function InventoryPage({ user }) {
                 </label>
                 {canManage && (
                   <button onClick={() => setItemModal({ open: true, data: null })} className="px-4 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg shadow-sm hover:bg-slate-700 transition-all">
-                    + New Stock Item
+                    + New stock item
                   </button>
                 )}
               </div>
@@ -293,8 +308,8 @@ export default function InventoryPage({ user }) {
                 </div>
               ) : (
                 <DataTable
-                  title="Current Stock Levels"
-                  columns={["Code", "Name", "On Hand", "Reorder Level", "Status", "Actions"]}
+                  title="Current stock levels"
+                  columns={["Code", "Name", "On hand", "Reorder level", "Status", "Actions"]}
                   rows={visibleItems}
                   emptyText="No inventory items found."
                   renderRow={(i) => {
@@ -347,7 +362,7 @@ export default function InventoryPage({ user }) {
             <div className="flex justify-end">
               {canManage && (
                 <button onClick={() => setSupplierModal({ open: true, data: null })} className="px-4 py-2 bg-orac-blue text-white text-sm font-medium rounded-lg shadow-sm hover:bg-orac-blue/90 transition-all">
-                  + Add Supplier
+                  + Add supplier
                 </button>
               )}
             </div>
@@ -356,7 +371,7 @@ export default function InventoryPage({ user }) {
             ) : (
               <DataTable
                 title="Suppliers"
-                columns={["Supplier Name", "Contact", "Email", "Lead Time", "Actions"]}
+                columns={["Supplier name", "Contact", "Email", "Lead time", "Actions"]}
                 rows={suppliers}
                 emptyText="No suppliers found."
                 renderRow={(s) => (
@@ -381,20 +396,20 @@ export default function InventoryPage({ user }) {
       </div>
 
       {/* Item Modal */}
-      <Modal title={itemModal.data ? "Edit Stock Item" : "Create Stock Item"} isOpen={itemModal.open} onClose={() => setItemModal({ open: false, data: null })}>
+      <Modal title={itemModal.data ? "Edit stock item" : "Create stock item"} isOpen={itemModal.open} onClose={() => setItemModal({ open: false, data: null })} size="lg">
         <form onSubmit={handleItemSave} className="space-y-4">
-          <div><label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Item Code</label><input name="item_code" defaultValue={itemModal.data?.item_code || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
-          <div><label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Item Name</label><input name="item_name" defaultValue={itemModal.data?.item_name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
+          <div><label className="mb-1 block text-sm font-semibold text-gray-700">Item Code</label><input name="item_code" defaultValue={itemModal.data?.item_code || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
+          <div><label className="mb-1 block text-sm font-semibold text-gray-700">Item Name</label><input name="item_name" defaultValue={itemModal.data?.item_name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Unit of Measure</label><input name="unit_of_measure" defaultValue={itemModal.data?.unit_of_measure || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" placeholder="e.g. m2, each, set" /></div>
-            <div><label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Unit Cost</label><input name="unit_cost" type="number" step="0.01" defaultValue={itemModal.data?.unit_cost || "0"} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
+            <div><label className="mb-1 block text-sm font-semibold text-gray-700">Unit of measure</label><input name="unit_of_measure" defaultValue={itemModal.data?.unit_of_measure || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" placeholder="e.g. m2, each, set" /></div>
+            <div><label className="mb-1 block text-sm font-semibold text-gray-700">Unit cost</label><input name="unit_cost" type="number" step="0.01" defaultValue={itemModal.data?.unit_cost || "0"} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Starting Qty (On Hand)</label><input name="quantity_on_hand" type="number" defaultValue={itemModal.data?.quantity_on_hand || "0"} disabled={!!itemModal.data} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-gray-50 focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 disabled:text-gray-400" /></div>
-            <div><label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Reorder Level</label><input name="reorder_level" type="number" defaultValue={itemModal.data?.reorder_level || "0"} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
+            <div><label className="mb-1 block text-sm font-semibold text-gray-700">Starting quantity on hand</label><input name="quantity_on_hand" type="number" defaultValue={itemModal.data?.quantity_on_hand || "0"} disabled={!!itemModal.data} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-gray-50 focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 disabled:text-gray-400" /></div>
+            <div><label className="mb-1 block text-sm font-semibold text-gray-700">Reorder level</label><input name="reorder_level" type="number" defaultValue={itemModal.data?.reorder_level || "0"} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Primary Supplier</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">Primary supplier</label>
             <select name="supplier_id" defaultValue={itemModal.data?.supplier_id || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 bg-white">
               <option value="">None / Unknown</option>
               {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -408,15 +423,15 @@ export default function InventoryPage({ user }) {
       </Modal>
 
       {/* Supplier Modal */}
-      <Modal title={supplierModal.data ? "Edit Supplier" : "Add Supplier"} isOpen={supplierModal.open} onClose={() => setSupplierModal({ open: false, data: null })}>
+      <Modal title={supplierModal.data ? "Edit supplier" : "Add supplier"} isOpen={supplierModal.open} onClose={() => setSupplierModal({ open: false, data: null })} size="lg">
         <form onSubmit={handleSupplierSave} className="space-y-4">
-          <div><label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Supplier Name</label><input name="name" defaultValue={supplierModal.data?.name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
-          <div><label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Contact Person</label><input name="contact_person" defaultValue={supplierModal.data?.contact_person || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
+          <div><label className="mb-1 block text-sm font-semibold text-gray-700">Supplier name</label><input name="name" defaultValue={supplierModal.data?.name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
+          <div><label className="mb-1 block text-sm font-semibold text-gray-700">Contact person</label><input name="contact_person" defaultValue={supplierModal.data?.contact_person || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Email</label><input name="email" type="email" defaultValue={supplierModal.data?.email || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
-            <div><label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Phone</label><input name="phone" defaultValue={supplierModal.data?.phone || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
+            <div><label className="mb-1 block text-sm font-semibold text-gray-700">Email</label><input name="email" type="email" defaultValue={supplierModal.data?.email || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
+            <div><label className="mb-1 block text-sm font-semibold text-gray-700">Phone</label><input name="phone" defaultValue={supplierModal.data?.phone || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
           </div>
-          <div><label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Lead Time (Days)</label><input name="lead_time_days" type="number" defaultValue={supplierModal.data?.lead_time_days || "0"} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
+          <div><label className="mb-1 block text-sm font-semibold text-gray-700">Lead time (days)</label><input name="lead_time_days" type="number" defaultValue={supplierModal.data?.lead_time_days || "0"} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
           <div className="pt-4 flex justify-end gap-3">
             <button type="button" onClick={() => setSupplierModal({ open: false, data: null })} className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900">Cancel</button>
             <button type="submit" className="px-5 py-2 bg-orac-blue text-white text-sm font-medium rounded-lg hover:bg-orac-blue/90 shadow-sm">Save Supplier</button>

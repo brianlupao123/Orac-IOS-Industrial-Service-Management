@@ -131,7 +131,7 @@ export default function WorksheetsPage({ user }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-light tracking-tight text-gray-900 mb-2">Timesheets</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl mb-2">Timesheets</h1>
           <p className="text-sm text-gray-500 max-w-3xl leading-relaxed">
             <strong>Timesheets</strong> record skilled labour, hours, field activity and outcomes against a dispatch card.
             The technical system record remains a field worksheet; supervisors review and approve submitted timesheets.
@@ -165,7 +165,7 @@ export default function WorksheetsPage({ user }) {
           <button
             key={key}
             onClick={() => setFilter(key)}
-            className={`rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide transition-all ${
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
               filter === key 
                 ? "bg-gray-900 text-white shadow-md" 
                 : "bg-gray-100/50 text-gray-600 hover:bg-gray-200/80"
@@ -221,7 +221,7 @@ export default function WorksheetsPage({ user }) {
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="font-semibold text-gray-900 tracking-tight text-lg">{ws.activity || "Timesheet"}</span>
+                    <span className="font-semibold text-gray-900 text-lg">{ws.activity || "Timesheet"}</span>
                     <StatusBadge status={ws.status} />
                   </div>
                   
@@ -237,14 +237,14 @@ export default function WorksheetsPage({ user }) {
                       </div>
                     )}
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Trade</span>
+                      <span className="text-sm font-semibold text-gray-500">Trade</span>
                       {displayTrade(ws.technician_trade)}
                     </div>
                   </div>
                   
                   {ws.outcomes && (
                     <div className="mt-3 bg-gray-50/80 rounded-lg p-3 border border-gray-100">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Activity Outcomes</p>
+                      <p className="text-sm font-semibold text-gray-500 mb-1">Activity Outcomes</p>
                       <p className="text-sm text-gray-700">{ws.outcomes}</p>
                     </div>
                   )}
@@ -262,7 +262,7 @@ export default function WorksheetsPage({ user }) {
 
               {canReview && ws.status === "Submitted" && (
                 <div className="mt-5 border-t border-gray-100 pt-5 bg-gray-50/30 -mx-5 -mb-5 px-5 pb-5 rounded-b-xl">
-                  <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">Supervisor Review</label>
+                  <label className="block text-sm font-semibold text-gray-600 mb-2">Supervisor Review</label>
                   <textarea
                     placeholder="Enter review comments (required if returning)"
                     value={comment[ws.id] || ""}
@@ -308,9 +308,9 @@ export default function WorksheetsPage({ user }) {
           )}
 
           <fieldset className="space-y-4">
-            <legend className="text-xs font-semibold uppercase tracking-wider text-gray-500">Dispatch &amp; date</legend>
+            <legend className="text-sm font-semibold text-gray-500">Dispatch &amp; date</legend>
             <div>
-              <label htmlFor="ws-dispatch" className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+              <label htmlFor="ws-dispatch" className="mb-1 block text-sm font-semibold text-gray-600">
                 Dispatch Card
               </label>
               <select
@@ -332,7 +332,7 @@ export default function WorksheetsPage({ user }) {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="ws-date" className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+                <label htmlFor="ws-date" className="mb-1 block text-sm font-semibold text-gray-600">
                   Work Date
                 </label>
                 <input
@@ -345,7 +345,7 @@ export default function WorksheetsPage({ user }) {
                 />
               </div>
               <div>
-                <label htmlFor="ws-hours" className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+                <label htmlFor="ws-hours" className="mb-1 block text-sm font-semibold text-gray-600">
                   Hours
                 </label>
                 <input
@@ -364,9 +364,9 @@ export default function WorksheetsPage({ user }) {
           </fieldset>
 
           <fieldset className="space-y-4 border-t border-gray-100 pt-4">
-            <legend className="text-xs font-semibold uppercase tracking-wider text-gray-500">Work details</legend>
+            <legend className="text-sm font-semibold text-gray-500">Work details</legend>
             <div>
-              <label htmlFor="ws-activity" className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+              <label htmlFor="ws-activity" className="mb-1 block text-sm font-semibold text-gray-600">
                 Activity
               </label>
               <input
@@ -381,7 +381,7 @@ export default function WorksheetsPage({ user }) {
             </div>
 
             <div>
-              <label htmlFor="ws-outcomes" className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+              <label htmlFor="ws-outcomes" className="mb-1 block text-sm font-semibold text-gray-600">
                 Outcomes
               </label>
               <textarea
