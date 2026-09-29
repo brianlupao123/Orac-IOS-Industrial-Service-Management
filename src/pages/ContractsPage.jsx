@@ -409,7 +409,7 @@ export default function ContractsPage({ user }) {
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 text-sm">
                     <thead className="bg-gray-50">
-                      <tr className="text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <tr className="text-left text-sm font-semibold text-gray-500">
                         <th scope="col" className="px-4 py-3">Contract</th>
                         <th scope="col" className="px-4 py-3">Client</th>
                         <th scope="col" className="px-4 py-3">Period</th>
@@ -487,7 +487,7 @@ export default function ContractsPage({ user }) {
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 text-sm">
                     <thead className="bg-gray-50">
-                      <tr className="text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <tr className="text-left text-sm font-semibold text-gray-500">
                         <th scope="col" className="px-4 py-3">Contract</th>
                         <th scope="col" className="px-4 py-3">Equipment</th>
                         <th scope="col" className="px-4 py-3">Frequency</th>

@@ -18,8 +18,8 @@ test("A low-stock filter narrows the visible rows without altering the underlyin
   assert.match(page, /const \[lowStockOnly, setLowStockOnly\] = useState\(false\);/);
   assert.match(page, /const visibleItems = lowStockOnly \? items\.filter/);
   // Stat cards must keep reading from the full `items` list, not the filtered view.
-  assert.match(page, /value=\{items\.length\}/);
-  assert.match(page, /value=\{lowStockCount\}/);
+  assert.match(page, /value=\{items\.length\}|value: items\.length/);
+  assert.match(page, /value=\{lowStockCount\}|value: lowStockCount/);
   assert.match(page, /rows=\{visibleItems\}/);
 });
 
@@ -34,7 +34,7 @@ test("no new non-ASCII characters were introduced by the reorder-attention chang
   const page = read("src/pages/InventoryPage.jsx");
   const addedLines = [
     "Show reorder attention only",
-    "Reorder Level",
+    "Reorder level",
     "Status",
     "Reorder now",
     "OK</span>"

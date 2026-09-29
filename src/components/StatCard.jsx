@@ -24,15 +24,15 @@ export default function StatCard({ label, value, tone = "slate", icon, subtitle,
     >
       <div className="flex items-start justify-between">
         <div className="flex flex-col">
-          <div className="text-xs font-semibold tracking-wide uppercase opacity-60 mb-1">{label}</div>
-          <div className="text-3xl font-light tracking-tight">
+          <div className="mb-1 text-sm font-semibold text-gray-600">{label}</div>
+          <div className="text-3xl font-semibold sm:text-4xl">
             {value === undefined || value === null ? (
               <span className="inline-block h-8 w-16 animate-pulse rounded bg-gray-200/50" />
             ) : (
               value
             )}
           </div>
-          {subtitle && <div className="mt-2 text-xs font-medium opacity-50">{subtitle}</div>}
+          {subtitle && <div className="mt-2 text-sm font-medium text-gray-600">{subtitle}</div>}
         </div>
         {icon && (
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/80 text-xl shadow-sm backdrop-blur-sm border border-black/5">

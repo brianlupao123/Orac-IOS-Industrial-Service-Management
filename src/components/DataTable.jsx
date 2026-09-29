@@ -1,12 +1,27 @@
 import React from "react";
 
-export default function DataTable({ title, columns, rows, renderRow, emptyText = "No data", action }) {
+export default function DataTable({ title, count, columns, rows, renderRow, emptyText = "No data", action, toolbar }) {
   return (
     <div className="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm">
       {(title || action) && (
-        <div className="flex items-center justify-between border-b border-gray-50 bg-gray-50/30 px-5 py-4">
-          {title && <h3 className="text-base font-semibold text-gray-900">{title}</h3>}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-50 bg-gray-50/30 px-5 py-4">
+          {title && (
+            <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
+              {title}
+              {count !== undefined && (
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">{count}</span>
+              )}
+            </h3>
+          )}
           {action && <div>{action}</div>}
+        </div>
+      )}
+      {/* Optional filter/search row — a caller passes its own inputs here so
+          filtering logic stays with the page/role that owns the data, this
+          component only provides a consistent bar to put it in. */}
+      {toolbar && (
+        <div className="flex flex-wrap items-center gap-3 border-b border-gray-50 bg-white px-5 py-3">
+          {toolbar}
         </div>
       )}
       {rows.length === 0 ? (
@@ -22,11 +37,14 @@ export default function DataTable({ title, columns, rows, renderRow, emptyText =
             <thead className="bg-gray-50/50">
               <tr className="border-b border-gray-100 text-left text-sm font-semibold text-gray-600">
                 {columns.map((col, i) => (
-                  <th key={i} className="px-5 py-3.5 whitespace-nowrap">{col}</th>
+                  <th key={i} scope="col" className="px-5 py-3.5 whitespace-nowrap">{col}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 bg-white">
+            {/* Zebra striping on even rows is a scanning aid for dense operational
+                tables (Cloudscape/USWDS table guidance); it is layered on top of
+                whatever hover/selection classes each row already sets. */}
+            <tbody className="bg-white [&>tr:not(:first-child)]:border-t [&>tr:not(:first-child)]:border-orac-border-default [&>tr:nth-child(even)]:bg-orac-surface-muted">
               {rows.map((row, i) => renderRow(row, i))}
             </tbody>
           </table>

@@ -278,6 +278,7 @@ export default function AdminEntitiesTab({ user }) {
               <button
                 key={ent.key}
                 onClick={() => setActiveEntity(ent.key)}
+                aria-current={activeEntity === ent.key ? "page" : undefined}
                 className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   activeEntity === ent.key 
                     ? "bg-orac-blue/10 text-orac-blue" 
@@ -419,6 +420,7 @@ export default function AdminEntitiesTab({ user }) {
         title={modal.item ? `Edit ${currentConfig.singular}` : `New ${currentConfig.singular}`}
         isOpen={modal.open}
         onClose={() => setModal({ open: false, item: null })}
+        size="lg"
       >
         <form onSubmit={handleSave} className="space-y-4">
           {formError && <ErrorBanner message={formError} />}
@@ -428,7 +430,7 @@ export default function AdminEntitiesTab({ user }) {
               <ScopeTrail
                 items={(selectedParent?.hierarchy_path || []).map((n) => ({ label: n.name }))}
               />
-              <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">
+              <label className="mb-1 block text-sm font-semibold text-gray-700">
                 {currentConfig.parentLabel}
               </label>
               <SearchableSelect
@@ -456,42 +458,42 @@ export default function AdminEntitiesTab({ user }) {
           {activeEntity === "catalog_items" ? (
             <>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Item Code</label>
+                <label className="mb-1 block text-sm font-semibold text-gray-700">Item Code</label>
                 <input name="item_code" defaultValue={modal.item?.item_code || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Item Name</label>
+                <label className="mb-1 block text-sm font-semibold text-gray-700">Item Name</label>
                 <input name="item_name" defaultValue={modal.item?.item_name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Unit Price</label>
+                <label className="mb-1 block text-sm font-semibold text-gray-700">Unit Price</label>
                 <input name="unit_price" type="number" step="0.01" defaultValue={modal.item?.unit_price || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
               </div>
             </>
           ) : activeEntity !== "equipment_tags" ? (
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Name</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">Name</label>
               <input name="name" defaultValue={modal.item?.name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
             </div>
           ) : null}
 
           {activeEntity === "mine_sites" && (
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Location</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">Location</label>
               <input name="location" defaultValue={modal.item?.location || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
             </div>
           )}
 
           {activeEntity === "plants" && (
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Plant Code</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">Plant Code</label>
               <input name="plant_code" defaultValue={modal.item?.plant_code || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
             </div>
           )}
 
           {activeEntity === "plant_sections" && (
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Section Code</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">Section Code</label>
               <input name="section_code" defaultValue={modal.item?.section_code || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
             </div>
           )}
@@ -499,11 +501,11 @@ export default function AdminEntitiesTab({ user }) {
           {activeEntity === "equipment_tags" && (
             <>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Tag Code</label>
+                <label className="mb-1 block text-sm font-semibold text-gray-700">Tag Code</label>
                 <input name="tag_code" defaultValue={modal.item?.tag_code || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Equipment Name</label>
+                <label className="mb-1 block text-sm font-semibold text-gray-700">Equipment Name</label>
                 <input name="equipment_name" defaultValue={modal.item?.equipment_name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
               </div>
             </>
@@ -516,7 +518,7 @@ export default function AdminEntitiesTab({ user }) {
               action (deactivateEntity/reactivateEntity, which records who and
               when), so the form now says so instead of offering a dead control. */}
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-600 uppercase">Status</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">Status</label>
             <p className="text-sm text-gray-700">
               {!modal.item ? "New records start Active." : modal.item.is_active !== false ? "Active" : "Inactive"}
             </p>
@@ -529,7 +531,7 @@ export default function AdminEntitiesTab({ user }) {
           </div>
 
           <div className="pt-4 flex justify-end gap-3">
-            <button type="button" onClick={() => setModal({ open: false, item: null })} className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900">Cancel</button>
+            <button type="button" onClick={() => setModal({ open: false, item: null })} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
             <button type="submit" className="px-5 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg hover:bg-slate-800 shadow-sm">Save</button>
           </div>
         </form>

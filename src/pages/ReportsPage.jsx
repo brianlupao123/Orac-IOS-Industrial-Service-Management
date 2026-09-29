@@ -185,7 +185,7 @@ export default function ReportsPage({ user }) {
             ) : Array.isArray(data) ? (
               <table className="min-w-full text-sm">
                 <thead className="sticky top-0 bg-gray-100 shadow-sm z-10">
-                  <tr className="text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <tr className="text-left text-sm font-medium text-gray-500">
                     {Object.keys(data[0] || {}).map((col) => (
                       <th key={col} className="px-4 py-3 whitespace-nowrap">{col.replace(/_/g, " ")}</th>
                     ))}

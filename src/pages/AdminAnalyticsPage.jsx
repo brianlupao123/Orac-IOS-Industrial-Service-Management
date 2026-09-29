@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { summary, reports } from "../api/client.js";
 import { ErrorBanner } from "../components/PageStates.jsx";
+import StatCard from "../components/StatCard.jsx";
 
 // Deliberately uses zero external chart dependencies (no recharts/chart.js
 // assumed) since this repo's package.json wasn't available to confirm
@@ -9,10 +10,10 @@ import { ErrorBanner } from "../components/PageStates.jsx";
 function Bar({ label, value, max }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
-    <div className="mb-2">
-      <div className="flex justify-between text-xs text-gray-500 mb-0.5">
+    <div className="mb-2.5">
+      <div className="mb-1 flex justify-between text-sm text-gray-600">
         <span>{label.replace(/_/g, " ")}</span>
-        <span>{value}</span>
+        <span className="font-semibold tabular-nums text-gray-900">{value}</span>
       </div>
       <div className="h-2 rounded bg-gray-100">
         <div
@@ -20,15 +21,6 @@ function Bar({ label, value, max }) {
           style={{ width: `${pct}%` }}
         />
       </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value }) {
-  return (
-    <div className="rounded-lg bg-white border border-gray-200 p-4">
-      <div className="text-2xl font-semibold text-orac-blue">{value}</div>
-      <div className="text-xs text-gray-500 mt-1">{label}</div>
     </div>
   );
 }
@@ -65,7 +57,7 @@ export default function AdminAnalyticsPage() {
     );
   }
 
-  if (!stats) return <p className="text-gray-500">Loading analytics...</p>;
+  if (!stats) return <p className="text-sm text-gray-500">Loading analytics…</p>;
 
   const pipelineCounts = pipeline?.counts || {};
   const maxPipeline = Math.max(1, ...Object.values(pipelineCounts));
@@ -86,44 +78,44 @@ export default function AdminAnalyticsPage() {
         <StatCard label="Total PO variance" value={totalVariance} />
       </div>
 
-      <section className="rounded-lg border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 font-medium text-orac-blue">Quote pipeline by status</h2>
+      <section className="rounded-lg border border-gray-200 bg-white p-5">
+        <h2 className="mb-3 text-base font-semibold text-orac-blue">Quote pipeline by status</h2>
         {Object.keys(pipelineCounts).length === 0 && (
-          <p className="text-sm text-gray-400">No quotes yet.</p>
+          <p className="text-sm text-gray-500">No quotes yet.</p>
         )}
         {Object.entries(pipelineCounts).map(([status, count]) => (
           <Bar key={status} label={status} value={count} max={maxPipeline} />
         ))}
       </section>
 
-      <section className="rounded-lg border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 font-medium text-orac-blue">PO compliance</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 text-sm">
+      <section className="rounded-lg border border-gray-200 bg-white p-5">
+        <h2 className="mb-3 text-base font-semibold text-orac-blue">PO compliance</h2>
+        <div className="grid grid-cols-1 gap-5 text-sm sm:grid-cols-3">
           <div>
-            <p className="text-gray-500 mb-1">
+            <p className="mb-1.5 font-medium text-gray-600">
               Approved, awaiting PO ({poCompliance?.approved_awaiting_po?.length || 0})
             </p>
-            <ul className="text-orac-blue">
+            <ul className="space-y-0.5 text-orac-blue">
               {(poCompliance?.approved_awaiting_po || []).slice(0, 5).map((q) => (
                 <li key={q.id}>{q.quote_number}</li>
               ))}
             </ul>
           </div>
           <div>
-            <p className="text-gray-500 mb-1">
+            <p className="mb-1.5 font-medium text-gray-600">
               Requires amendment ({poCompliance?.requires_amendment?.length || 0})
             </p>
-            <ul className="text-orac-blue">
+            <ul className="space-y-0.5 text-orac-blue">
               {(poCompliance?.requires_amendment || []).slice(0, 5).map((po) => (
                 <li key={po.id}>{po.po_reference} (logged {po.logged_value} vs {po.po_amount})</li>
               ))}
             </ul>
           </div>
           <div>
-            <p className="text-gray-500 mb-1">
+            <p className="mb-1.5 font-medium text-gray-600">
               Urgent, pending verification ({poCompliance?.urgent_pending_verification?.length || 0})
             </p>
-            <ul className="text-orac-blue">
+            <ul className="space-y-0.5 text-orac-blue">
               {(poCompliance?.urgent_pending_verification || []).slice(0, 5).map((po) => (
                 <li key={po.id}>{po.id}</li>
               ))}
@@ -132,26 +124,26 @@ export default function AdminAnalyticsPage() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 font-medium text-orac-blue">Worksheet backlog</h2>
+      <section className="rounded-lg border border-gray-200 bg-white p-5">
+        <h2 className="mb-3 text-base font-semibold text-orac-blue">Worksheet backlog</h2>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <div className="text-xl font-semibold text-orac-blue">
+            <div className="text-2xl font-semibold text-orac-blue">
               {worksheetReport?.pending_review?.length ?? 0}
             </div>
-            <div className="text-xs text-gray-500">Pending review</div>
+            <div className="mt-1 text-sm text-gray-600">Pending review</div>
           </div>
           <div>
-            <div className="text-xl font-semibold text-orac-blue">
+            <div className="text-2xl font-semibold text-orac-blue">
               {worksheetReport?.returned_for_correction?.length ?? 0}
             </div>
-            <div className="text-xs text-gray-500">Returned for correction</div>
+            <div className="mt-1 text-sm text-gray-600">Returned for correction</div>
           </div>
           <div>
-            <div className="text-xl font-semibold text-orac-blue">
+            <div className="text-2xl font-semibold text-orac-blue">
               {worksheetReport?.approved_count ?? 0}
             </div>
-            <div className="text-xs text-gray-500">Approved</div>
+            <div className="mt-1 text-sm text-gray-600">Approved</div>
           </div>
         </div>
       </section>

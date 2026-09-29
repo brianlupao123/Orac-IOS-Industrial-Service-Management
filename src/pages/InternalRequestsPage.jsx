@@ -143,7 +143,7 @@ export default function InternalRequestsPage({ user }) {
               <button type="button" aria-pressed={activeTab === "mine"} onClick={() => setTab("mine")} className={tabClass(activeTab === "mine")}>My Requests</button>
               {showInbox && <button type="button" aria-pressed={activeTab === "inbox"} onClick={() => setTab("inbox")} className={tabClass(activeTab === "inbox")}>Team Inbox</button>}
             </div>
-            <label htmlFor="iwr-filter" className="text-xs font-medium uppercase tracking-wider text-gray-600">Status</label>
+            <label htmlFor="iwr-filter" className="text-sm font-medium text-gray-600">Status</label>
             <select id="iwr-filter" value={filter} onChange={(event) => setFilter(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
               <option value="">All statuses</option>
               {INTERNAL_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
