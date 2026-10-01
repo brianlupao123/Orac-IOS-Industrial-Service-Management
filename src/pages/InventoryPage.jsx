@@ -1,5 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { inventory } from "../api/client.js";
+import { canAccessRoute } from "../accessPolicy.js";
+import {
+  isSupplierReceipt, receiptFields, movementProblem, keyForPayload, clearAttempt,
+  referenceLinkTarget, reconciliationText
+} from "../inventoryModel.js";
 import DataTable from "../components/DataTable.jsx";
 import AttentionBand from "../components/AttentionBand.jsx";
 import Modal from "../components/Modal.jsx";
@@ -13,7 +19,8 @@ import { ICONS } from "../components/icons.jsx";
 const MOVEMENT_LABELS = { in: "Receipt", out: "Issue / use", adjustment: "Correction" };
 const REFERENCE_LABELS = {
   supplier: "Supplier receipt",
-  purchase_order: "Purchase order receipt",
+  // purchase_orders in ORAC are CLIENT purchase orders, so this is a reference, never supplier purchase evidence.
+  purchase_order: "Client PO reference",
   dispatch_card: "Service dispatch issue",
   material_usage: "Service dispatch use",
   direct_sale: "Direct sale issue",
@@ -33,7 +40,11 @@ export default function InventoryPage({ user }) {
   const [activeTab, setActiveTab] = useState("stock");
   const [lowStockOnly, setLowStockOnly] = useState(false);
   
-  const [form, setForm] = useState({ stock_item_id: "", movement_type: "in", quantity: "", reason: "", category: "", override_negative: false });
+  const [form, setForm] = useState({ stock_item_id: "", movement_type: "in", quantity: "", reason: "", category: "", supplier_id: "", source_document_ref: "", override_negative: false });
+  const [submitting, setSubmitting] = useState(false);
+  // Same payload => same duplicate-submission key, so a double click or a retry is ONE movement on the server.
+  const attempt = useRef({ signature: null, key: null });
+  const [recon, setRecon] = useState({ loading: false, error: "", data: null });
 
   const [itemModal, setItemModal] = useState({ open: false, data: null });
   const [supplierModal, setSupplierModal] = useState({ open: false, data: null });
@@ -60,11 +71,27 @@ export default function InventoryPage({ user }) {
 
   useEffect(() => { load(); }, []);
 
+  async function loadReconciliation() {
+    setRecon((r) => ({ ...r, loading: true, error: "" }));
+    try {
+      const data = await inventory.reconciliation();
+      setRecon({ loading: false, error: "", data });
+    } catch (err) {
+      setRecon({ loading: false, error: err.message, data: null });
+    }
+  }
+
+  useEffect(() => { if (activeTab === "reconciliation") loadReconciliation(); }, [activeTab]);
+
   async function handleMovement(e) {
     e.preventDefault();
+    if (submitting) return;
     setError("");
+    const problem = movementProblem(form);
+    if (problem) { setError(problem); return; }
+    setSubmitting(true);
     try {
-      await inventory.recordMovement({
+      const payload = {
         stock_item_id: form.stock_item_id,
         movement_type: form.movement_type,
         quantity: Number(form.quantity),
@@ -72,16 +99,23 @@ export default function InventoryPage({ user }) {
         // Optional business category (return / scrap). Omitted when blank so
         // ordinary receipts, issues and corrections are sent exactly as before.
         ...(form.category ? { reference_type: form.category } : {}),
+        // A receipt names its supplier and source document; other movements add nothing here.
+        ...receiptFields(form),
         // Only meaningful when movement_type is "out" or a negative "adjustment", and only
         // Admin/Operations are permitted to use it; the backend re-checks role and always
         // has final say (see inventoryController.recordStockMovement).
         override_negative: form.override_negative
-      });
-      setForm({ stock_item_id: "", movement_type: "in", quantity: "", reason: "", category: "", override_negative: false });
+      };
+      await inventory.recordMovement({ ...payload, idempotency_key: keyForPayload(attempt.current, payload) });
+      clearAttempt(attempt.current);
+      setForm({ stock_item_id: "", movement_type: "in", quantity: "", reason: "", category: "", supplier_id: "", source_document_ref: "", override_negative: false });
       await load();
     } catch (err) {
-      // Gracefully show negative stock blocks from backend
+      // Gracefully show negative stock blocks from backend. The attempt key is kept, so retrying the
+      // identical request cannot create a second movement if the first one actually succeeded.
       setError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -173,6 +207,7 @@ export default function InventoryPage({ user }) {
         tabs={[
           { id: "stock", label: "Stock & movements" },
           { id: "suppliers", label: "Suppliers" },
+          ...(canManage ? [{ id: "reconciliation", label: "Reconciliation" }] : []),
         ]}
         activeId={activeTab}
         onChange={setActiveTab}
@@ -193,7 +228,10 @@ export default function InventoryPage({ user }) {
                       <label className="mb-1 block text-sm font-semibold text-gray-700">Item</label>
                       <select
                         value={form.stock_item_id}
-                        onChange={(e) => setForm({ ...form, stock_item_id: e.target.value })}
+                        onChange={(e) => {
+                          const chosen = items.find((i) => i.id === e.target.value);
+                          setForm({ ...form, stock_item_id: e.target.value, supplier_id: chosen?.supplier_id || "" });
+                        }}
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 bg-white"
                         required
                       >
@@ -242,6 +280,22 @@ export default function InventoryPage({ user }) {
                         required
                       />
                     </div>
+                    {isSupplierReceipt(form) && (
+                      <div data-evidence="inventory-receipt-source" className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        <div>
+                          <label className="mb-1 block text-sm font-semibold text-gray-700">Received from (supplier)</label>
+                          <select data-evidence="inventory-receipt-supplier" value={form.supplier_id} onChange={(e) => setForm({ ...form, supplier_id: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white" required>
+                            <option value="">Select supplier...</option>
+                            {suppliers.map((s) => (<option key={s.id} value={s.id}>{s.name}</option>))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-sm font-semibold text-gray-700">Delivery note / supplier invoice no.</label>
+                          <input data-evidence="inventory-receipt-document" type="text" value={form.source_document_ref} onChange={(e) => setForm({ ...form, source_document_ref: e.target.value })} maxLength={120} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" required />
+                          <p className="mt-1 text-xs text-gray-500">Proof of delivery. A client purchase order is not supplier evidence.</p>
+                        </div>
+                      </div>
+                    )}
                     {form.movement_type !== "out" && (
                       <div>
                         <label className="mb-1 block text-sm font-semibold text-gray-700">Category (optional)</label>
@@ -274,8 +328,8 @@ export default function InventoryPage({ user }) {
                         </span>
                       </label>
                     )}
-                    <button type="submit" className="w-full rounded-lg bg-orac-blue py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-orac-blue/90 mt-2">
-                      Submit movement
+                    <button type="submit" data-evidence="inventory-submit-movement" disabled={submitting} className="w-full rounded-lg bg-orac-blue py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-orac-blue/90 mt-2 disabled:cursor-not-allowed disabled:opacity-60">
+                      {submitting ? "Saving..." : "Submit movement"}
                     </button>
                   </div>
                 </form>
@@ -353,6 +407,50 @@ export default function InventoryPage({ user }) {
                 />
               )}
             </div>
+          </div>
+        )}
+
+        {/* RECONCILIATION TAB - read-only: stored balance vs what the ledger adds up to */}
+        {activeTab === "reconciliation" && canManage && (
+          <div data-evidence="inventory-reconciliation" className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Compares each item's balance with its movement history. This view only reports; it never changes stock.
+              Quantities are compared within one unit of measure.
+            </p>
+            {recon.loading ? (
+              <div className="py-8 text-center text-sm text-gray-400">Checking the ledger...</div>
+            ) : recon.error ? (
+              <ErrorBanner message={recon.error} />
+            ) : recon.data ? (
+              <>
+                <p data-evidence="inventory-reconciliation-summary" className="text-sm font-semibold text-orac-slate">
+                  {recon.data.totals.reconciled} of {recon.data.totals.items} items reconcile
+                  {recon.data.totals.with_exceptions ? ` - ${recon.data.totals.with_exceptions} need attention` : ""}
+                  {recon.data.totals.system_exceptions ? ` - ${recon.data.totals.system_exceptions} worksheet usage record(s) never reached the ledger` : ""}
+                </p>
+                <div className="space-y-3">
+                  {recon.data.items.map((r) => (
+                    <div key={r.stock_item_id} data-evidence="inventory-reconciliation-row" className="rounded-lg border border-gray-200 bg-white p-3 text-sm">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-semibold text-gray-800">{r.item_code} - {r.item_name}</span>
+                        <span className={r.status === "reconciled" ? "text-emerald-700" : "text-red-700"}>{r.status === "reconciled" ? "Reconciled" : "Needs attention"}</span>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">
+                        On hand {r.quantity_on_hand} {r.unit_of_measure} · ledger balance {r.ledger_balance ?? "none"} · {r.movement_count} movement(s)
+                      </p>
+                      {r.exceptions.length > 0 && (
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-red-700">
+                          {r.exceptions.map((x, idx) => (<li key={`${x.code}-${x.movement_id || idx}`}>{reconciliationText(x.code)}: {x.message}</li>))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                  {recon.data.system_exceptions.map((x) => (
+                    <div key={x.material_usage_id} data-evidence="inventory-reconciliation-system" className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">{reconciliationText(x.code)}: {x.message}</div>
+                  ))}
+                </div>
+              </>
+            ) : null}
           </div>
         )}
 
@@ -464,7 +562,9 @@ export default function InventoryPage({ user }) {
                 <p className="mt-1 text-xs text-gray-500">
                   By {m.actor_name || "Unknown user"}
                   {m.reference_label ? <> · {m.reference_label}</> : null}
+                  {m.source_document_ref ? <> · Source document {m.source_document_ref}</> : null}
                   {m.override_negative ? <> · Negative-stock override</> : null}
+                  {referenceLinkTarget(m, canAccessRoute(user.role, "/worksheets")) ? <> · <Link data-evidence="inventory-history-link" className="text-orac-blue underline" to={referenceLinkTarget(m, true)}>Open Timesheets</Link></> : null}
                 </p>
               </div>
             ))}
