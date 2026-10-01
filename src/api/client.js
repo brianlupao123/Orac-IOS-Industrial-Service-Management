@@ -101,7 +101,17 @@ async function request(path, options = {}) {
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  let res;
+  try {
+    res = await fetch(`${BASE}${path}`, { ...options, headers });
+  } catch (cause) {
+    // No answer from the server at all (offline, DNS, dropped connection). Marked
+    // so a page can keep an unsent draft instead of treating it as a server refusal.
+    const error = new Error("Could not reach the server. Check your connection and try again.");
+    error.network = true;
+    error.cause = cause;
+    throw error;
+  }
   const contentType = res.headers?.get?.("content-type") || "";
   const canReadText = typeof res.text === "function";
   const rawBody = canReadText ? await res.text() : "";
@@ -160,6 +170,18 @@ export const auth = {
   },
   logout() {
     clearSession();
+    // Explicit logout also removes unsent offline drafts from this device. Session
+    // expiry deliberately does not, so work in progress survives a timeout.
+    // The prefix is the same one offlineDraftModel.js uses (a test keeps them equal);
+    // it is repeated here because this file must stay free of relative imports.
+    try {
+      const doomed = [];
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("orac-draft:v1:")) doomed.push(key);
+      }
+      doomed.forEach((key) => localStorage.removeItem(key));
+    } catch { /* storage unavailable */ }
   },
   getCachedUser,
   getToken
@@ -193,6 +215,9 @@ export const assistant = {
   },
   chat(message, lastContext = null) {
     return request("/ai/chat", { method: "POST", body: JSON.stringify({ message, lastContext }) });
+  },
+  workflow(articleId) {
+    return request("/ai/workflow", { method: "POST", body: JSON.stringify({ article_id: articleId }) });
   },
   flag(requestId) {
     return request("/ai/feedback", { method: "POST", body: JSON.stringify({ request_id: requestId }) });
@@ -246,6 +271,26 @@ export const dispatch = {
       body: JSON.stringify(payload)
     });
   },
+  // Kiosk and Technician time entries on one dispatch, for the roles allowed to read them.
+  // The server never returns a rate on these reads.
+  timesheets(dispatchId, workDate) {
+    const query = workDate ? `?work_date=${encodeURIComponent(workDate)}` : "";
+    return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/timesheets${query}`);
+  },
+  // Plain-language stock status for materials already used on this assigned job only.
+  materialStatus(dispatchId) {
+    return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/materials/status`);
+  },
+  // Admin/Operations: roster plus a Supervisor picker, and the way to resolve "no Supervisor assigned".
+  roster(dispatchId) {
+    return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/roster`);
+  },
+  assignSupervisor(dispatchId, supervisorId) {
+    return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/supervisor`, {
+      method: "POST",
+      body: JSON.stringify({ supervisor_id: supervisorId })
+    });
+  },
   createWorksheet(dispatchId, payload) {
     // Worksheets: hours (not hours_logged), activity, outcomes, etc.
     return request(`/dispatch_cards/${dispatchId}/worksheets`, {
@@ -267,13 +312,47 @@ export const worksheets = {
       method: "POST",
       body: JSON.stringify({ decision, comment })
     });
+  },
+  // Edit a Draft or Returned worksheet in place (server refuses anything else).
+  update(id, payload) {
+    return request(`/field_worksheets/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(payload) });
+  },
+  // A correction after acknowledgement or approval is a new linked revision, never an in-place edit.
+  revise(id, reason) {
+    return request(`/field_worksheets/${encodeURIComponent(id)}/revise`, { method: "POST", body: JSON.stringify({ reason }) });
+  },
+  // Client Viewer only. The server takes identity from the signed-in account; only the
+  // typed signer name, declared role and an explicit confirmation are sent.
+  clientAcknowledge(id, { signer_name, signer_role }) {
+    return request(`/field_worksheets/${encodeURIComponent(id)}/client-acknowledge`, {
+      method: "POST",
+      body: JSON.stringify({ signer_name, signer_role, acknowledgement: true })
+    });
+  },
+  listOwnClient() {
+    return request("/field_worksheets/mine/client");
   }
 };
+
+// BLOCKED ON THE CONTROLLED-RATES WORK. The kiosk endpoint still requires an
+// hourly_rate on every entry. The value below is the pre-existing placeholder that
+// used to be hard-coded in the Kiosk page. It is NOT an approved rate, policy or
+// default, nothing displays it, and it is isolated here so the controlled-rates
+// change can delete this one constant and the `hourly_rate` line in submit().
+const UNAPPROVED_INTERIM_KIOSK_RATE = 45;
 
 export const kiosk = {
   roster(dispatchId) { return request(`/kiosk/dispatch_cards/${dispatchId}/roster`); },
   submit(dispatchId, payload) {
-    return request(`/kiosk/dispatch_cards/${dispatchId}/timesheets`, { method: "POST", body: JSON.stringify(payload) });
+    const entries = (payload.entries || []).map((entry) => ({ hourly_rate: UNAPPROVED_INTERIM_KIOSK_RATE, ...entry }));
+    return request(`/kiosk/dispatch_cards/${dispatchId}/timesheets`, { method: "POST", body: JSON.stringify({ ...payload, entries }) });
+  },
+  // Supervisor review queue (Admin/Operations may read it, only a Supervisor can decide).
+  reviewQueue(status = "pending_review") {
+    return request(`/timesheets/kiosk-review?status=${encodeURIComponent(status)}`);
+  },
+  review(timesheetId, decision, comment = "") {
+    return request(`/timesheets/${encodeURIComponent(timesheetId)}/review`, { method: "POST", body: JSON.stringify({ decision, comment }) });
   }
 };
 
@@ -315,11 +394,18 @@ export const inventory = {
     return request(`/inventory/stock_items/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
   },
   recordMovement(payload) {
-    // payload: { stock_item_id, movement_type: "in"|"out"|"adjustment", quantity, reason, reference_id?, override_negative? }
+    // payload: { stock_item_id, movement_type: "in"|"out"|"adjustment", quantity, reason, reference_type?, reference_id?,
+    //            source_document_ref? (required with a supplier receipt), idempotency_key?, override_negative? }
     return request("/inventory/movements", { method: "POST", body: JSON.stringify(payload) });
   },
   lowStockReport() {
     return request("/inventory/reports/low-stock");
+  },
+  // Read-only: each item's stored balance vs what its ledger adds up to, plus
+  // every rule-breaking movement. Never changes stock.
+  reconciliation(stockItemId) {
+    const query = stockItemId ? `?stock_item_id=${encodeURIComponent(stockItemId)}` : "";
+    return request(`/inventory/reconciliation${query}`);
   },
   // Full ledger (optionally filtered) and one item's history, newest first.
   listMovements(stockItemId) {
@@ -396,8 +482,15 @@ auth.resetPassword = (email, token, new_password) => { return request('/auth/res
 export const accessRequests = {
   submit(payload) { return request("/access-requests", { method: "POST", body: JSON.stringify(payload) }); },
   list() { return request("/access_requests"); },
-  approve(id, role, client_id) { return request(`/access-requests/${id}/approve`, { method: "POST", body: JSON.stringify({ role, client_id }) }); },
-  reject(id, reason) { return request(`/access-requests/${id}/reject`, { method: "POST", body: JSON.stringify({ reason }) }); }
+  // approve(id, { role, client_id }). The Admin's chosen role is what the server uses.
+  // The older positional form approve(id, role, client_id) is still accepted.
+  approve(id, decision, legacyClientId) {
+    const chosen = decision && typeof decision === "object" ? decision : { role: decision, client_id: legacyClientId };
+    return request(`/access-requests/${id}/approve`, { method: "POST", body: JSON.stringify({ role: chosen.role, client_id: chosen.client_id }) });
+  },
+  reject(id, reason) { return request(`/access-requests/${id}/reject`, { method: "POST", body: JSON.stringify({ reason }) }); },
+  // One-time account setup handoff. The response is the only place the link exists.
+  issueSetupLink(id) { return request(`/access-requests/${id}/setup-link`, { method: "POST" }); }
 };
 
 export const leads = {
@@ -452,6 +545,19 @@ export const documents = {
     };
     if (!paths[type]) throw new Error("Unsupported document type.");
     return downloadFile(paths[type], `${type}-${id}.pdf`);
+  },
+  // Admin/Operations client period pack. Filters: client (required), from/to
+  // (required), plus optional site, technician, task (dispatch) and kiosk time.
+  periodPackPdf({ client_id, from, to, site, technician_id, dispatch_id, include_kiosk } = {}) {
+    const params = new URLSearchParams();
+    params.set("client_id", client_id || "");
+    params.set("from", from || "");
+    params.set("to", to || "");
+    if (site) params.set("site", site);
+    if (technician_id) params.set("technician_id", technician_id);
+    if (dispatch_id) params.set("dispatch_id", dispatch_id);
+    if (include_kiosk) params.set("include_kiosk", "true");
+    return downloadFile(`/documents/timesheets/period-pack.pdf?${params.toString()}`, "period-pack.pdf");
   }
 };
 

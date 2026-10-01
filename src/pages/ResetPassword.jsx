@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { auth } from "../api/client.js";
 
@@ -11,8 +11,24 @@ export default function ResetPassword() {
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const email = params.get("email") || "";
-  const token = params.get("token") || "";
+  // Setup links carry the token in the URL fragment (#...), which browsers never
+  // send to a web server, so it stays out of host access logs. Query-string links
+  // from older builds still work.
+  const [link] = useState(() => {
+    const fromHash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    return {
+      email: fromHash.get("email") || params.get("email") || "",
+      token: fromHash.get("token") || params.get("token") || ""
+    };
+  });
+  const { email, token } = link;
+
+  // Once read, remove the token from the address bar and history entry.
+  useEffect(() => {
+    if (window.location.hash || window.location.search) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();

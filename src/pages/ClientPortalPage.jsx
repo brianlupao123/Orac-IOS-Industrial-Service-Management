@@ -6,6 +6,7 @@ import IconStatCard from "../components/IconStatCard.jsx";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import { ErrorBanner } from "../components/PageStates.jsx";
 import ServiceRequestPanel from "../components/ServiceRequestPanel.jsx";
+import ClientAcknowledgementPanel from "../components/ClientAcknowledgementPanel.jsx";
 import { ICONS } from "../components/icons.jsx";
 
 // Server already scopes these collections to the caller's client_id
@@ -77,6 +78,8 @@ export default function ClientPortalPage() {
       </div>
 
       {error && <ErrorBanner message={error} />}
+
+      <ClientAcknowledgementPanel />
 
       <ServiceRequestPanel />
 

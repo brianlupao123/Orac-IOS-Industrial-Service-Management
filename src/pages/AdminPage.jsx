@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { collections, admin } from "../api/client.js";
 import DataTable from "../components/DataTable.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
@@ -39,7 +40,16 @@ export default function AdminPage({ user }) {
     user.role === "Admin" ? "users" :
     user.role === "Operations" ? "entities" :
     "clients";
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const focusedRequestId = searchParams.get("focus");
+  const [activeTab, setActiveTab] = useState(
+    requestedTab === "access-requests" && user.role === "Admin" ? "access-requests" : initialTab
+  );
+  // A second notification click while already on this page must still switch tabs.
+  useEffect(() => {
+    if (requestedTab === "access-requests" && user.role === "Admin") setActiveTab("access-requests");
+  }, [requestedTab, focusedRequestId, user.role]);
 
   const [saveBusy, setSaveBusy] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -335,7 +345,7 @@ export default function AdminPage({ user }) {
 
         {activeTab === "access-requests" && canManageUsers && (
           <div className="pt-4 animate-in fade-in">
-            <AdminAccessRequestsPage />
+            <AdminAccessRequestsPage focusId={focusedRequestId} />
           </div>
         )}
 

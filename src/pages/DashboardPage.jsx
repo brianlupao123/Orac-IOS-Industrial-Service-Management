@@ -197,9 +197,9 @@ export default function DashboardPage({ user }) {
 
   // Supervisor: Timesheets pending review
   if (user.role === "Supervisor" || user.role === "Admin" || user.role === "Operations") {
-    const pendingReviewCount = user.role === "Operations"
-      ? (stats?.pending_review ?? 0)
-      : worksheets.filter((w) => w.status === "Submitted").length;
+    // Supervisor review only opens after the client has acknowledged, so this counts
+    // Client_Acknowledged. "Submitted" is still waiting on the client, not on a Supervisor.
+    const pendingReviewCount = worksheets.filter((w) => w.status === "Client_Acknowledged").length;
     roleCards.push(
       <IconStatCard
         key="worksheets_review"
@@ -207,7 +207,7 @@ export default function DashboardPage({ user }) {
         value={pendingReviewCount}
         iconPath={ICONS.clock}
         tone={pendingReviewCount > 0 ? "amber" : "neutral"}
-        subtitle="Awaiting supervisor sign-off"
+        subtitle="Client-acknowledged, awaiting Supervisor sign-off"
         evidenceTarget="evidence-kpi-worksheets-review"
         onClick={() => navigate("/worksheets")}
       />
@@ -293,7 +293,7 @@ export default function DashboardPage({ user }) {
         value={stats?.pending_review ?? 0}
         iconPath={ICONS.clock}
         tone={(stats?.pending_review || 0) > 0 ? "amber" : "neutral"}
-        subtitle="Submitted work awaiting decision"
+        subtitle="Waiting for client acknowledgement or Supervisor review"
         evidenceTarget="evidence-kpi-worksheets-review"
         onClick={() => navigate("/worksheets")}
       />
