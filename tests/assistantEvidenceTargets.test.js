@@ -12,7 +12,7 @@ test("floating assistant supports all eight role copies with compact quick actio
   }
   const quickGroups = file.match(/quick:\s*\[/g) || [];
   assert.equal(quickGroups.length, 8);
-  assert.match(file, /Ask AI/);
+  assert.match(file, /ORAC Guide/);
   assert.match(file, /Role-scoped dashboard evidence/);
 });
 

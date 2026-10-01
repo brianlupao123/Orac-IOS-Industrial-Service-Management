@@ -1,6 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { assistant } from "../api/client.js";
+import { canAccessRoute } from "../accessPolicy.js";
 import { Icon, ICONS } from "./icons.jsx";
+
+// The assistant is deterministic and read-only: it explains workflow, cites its
+// source and offers links. It never performs an action. Links are shown only when
+// the server returned them AND the frontend route policy also allows the role.
+const FOCUSABLE = "a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex=\"-1\"])";
 
 const ROLE_COPY = {
   Admin: {
@@ -99,6 +106,11 @@ export default function AIAssistantPanel({ user }) {
   const [flagged, setFlagged] = useState(new Set());
   const [lastContext, setLastContext] = useState(null);
   const conversationEnd = useRef(null);
+  const panelRef = useRef(null);
+  const inputRef = useRef(null);
+  const launcherRef = useRef(null);
+  const wasOpen = useRef(false);
+  const navigate = useNavigate();
   const copy = ROLE_COPY[user.role];
 
   useEffect(() => {
@@ -123,9 +135,29 @@ export default function AIAssistantPanel({ user }) {
 
   useEffect(() => {
     if (!open) return undefined;
-    const closeOnEscape = (event) => { if (event.key === "Escape") setOpen(false); };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") { setOpen(false); return; }
+      if (event.key !== "Tab" || !panelRef.current) return;
+      // Keep keyboard focus inside the modal drawer while it is open.
+      const items = [...panelRef.current.querySelectorAll(FOCUSABLE)];
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  useEffect(() => {
+    if (open) {
+      wasOpen.current = true;
+      inputRef.current?.focus();
+    } else if (wasOpen.current) {
+      wasOpen.current = false;
+      launcherRef.current?.focus();
+    }
   }, [open]);
 
   if (!config?.enabled || !copy) return null;
@@ -140,8 +172,11 @@ export default function AIAssistantPanel({ user }) {
 
   function rememberEvidence(response) {
     const first = response?.evidenceRefs?.[0];
+    const articleId = response?.guidance?.articleId;
     if (first?.metric && first?.targetId) {
-      setLastContext({ metric: first.metric, targetId: first.targetId, label: first.label });
+      setLastContext({ metric: first.metric, targetId: first.targetId, label: first.label, articleId });
+    } else if (articleId) {
+      setLastContext({ metric: "", targetId: "", label: response.guidance.title, articleId });
     }
   }
 
@@ -160,6 +195,16 @@ export default function AIAssistantPanel({ user }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  function openLink(link) {
+    if (!canAccessRoute(user.role, link.path)) return;
+    setOpen(false);
+    navigate(link.path);
+  }
+
+  function runGuide(topic) {
+    send(topic.title, () => assistant.workflow(topic.id));
   }
 
   function runQuick(action) {
@@ -187,11 +232,11 @@ export default function AIAssistantPanel({ user }) {
   }
 
   return <>
-    <button type="button" onClick={() => setOpen(true)} className="fixed bottom-6 right-6 z-30 flex items-center gap-3 rounded-full bg-orac-blue px-4 py-3 text-white shadow-lg transition-transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orac-blue/30" aria-label={`Open ${user.role} dashboard assistant`} title={`Open ${copy.scope}`} aria-haspopup="dialog" aria-expanded={open} aria-controls="dashboard-assistant-panel"><Icon path={ICONS.report} className="h-5 w-5" /><span className="text-sm font-semibold">Ask AI</span></button>
+    <button ref={launcherRef} type="button" onClick={() => setOpen(true)} className="fixed bottom-6 right-6 z-30 flex items-center gap-3 rounded-full bg-orac-blue px-4 py-3 text-white shadow-lg transition-transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orac-blue/30" aria-label={`Open ${user.role} ORAC guide (read-only, not generative AI)`} title={`Open ${copy.scope}`} aria-haspopup="dialog" aria-expanded={open} aria-controls="dashboard-assistant-panel"><Icon path={ICONS.report} className="h-5 w-5" /><span className="text-sm font-semibold">ORAC Guide</span></button>
 
     {open && <>
       <button type="button" className="fixed inset-0 z-40 cursor-default bg-slate-950/20" onClick={() => setOpen(false)} aria-label="Close assistant" />
-      <aside id="dashboard-assistant-panel" role="dialog" aria-modal="true" aria-labelledby="assistant-title" className="fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col border-l border-slate-200 bg-white shadow-2xl dark:border-slate-700">
+      <aside ref={panelRef} id="dashboard-assistant-panel" role="dialog" aria-modal="true" aria-labelledby="assistant-title" className="fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col border-l border-slate-200 bg-white shadow-2xl dark:border-slate-700">
         <header className="border-b border-slate-200 px-5 py-4 dark:border-slate-700">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -199,8 +244,8 @@ export default function AIAssistantPanel({ user }) {
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 <p className="text-xs font-semibold uppercase tracking-wide text-orac-blue">{user.role}</p>
               </div>
-              <h2 id="assistant-title" className="mt-1 text-xl font-semibold text-orac-blue">Dashboard assistant</h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Role-scoped dashboard evidence</p>
+              <h2 id="assistant-title" className="mt-1 text-xl font-semibold text-orac-blue">ORAC guide</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Role-scoped dashboard evidence and workflow guidance. Read-only and not generative AI: it explains and links, and never approves, sends or changes anything.</p>
             </div>
             <button type="button" onClick={() => setOpen(false)} className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Close</button>
           </div>
@@ -210,27 +255,35 @@ export default function AIAssistantPanel({ user }) {
           <div className="grid gap-2 sm:grid-cols-2">
             {copy.quick.map((action) => <button key={action.label} type="button" disabled={loading} onClick={() => runQuick(action)} className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-semibold text-slate-700 hover:border-orac-blue hover:bg-sky-50 disabled:opacity-60 dark:border-slate-700 dark:bg-transparent dark:text-slate-200 dark:hover:bg-sky-950/40">{action.label}</button>)}
           </div>
+          {config.workflow_topics?.length > 0 && <div className="mt-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Workflow guides for {user.role}</p>
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {config.workflow_topics.map((topic) => <li key={topic.id}><button type="button" disabled={loading} onClick={() => runGuide(topic)} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-left text-xs font-semibold text-slate-700 hover:border-orac-blue hover:bg-sky-50 disabled:opacity-60 dark:border-slate-700 dark:bg-transparent dark:text-slate-200 dark:hover:bg-sky-950/40">{topic.title}</button></li>)}
+            </ul>
+          </div>}
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-5">
-          {messages.length === 0 && <div className="rounded-lg border border-sky-100 bg-sky-50 p-4 text-sm leading-6 text-slate-700 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-slate-300"><p className="font-semibold text-slate-800 dark:text-slate-100">How can I help?</p><p className="mt-1">Ask about the numbers on this dashboard. I will answer using only evidence available to your role.</p></div>}
-          <div className="mt-4 space-y-4">
+          {messages.length === 0 && <div className="rounded-lg border border-sky-100 bg-sky-50 p-4 text-sm leading-6 text-slate-700 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-slate-300"><p className="font-semibold text-slate-800 dark:text-slate-100">How can I help?</p><p className="mt-1">Ask where to do a task, what a status means, or what evidence is needed. I answer from reviewed ORAC guidance and evidence available to your role, and I cite the source. I cannot do the task for you.</p></div>}
+          <div className="mt-4 space-y-4" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation with the ORAC guide">
             {messages.map((message) => <div key={message.id} className={message.sender === "user" ? "ml-auto max-w-[85%] rounded-2xl bg-orac-blue px-4 py-3 text-sm leading-6 text-white" : "mr-auto max-w-[92%] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200"}>
+              {message.sender === "assistant" && message.response?.label && <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{message.response.label}</p>}
               <div className="flex items-start gap-2">
                 <p className="min-w-0 flex-1 whitespace-pre-line">{message.text}</p>
                 {message.sender === "assistant" && message.response?.requestId && <button type="button" onClick={() => flagResponse(message.response.requestId)} disabled={flagged.has(message.response.requestId)} className="shrink-0 rounded-md p-1 text-slate-500 hover:bg-white disabled:opacity-60 dark:text-slate-400 dark:hover:bg-slate-700" title="Flag this answer for review" aria-label="Flag this answer for review"><Icon path={ICONS.flag} className="h-4 w-4" /></button>}
               </div>
+              {message.response?.links?.filter((link) => canAccessRoute(user.role, link.path)).length > 0 && <div className="mt-3 flex flex-wrap gap-2">{message.response.links.filter((link) => canAccessRoute(user.role, link.path)).map((link) => <button key={`${message.id}-${link.id}`} type="button" onClick={() => openLink(link)} className="rounded-full bg-orac-blue px-3 py-1 text-xs font-semibold text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-orac-blue/40">Open {link.label}</button>)}</div>}
               {message.response?.evidenceRefs?.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{message.response.evidenceRefs.map((ref) => <button key={`${message.id}-${ref.metric}-${ref.targetId}`} type="button" onClick={() => focusEvidence(ref)} className="rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-semibold text-orac-blue hover:bg-sky-50 dark:border-sky-800/60 dark:bg-transparent dark:hover:bg-sky-950/40">Show evidence: {ref.label}</button>)}</div>}
             </div>)}
-            {loading && <div className="mr-auto max-w-sm rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">Checking verified dashboard evidence...</div>}
+            {loading && <div role="status" className="mr-auto max-w-sm rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">Checking ORAC guidance and your scoped evidence...</div>}
             <div ref={conversationEnd} />
           </div>
         </div>
 
         <form className="border-t border-slate-200 p-4 dark:border-slate-700" onSubmit={submitQuestion}>
-          {error && <p className="mb-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
+          {error && <p role="alert" className="mb-3 text-sm text-red-700 dark:text-red-300">{error}</p>}
           <div className="flex gap-3">
-            <input value={input} onChange={(event) => setInput(event.target.value)} maxLength={500} placeholder={copy.placeholder} className="min-w-0 flex-1 rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 dark:border-slate-600" />
+            <input ref={inputRef} aria-label="Ask the ORAC guide a question" value={input} onChange={(event) => setInput(event.target.value)} maxLength={500} placeholder={copy.placeholder} className="min-w-0 flex-1 rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 dark:border-slate-600" />
             <button type="submit" disabled={loading || !input.trim()} className="rounded-lg bg-orac-blue px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">Send</button>
           </div>
         </form>

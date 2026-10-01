@@ -194,6 +194,9 @@ export const assistant = {
   chat(message, lastContext = null) {
     return request("/ai/chat", { method: "POST", body: JSON.stringify({ message, lastContext }) });
   },
+  workflow(articleId) {
+    return request("/ai/workflow", { method: "POST", body: JSON.stringify({ article_id: articleId }) });
+  },
   flag(requestId) {
     return request("/ai/feedback", { method: "POST", body: JSON.stringify({ request_id: requestId }) });
   }
