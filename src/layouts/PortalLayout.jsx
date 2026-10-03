@@ -1,9 +1,9 @@
-import React from "react";
-import { NavLink } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import UserProfileDropdown from "../components/UserProfileDropdown.jsx";
 import NotificationBell from "../components/NotificationBell.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
-import { visibleNavigation } from "../accessPolicy.js";
+import { visibleNavigationGroups } from "../accessPolicy.js";
 
 /**
  * Production portal layout shell.
@@ -11,8 +11,91 @@ import { visibleNavigation } from "../accessPolicy.js";
  * Features: branded header bar, role-gated navigation, notification bell, user dropdown.
  */
 
+function WorkspaceNavMenu({ group, pathname }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+  const hasActiveItem = group.items.some((item) => item.path === pathname);
+
+  useEffect(() => {
+    const closeWhenFocusLeaves = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) setIsOpen(false);
+    };
+
+    document.addEventListener("mousedown", closeWhenFocusLeaves);
+    return () => document.removeEventListener("mousedown", closeWhenFocusLeaves);
+  }, []);
+
+  const closeOnEscape = (event) => {
+    if (event.key === "Escape") {
+      setIsOpen(false);
+      menuRef.current?.querySelector("button")?.focus();
+    }
+  };
+
+  if (group.items.length === 1) {
+    const [item] = group.items;
+    return (
+      <NavLink
+        to={item.path}
+        end={item.path === "/"}
+        className={({ isActive }) =>
+          `whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
+            isActive ? "bg-orac-navy text-white shadow-sm" : "text-gray-600 hover:bg-white hover:text-orac-slate hover:shadow-sm"
+          }`
+        }
+      >
+        {item.label}
+      </NavLink>
+    );
+  }
+
+  return (
+    <div ref={menuRef} className="relative" onKeyDown={closeOnEscape}>
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        aria-controls={`primary-nav-${group.id}`}
+        onClick={() => setIsOpen((open) => !open)}
+        className={`inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
+          hasActiveItem ? "bg-orac-navy text-white shadow-sm" : "text-gray-600 hover:bg-white hover:text-orac-slate hover:shadow-sm"
+        }`}
+      >
+        {group.label}
+        <span aria-hidden="true" className="text-xs">v</span>
+      </button>
+      {isOpen && (
+        <div
+          id={`primary-nav-${group.id}`}
+          role="menu"
+          aria-label={`${group.label} navigation`}
+          className="absolute left-0 top-full z-30 mt-1 min-w-56 border border-gray-200 bg-white p-1 shadow-lg"
+        >
+          {group.items.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.path === "/"}
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+              className={({ isActive }) =>
+                `block rounded-md px-3 py-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
+                  isActive ? "bg-blue-50 text-orac-navy" : "text-gray-700 hover:bg-gray-50 hover:text-orac-navy"
+                }`
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PortalLayout({ user, onLogout, children }) {
-  const navItems = visibleNavigation(user.role);
+  const location = useLocation();
+  const navGroups = visibleNavigationGroups(user.role);
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -68,24 +151,9 @@ export default function PortalLayout({ user, onLogout, children }) {
           </div>
         </div>
 
-        {/* Navigation — clean segmented control bar, policy-derived (visibleNavigation) */}
+        {/* Navigation stays route-policy-derived but exposes compact work areas. */}
         <nav aria-label="Primary" className="flex items-center gap-1 overflow-x-auto border-t border-gray-100 bg-gray-50/70 px-4 py-2 sm:px-6">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === "/"}
-              className={({ isActive }) =>
-                `whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
-                  isActive
-                    ? "bg-orac-navy text-white shadow-sm"
-                    : "text-gray-600 hover:bg-white hover:text-orac-slate hover:shadow-sm"
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+          {navGroups.map((group) => <WorkspaceNavMenu key={group.id} group={group} pathname={location.pathname} />)}
         </nav>
       </header>
 
