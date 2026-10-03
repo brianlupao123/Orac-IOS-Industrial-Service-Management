@@ -51,7 +51,7 @@ test("adding the route did not widen or narrow any pre-existing route", () => {
   assert.equal(canAccessRoute(ROLES.SALES, "/finance"), false, "Sales must not reach Finance PO/invoice actions");
   assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, "/finance"), false);
   assert.equal(canAccessRoute(ROLES.FINANCE, "/quotations"), false, "Finance must not draft/send quotes");
-  assert.deepEqual(Object.keys(ROUTE_ACCESS).sort(), [...Object.keys(expected), "/reports", "/operational-data", "/documents", "/quotations", "/finance", ROUTE].sort());
+  assert.deepEqual(Object.keys(ROUTE_ACCESS).sort(), [...Object.keys(expected), "/reports", "/operational-data", "/documents", "/quotations", "/finance", "/daily-timesheets", "/contractor-logs", ROUTE].sort());
   assert.equal(canAccessRoute(ROLES.SALES, "/inventory"), false);
   assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, "/reports"), false);
   assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, "/quotations"), false, "Client Viewer must never see internal quote drafting");

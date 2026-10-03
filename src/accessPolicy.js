@@ -28,6 +28,8 @@ export const ROUTE_ACCESS = Object.freeze({
   // every action, including request creation and lifecycle transitions.
   "/internal-requests": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.SALES, ROLES.FINANCE, ROLES.OPERATIONS, ROLES.SUPERVISOR, ROLES.TECHNICIAN],
   "/worksheets": [...operationalRoles, ROLES.TECHNICIAN],
+  "/daily-timesheets": [...operationalRoles, ROLES.TECHNICIAN],
+  "/contractor-logs": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR],
   "/inventory": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],
   "/reports": [...operationalRoles, ROLES.SALES, ROLES.FINANCE],
   "/operational-data": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE],
@@ -48,6 +50,8 @@ export const NAV_ITEMS = Object.freeze([
   { path: "/finance", label: "PO & Invoicing" },
   { path: "/internal-requests", label: "Internal Requests" },
   { path: "/worksheets", label: "Timesheets" },
+  { path: "/daily-timesheets", label: "Daily Time Sheets" },
+  { path: "/contractor-logs", label: "Contractor Logs" },
   { path: "/inventory", label: "Inventory" },
   { path: "/reports", label: "Reports" },
   { path: "/operational-data", label: "Operational Data" },
