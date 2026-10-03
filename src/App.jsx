@@ -23,6 +23,10 @@ import PortalLayout from "./layouts/PortalLayout.jsx";
 import AccessDeniedPage from "./pages/AccessDeniedPage.jsx";
 import OperationalDataPage from "./pages/OperationalDataPage.jsx";
 import DocumentsPage from "./pages/DocumentsPage.jsx";
+import DailyTimesheetPage from "./pages/DailyTimesheetPage.jsx";
+import ContractorLogPage from "./pages/ContractorLogPage.jsx";
+import DailyTimesheetPrintPage from "./pages/DailyTimesheetPrintPage.jsx";
+import ContractorLogPrintPage from "./pages/ContractorLogPrintPage.jsx";
 
 function GuardedRoute({ user, path, children }) {
   return canAccessRoute(user.role, path) ? children : <AccessDeniedPage />;
@@ -80,8 +84,12 @@ export default function App() {
   }
 
   return (
-    <PortalLayout user={user} onLogout={() => { auth.logout(); setUser(null); }}>
-      <Routes>
+    <Routes>
+      <Route path="/daily-timesheets/:id/print" element={<DailyTimesheetPrintPage />} />
+      <Route path="/contractor-logs/:id/print" element={<ContractorLogPrintPage />} />
+      <Route path="/*" element={
+        <PortalLayout user={user} onLogout={() => { auth.logout(); setUser(null); }}>
+          <Routes>
         <Route path="/" element={<DashboardPage user={user} />} />
         <Route path="/portal" element={<GuardedRoute user={user} path="/portal"><ClientPortalPage /></GuardedRoute>} />
         <Route path="/service-requests" element={<GuardedRoute user={user} path="/service-requests"><ServiceRequestTriagePage /></GuardedRoute>} />
@@ -89,6 +97,8 @@ export default function App() {
         <Route path="/finance" element={<GuardedRoute user={user} path="/finance"><FinanceCommercialPage /></GuardedRoute>} />
         <Route path="/internal-requests" element={<GuardedRoute user={user} path="/internal-requests"><InternalRequestsPage user={user} /></GuardedRoute>} />
         <Route path="/worksheets" element={<GuardedRoute user={user} path="/worksheets"><WorksheetsPage user={user} /></GuardedRoute>} />
+        <Route path="/daily-timesheets" element={<GuardedRoute user={user} path="/daily-timesheets"><DailyTimesheetPage user={user} /></GuardedRoute>} />
+        <Route path="/contractor-logs" element={<GuardedRoute user={user} path="/contractor-logs"><ContractorLogPage user={user} /></GuardedRoute>} />
         <Route path="/kiosk" element={<GuardedRoute user={user} path="/kiosk"><KioskModePage user={user} /></GuardedRoute>} />
         <Route path="/contracts" element={<GuardedRoute user={user} path="/contracts"><ContractsPage user={user} /></GuardedRoute>} />
         <Route path="/inventory" element={<GuardedRoute user={user} path="/inventory"><InventoryPage user={user} /></GuardedRoute>} />
@@ -97,7 +107,9 @@ export default function App() {
         <Route path="/documents" element={<GuardedRoute user={user} path="/documents"><DocumentsPage user={user} /></GuardedRoute>} />
         <Route path="/admin" element={<GuardedRoute user={user} path="/admin"><AdminPage user={user} /></GuardedRoute>} />
         <Route path="*" element={<AccessDeniedPage />} />
-      </Routes>
-    </PortalLayout>
+          </Routes>
+        </PortalLayout>
+      } />
+    </Routes>
   );
 }

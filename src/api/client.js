@@ -334,6 +334,22 @@ export const worksheets = {
   }
 };
 
+export const dailyTimesheets = {
+  list() { return request("/daily_timesheets"); },
+  create(payload) { return request("/daily_timesheets", { method: "POST", body: JSON.stringify(payload) }); },
+  update(id, payload) { return request(`/daily_timesheets/${id}`, { method: "PATCH", body: JSON.stringify(payload) }); },
+  submit(id) { return request(`/daily_timesheets/${id}/submit`, { method: "POST", body: JSON.stringify({}) }); },
+  review(id, decision, comment = "") { return request(`/daily_timesheets/${id}/review`, { method: "POST", body: JSON.stringify({ decision, comment }) }); }
+};
+
+export const contractorLogs = {
+  list() { return request("/contractor_log_sheets"); },
+  create(payload) { return request("/contractor_log_sheets", { method: "POST", body: JSON.stringify(payload) }); },
+  update(id, payload) { return request(`/contractor_log_sheets/${id}`, { method: "PATCH", body: JSON.stringify(payload) }); },
+  submit(id) { return request(`/contractor_log_sheets/${id}/submit`, { method: "POST", body: JSON.stringify({}) }); },
+  review(id, decision, comment = "") { return request(`/contractor_log_sheets/${id}/review`, { method: "POST", body: JSON.stringify({ decision, comment }) }); }
+};
+
 // BLOCKED ON THE CONTROLLED-RATES WORK. The kiosk endpoint still requires an
 // hourly_rate on every entry. The value below is the pre-existing placeholder that
 // used to be hard-coded in the Kiosk page. It is NOT an approved rate, policy or

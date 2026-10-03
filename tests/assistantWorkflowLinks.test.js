@@ -21,6 +21,8 @@ const ROUTE_CONTRACT = {
   "/finance": ["Admin", "Finance"],
   "/internal-requests": ["Admin", "Management", "Sales", "Finance", "Operations", "Supervisor", "Technician"],
   "/worksheets": ["Admin", "Management", "Operations", "Supervisor", "Technician"],
+  "/daily-timesheets": ["Admin", "Management", "Operations", "Supervisor", "Technician"],
+  "/contractor-logs": ["Admin", "Management", "Operations", "Supervisor"],
   "/kiosk": ["Admin", "Management", "Operations", "Supervisor"],
   "/inventory": ["Admin", "Management", "Operations"],
   "/reports": ["Admin", "Management", "Operations", "Supervisor", "Sales", "Finance"],
