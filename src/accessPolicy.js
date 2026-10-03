@@ -59,6 +59,37 @@ export const NAV_ITEMS = Object.freeze([
   { path: "/admin", label: "Administration" }
 ]);
 
+// Navigation is grouped for scanning only. ROUTE_ACCESS remains the source of
+// truth for permission decisions, so moving an item between groups cannot
+// widen access to any route.
+export const NAV_GROUPS = Object.freeze([
+  {
+    id: "workspace",
+    label: "Workspace",
+    paths: ["/", "/operational-data", "/documents", "/admin"]
+  },
+  {
+    id: "commercial",
+    label: "Commercial",
+    paths: ["/portal", "/service-requests", "/quotations", "/finance", "/internal-requests"]
+  },
+  {
+    id: "field-work",
+    label: "Field Work",
+    paths: ["/worksheets", "/daily-timesheets", "/contractor-logs"]
+  },
+  {
+    id: "inventory",
+    label: "Inventory",
+    paths: ["/inventory"]
+  },
+  {
+    id: "reports",
+    label: "Reports",
+    paths: ["/reports"]
+  }
+]);
+
 export function canAccessRoute(role, path) {
   const allowedRoles = ROUTE_ACCESS[path];
   return path === "/" || Boolean(allowedRoles?.includes(role));
@@ -66,4 +97,13 @@ export function canAccessRoute(role, path) {
 
 export function visibleNavigation(role) {
   return NAV_ITEMS.filter((item) => canAccessRoute(role, item.path));
+}
+
+export function visibleNavigationGroups(role) {
+  const itemsByPath = new Map(visibleNavigation(role).map((item) => [item.path, item]));
+
+  return NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.paths.map((path) => itemsByPath.get(path)).filter(Boolean)
+  })).filter((group) => group.items.length > 0);
 }
