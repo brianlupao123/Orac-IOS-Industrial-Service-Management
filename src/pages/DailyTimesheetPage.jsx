@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import React, { useEffect, useMemo, useState } from "react";
 import { collections, dailyTimesheets } from "../api/client.js";
 import StatusBadge from "../components/StatusBadge.jsx";
@@ -135,14 +136,12 @@ export default function DailyTimesheetPage({ user }) {
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-bold text-orac-slate">Daily Time Sheets</h1>
-          <p className="text-sm text-gray-500">Digitised version of the paper "Daily Time Sheet" form.</p>
+          <h1 className="text-xl font-bold text-orac-slate">Daily Time Sheets (legacy)</h1>
+          <p className="text-sm text-gray-500">
+            Read-only history. New work is recorded on a <Link to="/worksheets" className="font-semibold text-orac-cyan underline">Timesheet</Link>.
+            Records still in progress can be finished here; nothing new can be started.
+          </p>
         </div>
-        {canSubmit && (
-          <button onClick={openCreateModal} className="rounded-md bg-orac-cyan px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
-            New Time Sheet
-          </button>
-        )}
       </div>
 
       {error && <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700">{error}</div>}

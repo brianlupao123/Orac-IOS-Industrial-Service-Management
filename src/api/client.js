@@ -300,6 +300,28 @@ export const dispatch = {
   }
 };
 
+// Worksheet = the automatically generated monthly register. It is consolidated on the server
+// from approved Timesheets; no call here sends or receives hours entered by hand, a rate, an
+// amount or a cost.
+export const worksheetRegisters = {
+  list() { return request("/worksheet_registers"); },
+  get(id) { return request(`/worksheet_registers/${encodeURIComponent(id)}`); },
+  create(payload) { return request("/worksheet_registers", { method: "POST", body: JSON.stringify(payload) }); },
+  update(id, payload) { return request(`/worksheet_registers/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(payload) }); },
+  build(id) { return request(`/worksheet_registers/${encodeURIComponent(id)}/build`, { method: "POST", body: JSON.stringify({}) }); },
+  acknowledge(id, keys, note) { return request(`/worksheet_registers/${encodeURIComponent(id)}/acknowledge`, { method: "POST", body: JSON.stringify({ keys, note }) }); },
+  submit(id) { return request(`/worksheet_registers/${encodeURIComponent(id)}/submit`, { method: "POST", body: JSON.stringify({}) }); },
+  review(id, decision, comment = "") { return request(`/worksheet_registers/${encodeURIComponent(id)}/review`, { method: "POST", body: JSON.stringify({ decision, comment }) }); },
+  cancel(id, reason) { return request(`/worksheet_registers/${encodeURIComponent(id)}/cancel`, { method: "POST", body: JSON.stringify({ reason }) }); },
+  reconcile(id) { return request(`/worksheet_registers/${encodeURIComponent(id)}/reconcile`, { method: "POST", body: JSON.stringify({ confirm: true }) }); }
+};
+
+// Read-only view of legacy records (Daily Time Sheets, Contractor Logs, Timesheets recorded
+// before Normal / 1.5 / 2.0) in the one Timesheet shape. Never writes.
+export const legacyTimesheets = {
+  list() { return request("/legacy_timesheets"); }
+};
+
 export const worksheets = {
   submit(id, payload = {}) {
     return request(`/field_worksheets/${id}/submit`, {
@@ -340,6 +362,21 @@ export const dailyTimesheets = {
   update(id, payload) { return request(`/daily_timesheets/${id}`, { method: "PATCH", body: JSON.stringify(payload) }); },
   submit(id) { return request(`/daily_timesheets/${id}/submit`, { method: "POST", body: JSON.stringify({}) }); },
   review(id, decision, comment = "") { return request(`/daily_timesheets/${id}/review`, { method: "POST", body: JSON.stringify({ decision, comment }) }); }
+};
+
+// Monthly Timesheet: hours-only consolidation of Supervisor-approved Daily Time
+// Sheets. No call here ever sends or receives a rate, amount or cost.
+export const monthlyTimesheets = {
+  list() { return request("/monthly_timesheets"); },
+  get(id) { return request(`/monthly_timesheets/${encodeURIComponent(id)}`); },
+  create(payload) { return request("/monthly_timesheets", { method: "POST", body: JSON.stringify(payload) }); },
+  update(id, payload) { return request(`/monthly_timesheets/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(payload) }); },
+  build(id) { return request(`/monthly_timesheets/${encodeURIComponent(id)}/build`, { method: "POST", body: JSON.stringify({}) }); },
+  acknowledge(id, keys, note) { return request(`/monthly_timesheets/${encodeURIComponent(id)}/acknowledge`, { method: "POST", body: JSON.stringify({ keys, note }) }); },
+  submit(id) { return request(`/monthly_timesheets/${encodeURIComponent(id)}/submit`, { method: "POST", body: JSON.stringify({}) }); },
+  review(id, decision, comment = "") { return request(`/monthly_timesheets/${encodeURIComponent(id)}/review`, { method: "POST", body: JSON.stringify({ decision, comment }) }); },
+  cancel(id, reason) { return request(`/monthly_timesheets/${encodeURIComponent(id)}/cancel`, { method: "POST", body: JSON.stringify({ reason }) }); },
+  reconcile(id) { return request(`/monthly_timesheets/${encodeURIComponent(id)}/reconcile`, { method: "POST", body: JSON.stringify({ confirm: true }) }); }
 };
 
 export const contractorLogs = {

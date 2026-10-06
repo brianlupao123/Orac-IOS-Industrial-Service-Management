@@ -6,8 +6,8 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 
 test("portal navigation stays policy-derived (no hard-coded role links)", () => {
   const file = read("src/layouts/PortalLayout.jsx");
-  assert.match(file, /import \{ visibleNavigation \} from "\.\.\/accessPolicy\.js"/);
-  assert.match(file, /visibleNavigation\(user\.role\)/);
+  assert.match(file, /import \{ visibleNavigationGroups \} from "\.\.\/accessPolicy\.js"/);
+  assert.match(file, /visibleNavigationGroups\(user\.role\)/);
   // Guard against role names being hard-coded into the layout itself.
   for (const role of ["Admin", "Management", "Sales", "Finance", "Operations", "Supervisor", "Technician", "Client Viewer"]) {
     assert.doesNotMatch(file, new RegExp(`"${role}"`));
@@ -20,7 +20,7 @@ test("nav and footer no longer use the unconverted navy utility that fails dark-
   // text on a dark surface previously produced ~1.8:1 contrast (fails WCAG AA).
   assert.doesNotMatch(file, /hover:text-orac-navy/);
   assert.doesNotMatch(file, /className="font-semibold text-orac-navy/);
-  assert.match(file, /hover:text-orac-slate/);
+  assert.match(file, /hover:text-orac-text-primary/);
   assert.match(file, /className="font-semibold text-orac-blue/);
 });
 

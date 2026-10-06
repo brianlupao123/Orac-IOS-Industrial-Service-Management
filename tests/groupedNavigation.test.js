@@ -15,7 +15,7 @@ test("commercial and field work keep related operational pages together", () => 
   const commercial = NAV_GROUPS.find((group) => group.id === "commercial");
   const fieldWork = NAV_GROUPS.find((group) => group.id === "field-work");
   assert.deepEqual(commercial.paths, ["/portal", "/service-requests", "/quotations", "/finance", "/internal-requests"]);
-  assert.deepEqual(fieldWork.paths, ["/worksheets", "/daily-timesheets", "/contractor-logs"]);
+  assert.deepEqual(fieldWork.paths, ["/worksheets", "/monthly-worksheets"]);
 });
 
 test("primary navigation provides accessible menus and preserves direct one-item work areas", () => {

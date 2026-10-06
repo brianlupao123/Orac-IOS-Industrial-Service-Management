@@ -30,6 +30,11 @@ export const ROUTE_ACCESS = Object.freeze({
   "/worksheets": [...operationalRoles, ROLES.TECHNICIAN],
   "/daily-timesheets": [...operationalRoles, ROLES.TECHNICIAN],
   "/contractor-logs": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR],
+  // Worksheet = the automatically generated monthly register. It shows colleagues' hours, so
+  // Technician and Client Viewer are excluded; the server enforces every action.
+  "/monthly-worksheets": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR],
+  // Read-only history of the older forms, in the one Timesheet shape.
+  "/legacy-history": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR],
   "/inventory": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],
   "/reports": [...operationalRoles, ROLES.SALES, ROLES.FINANCE],
   "/operational-data": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE],
@@ -50,8 +55,7 @@ export const NAV_ITEMS = Object.freeze([
   { path: "/finance", label: "PO & Invoicing" },
   { path: "/internal-requests", label: "Internal Requests" },
   { path: "/worksheets", label: "Timesheets" },
-  { path: "/daily-timesheets", label: "Daily Time Sheets" },
-  { path: "/contractor-logs", label: "Contractor Logs" },
+  { path: "/monthly-worksheets", label: "Worksheets" },
   { path: "/inventory", label: "Inventory" },
   { path: "/reports", label: "Reports" },
   { path: "/operational-data", label: "Operational Data" },
@@ -76,7 +80,7 @@ export const NAV_GROUPS = Object.freeze([
   {
     id: "field-work",
     label: "Field Work",
-    paths: ["/worksheets", "/daily-timesheets", "/contractor-logs"]
+    paths: ["/worksheets", "/monthly-worksheets"]
   },
   {
     id: "inventory",

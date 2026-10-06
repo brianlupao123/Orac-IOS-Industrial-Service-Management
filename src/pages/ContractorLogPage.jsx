@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import React, { useEffect, useMemo, useState } from "react";
 import { collections, contractorLogs } from "../api/client.js";
 import StatusBadge from "../components/StatusBadge.jsx";
@@ -34,7 +35,6 @@ export default function ContractorLogPage({ user }) {
   const [modalSubmitting, setModalSubmitting] = useState(false);
   const [form, setForm] = useState(emptyForm());
 
-  const canCreate = CREATE_ROLES.includes(user.role);
   const canReview = REVIEW_ROLES.includes(user.role);
 
   async function load() {
@@ -113,14 +113,12 @@ export default function ContractorLogPage({ user }) {
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-bold text-orac-slate">Contractors Log Sheet</h1>
-          <p className="text-sm text-gray-500">Digitised version of the "Contractors Work Specification Form" paper log.</p>
+          <h1 className="text-xl font-bold text-orac-slate">Contractor Logs (legacy)</h1>
+          <p className="text-sm text-gray-500">
+            Read-only history. A contractor's work is now recorded on a <Link to="/worksheets" className="font-semibold text-orac-cyan underline">Timesheet</Link>.
+            Records still in progress can be finished here; nothing new can be started.
+          </p>
         </div>
-        {canCreate && (
-          <button onClick={openCreateModal} className="rounded-md bg-orac-cyan px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
-            New Log Sheet
-          </button>
-        )}
       </div>
 
       {error && <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700">{error}</div>}

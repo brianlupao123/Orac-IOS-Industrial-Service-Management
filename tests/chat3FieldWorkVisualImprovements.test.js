@@ -41,7 +41,7 @@ test("Kiosk Mode still uses the scoped roster and audited batch endpoint (unchan
 // ---- Timesheets: grouped create-timesheet form, unmistakable from Internal Requests
 
 test("the Timesheets create form is grouped into labelled sections", () => {
-  const page = read("src/pages/WorksheetsPage.jsx");
+  const page = read("src/components/TimesheetFormModal.jsx");
   assert.match(page, /<fieldset className="space-y-4">/);
   assert.match(page, /Dispatch &amp; date/);
   assert.match(page, /Work details/);
