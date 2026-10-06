@@ -152,7 +152,7 @@ export default function PortalLayout({ user, onLogout, children }) {
         </div>
 
         {/* Navigation stays route-policy-derived but exposes compact work areas. */}
-        <nav aria-label="Primary" className="flex items-center gap-1 overflow-x-auto border-t border-gray-100 bg-gray-50/70 px-4 py-2 sm:px-6">
+        <nav aria-label="Primary" className="flex flex-wrap items-center gap-1 overflow-visible border-t border-gray-100 bg-gray-50/70 px-4 py-2 sm:px-6">
           {navGroups.map((group) => <WorkspaceNavMenu key={group.id} group={group} pathname={location.pathname} />)}
         </nav>
       </header>
