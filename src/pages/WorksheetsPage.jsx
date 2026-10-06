@@ -10,14 +10,16 @@ import AssignedMaterialsPanel from "../components/AssignedMaterialsPanel.jsx";
 import PeriodPackPanel from "../components/PeriodPackPanel.jsx";
 import { displayTrade } from "../constants/trades.js";
 import { canEditWorksheet, canReviewWorksheet, canReviseWorksheet, worksheetStatusLabel } from "../fieldStatusModel.js";
-import { saveDraft, loadDraft, clearDraft, isNetworkFailure } from "../offlineDraftModel.js";
+import TimesheetFormModal from "../components/TimesheetFormModal.jsx";
+import TimesheetOutboxPanel from "../components/TimesheetOutboxPanel.jsx";
+import { cacheDispatchOptions } from "../offlineTimesheetOutbox.js";
+import { hoursSummary, signoffProgress, isTimesheetV2 } from "../lib/timesheetFormLogic.js";
 
 const SUBMIT_ROLES = ["Admin", "Operations", "Technician", "Supervisor"];
 const KIOSK_REVIEW_ROLES = ["Admin", "Operations", "Supervisor"];
 const MATERIAL_ROLES = ["Admin", "Operations", "Technician", "Supervisor"];
 const PERIOD_PACK_ROLES = ["Admin", "Operations"];
-const EMPTY_FORM = () => ({ dispatch_card_id: "", work_date: new Date().toISOString().slice(0, 10), hours: "", activity: "", outcomes: "" });
-function draftStorage() { try { return window.localStorage; } catch { return null; } }
+function localStore() { try { return window.localStorage; } catch { return null; } }
 
 export default function WorksheetsPage({ user }) {
   const [items, setItems] = useState([]);
@@ -28,13 +30,10 @@ export default function WorksheetsPage({ user }) {
   const [filter, setFilter] = useState("all");
   const [tradeFilter, setTradeFilter] = useState("all");
 
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalError, setModalError] = useState("");
-  const [modalSubmitting, setModalSubmitting] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM());
-  const [editingId, setEditingId] = useState(null);
-  const [draftNote, setDraftNote] = useState("");
+  // Timesheet form (create or edit) and the offline outbox panel
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingWs, setEditingWs] = useState(null);
+  const [outboxKey, setOutboxKey] = useState(0);
   const [notice, setNotice] = useState("");
 
   // Revision (a new linked draft after acknowledgement or approval)
@@ -43,30 +42,14 @@ export default function WorksheetsPage({ user }) {
   const [reviseError, setReviseError] = useState("");
 
   const canSubmit = SUBMIT_ROLES.includes(user.role);
-  const draftScope = editingId ? `edit:${editingId}` : "new";
 
-  function openCreate() {
-    setModalError("");
-    setEditingId(null);
-    const saved = loadDraft(draftStorage(), user.id, "worksheet", "new");
-    setForm(saved?.data?.form ? { ...EMPTY_FORM(), ...saved.data.form } : EMPTY_FORM());
-    setDraftNote(saved ? "Restored an unsent draft saved on this device." : "");
-    setIsModalOpen(true);
+  function openCreate() { setEditingWs(null); setFormOpen(true); }
+  function openEdit(ws) { setEditingWs(ws); setFormOpen(true); }
+  function handleSaved(message, extra = {}) {
+    setNotice(message);
+    if (extra.queued) setOutboxKey((k) => k + 1);
+    load();
   }
-
-  function openEdit(ws) {
-    setModalError("");
-    setEditingId(ws.id);
-    setForm({ dispatch_card_id: ws.dispatch_card_id || "", work_date: ws.work_date || EMPTY_FORM().work_date, hours: ws.hours ?? "", activity: ws.activity || "", outcomes: ws.outcomes || "" });
-    setDraftNote("");
-    setIsModalOpen(true);
-  }
-
-  // Unsent form text is kept on this device (no rates, expires, cleared on logout).
-  useEffect(() => {
-    if (!isModalOpen || editingId) return;
-    if (form.activity || form.outcomes || form.hours) saveDraft(draftStorage(), user.id, "worksheet", "new", { form });
-  }, [form, isModalOpen, editingId]);
 
   async function load() {
     setLoading(true);
@@ -77,7 +60,7 @@ export default function WorksheetsPage({ user }) {
         collections.list("dispatch_cards").catch(() => [])
       ]);
       setItems(wsData || []);
-      if (dcData) setDispatches(dcData);
+      if (dcData) { setDispatches(dcData); cacheDispatchOptions(localStore(), user.id, dcData); }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -105,39 +88,6 @@ export default function WorksheetsPage({ user }) {
       setShowSignatureModal(false);
     } catch (err) {
       setError(err.message);
-    }
-  }
-
-  async function handleCreateWorksheet(e) {
-    e.preventDefault();
-    if (!form.dispatch_card_id) {
-      setModalError("Please select a dispatch card.");
-      return;
-    }
-    setModalSubmitting(true);
-    setModalError("");
-    try {
-      if (editingId) {
-        await worksheets.update(editingId, { activity: form.activity, hours: Number(form.hours), outcomes: form.outcomes });
-        setNotice("Timesheet updated.");
-      } else {
-        await dispatch.createWorksheet(form.dispatch_card_id, {
-          work_date: form.work_date,
-          hours: Number(form.hours),
-          activity: form.activity,
-          outcomes: form.outcomes
-        });
-        clearDraft(draftStorage(), user.id, "worksheet", "new");
-        setNotice("Timesheet created as a Draft. Submit it when it is ready for the client to acknowledge.");
-      }
-      setIsModalOpen(false);
-      setEditingId(null);
-      setForm(EMPTY_FORM());
-      await load();
-    } catch (err) {
-      setModalError(isNetworkFailure(err) ? "Not saved: the connection dropped. What you typed is kept on this device. Try again when you are back online." : err.message);
-    } finally {
-      setModalSubmitting(false);
     }
   }
 
@@ -218,6 +168,9 @@ export default function WorksheetsPage({ user }) {
         <StatCard label="Approved" value={counts.approved} tone="green" icon="✅" />
       </div>
 
+      {notice && <div role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>}
+      <TimesheetOutboxPanel user={user} refreshKey={outboxKey} onSynced={load} />
+
       {/* Filters */}
       <div className="flex flex-wrap gap-2 pb-2 border-b border-gray-100">
         {[["all", "All Timesheets"], ["Draft", "Draft"], ["Submitted", "Awaiting client"], ["Client_Acknowledged", "Awaiting Supervisor"], ["Supervisor_Approved", "Approved"], ["Returned_For_Correction", "Returned"]].map(([key, label]) => (
@@ -289,12 +242,12 @@ export default function WorksheetsPage({ user }) {
                   <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500 mb-3">
                     <div className="flex items-center gap-1.5">
                       <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      {ws.hours ?? "?"} hours logged
+                      {hoursSummary(ws)}
                     </div>
-                    {ws.technician_name && (
+                    {(ws.worker_name || ws.technician_name) && (
                       <div className="flex items-center gap-1.5">
                         <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                        {ws.technician_name}
+                        {ws.worker_name || ws.technician_name}{ws.worker_type === "contractor" ? " (contractor)" : ""}
                       </div>
                     )}
                     <div className="flex items-center gap-1.5">
@@ -308,6 +261,20 @@ export default function WorksheetsPage({ user }) {
                       <p className="text-sm font-semibold text-gray-500 mb-1">Activity Outcomes</p>
                       <p className="text-sm text-gray-700">{ws.outcomes}</p>
                     </div>
+                  )}
+                  {isTimesheetV2(ws) && (
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600" aria-label="Sign-off progress">
+                      {signoffProgress(ws).map((p) => (
+                        <span key={p.party} className={p.done ? "font-semibold text-emerald-700" : "text-gray-500"}>{p.done ? "Signed" : "Waiting"}: {p.party}</span>
+                      ))}
+                      {ws.synced_at && <span className="rounded bg-sky-50 px-1.5 py-0.5 text-sky-800">Captured offline</span>}
+                    </div>
+                  )}
+                  {isTimesheetV2(ws) && (ws.server_checks?.flags || []).filter((f) => f.severity !== "info").map((f) => (
+                    <p key={f.code + (f.date || "")} className={`mt-2 rounded-md px-2 py-1 text-xs ${f.severity === "blocking" ? "bg-red-50 text-red-800" : "bg-amber-50 text-amber-900"}`}>{f.message}</p>
+                  ))}
+                  {ws.materials_used?.length > 0 && isTimesheetV2(ws) && (
+                    <p className="mt-2 text-xs text-gray-600">Materials: {ws.materials_used.map((m) => `${m.quantity}${m.unit ? ` ${m.unit}` : ""} ${m.description}`).join("; ")}</p>
                   )}
                   <WorksheetEvidence worksheet={ws} role={user.role} />
                 </div>
@@ -367,6 +334,9 @@ export default function WorksheetsPage({ user }) {
       {["Admin", "Operations"].includes(user.role) && (
         <p className="text-sm text-gray-500">Entering crew hours for a whole crew? Use <Link to="/kiosk" className="font-semibold text-orac-blue underline">Kiosk Mode: Crew Time Entry</Link>. Those hours wait for Supervisor review.</p>
       )}
+      {["Admin", "Management", "Operations", "Supervisor"].includes(user.role) && (
+        <p className="text-sm text-gray-500">Looking for an older Daily Time Sheet, Contractor Log or a Timesheet without Normal / 1.5 / 2.0? See <Link to="/legacy-history" className="font-semibold text-orac-blue underline">earlier records (read-only)</Link>. The monthly register is under <Link to="/monthly-worksheets" className="font-semibold text-orac-blue underline">Worksheets</Link>.</p>
+      )}
       {MATERIAL_ROLES.includes(user.role) && <AssignedMaterialsPanel dispatches={dispatches} />}
       {PERIOD_PACK_ROLES.includes(user.role) && <PeriodPackPanel worksheets={items} />}
 
@@ -388,132 +358,8 @@ export default function WorksheetsPage({ user }) {
         </form>
       </Modal>
 
-      {/* New Timesheet Modal */}
-      <Modal
-        title={editingId ? "Edit Timesheet" : "Create Timesheet"}
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setModalError("");
-          setEditingId(null);
-        }}
-      >
-        <form onSubmit={handleCreateWorksheet} className="space-y-4">
-          {modalError && (
-            <div role="alert" className="rounded-lg bg-red-50 p-3 text-xs text-red-700 border border-red-200">
-              {modalError}
-            </div>
-          )}
-          {draftNote && <p role="status" className="text-xs text-gray-500">{draftNote}</p>}
-
-          <fieldset className="space-y-4">
-            <legend className="text-sm font-semibold text-gray-500">Dispatch &amp; date</legend>
-            <div>
-              <label htmlFor="ws-dispatch" className="mb-1 block text-sm font-semibold text-gray-600">
-                Dispatch Card
-              </label>
-              <select
-                id="ws-dispatch"
-                required
-                disabled={Boolean(editingId)}
-                value={form.dispatch_card_id}
-                onChange={(e) => setForm({ ...form, dispatch_card_id: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 bg-white"
-              >
-                <option value="">Select dispatch card...</option>
-                {dispatches.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.dispatch_number || d.id} {d.status ? `(${d.status})` : ""} {d.site_name ? `— ${d.site_name}` : ""}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-gray-500">This timesheet is created against the field worksheet record for the selected dispatch.</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="ws-date" className="mb-1 block text-sm font-semibold text-gray-600">
-                  Work Date
-                </label>
-                <input
-                  id="ws-date"
-                  type="date"
-                  required
-                  disabled={Boolean(editingId)}
-                  value={form.work_date}
-                  onChange={(e) => setForm({ ...form, work_date: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20"
-                />
-              </div>
-              <div>
-                <label htmlFor="ws-hours" className="mb-1 block text-sm font-semibold text-gray-600">
-                  Hours
-                </label>
-                <input
-                  id="ws-hours"
-                  type="number"
-                  step="0.5"
-                  min="0.5"
-                  required
-                  placeholder="e.g. 8"
-                  value={form.hours}
-                  onChange={(e) => setForm({ ...form, hours: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20"
-                />
-              </div>
-            </div>
-          </fieldset>
-
-          <fieldset className="space-y-4 border-t border-gray-100 pt-4">
-            <legend className="text-sm font-semibold text-gray-500">Work details</legend>
-            <div>
-              <label htmlFor="ws-activity" className="mb-1 block text-sm font-semibold text-gray-600">
-                Activity
-              </label>
-              <input
-                id="ws-activity"
-                type="text"
-                required
-                placeholder="e.g. Ceramic liner replacement"
-                value={form.activity}
-                onChange={(e) => setForm({ ...form, activity: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="ws-outcomes" className="mb-1 block text-sm font-semibold text-gray-600">
-                Outcomes
-              </label>
-              <textarea
-                id="ws-outcomes"
-                rows={3}
-                placeholder="Summary of work completed and observations"
-                value={form.outcomes}
-                onChange={(e) => setForm({ ...form, outcomes: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20"
-              />
-            </div>
-          </fieldset>
-
-          <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={() => { setIsModalOpen(false); setEditingId(null); }}
-              className="min-h-[44px] px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={modalSubmitting}
-              className="px-5 py-2 bg-orac-blue text-white text-sm font-semibold rounded-lg hover:brightness-105 shadow-sm disabled:opacity-50"
-            >
-              {modalSubmitting ? "Saving..." : editingId ? "Save changes" : "Create Timesheet"}
-            </button>
-          </div>
-        </form>
-      </Modal>
+      {/* The one Timesheet form (create or edit) */}
+      <TimesheetFormModal isOpen={formOpen} onClose={() => { setFormOpen(false); setEditingWs(null); }} user={user} dispatches={dispatches} editing={editingWs} onSaved={handleSaved} />
       {showSignatureModal && (
         <Modal title="Client Representative Sign-Off" isOpen={showSignatureModal} onClose={() => setShowSignatureModal(false)}>
           <div className="p-4">

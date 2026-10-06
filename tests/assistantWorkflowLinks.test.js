@@ -23,6 +23,8 @@ const ROUTE_CONTRACT = {
   "/worksheets": ["Admin", "Management", "Operations", "Supervisor", "Technician"],
   "/daily-timesheets": ["Admin", "Management", "Operations", "Supervisor", "Technician"],
   "/contractor-logs": ["Admin", "Management", "Operations", "Supervisor"],
+  "/monthly-worksheets": ["Admin", "Management", "Operations", "Supervisor"],
+  "/legacy-history": ["Admin", "Management", "Operations", "Supervisor"],
   "/kiosk": ["Admin", "Management", "Operations", "Supervisor"],
   "/inventory": ["Admin", "Management", "Operations"],
   "/reports": ["Admin", "Management", "Operations", "Supervisor", "Sales", "Finance"],

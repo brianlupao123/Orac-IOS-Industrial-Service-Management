@@ -80,7 +80,7 @@ function WorkspaceNavMenu({ group, pathname }) {
               onClick={() => setIsOpen(false)}
               className={({ isActive }) =>
                 `block rounded-md px-3 py-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
-                  isActive ? "bg-blue-50 text-orac-navy" : "text-gray-700 hover:bg-gray-50 hover:text-orac-navy"
+                  isActive ? "bg-orac-info-bg text-orac-text-primary" : "text-orac-text-secondary hover:bg-orac-surface-muted hover:text-orac-text-primary"
                 }`
               }
             >

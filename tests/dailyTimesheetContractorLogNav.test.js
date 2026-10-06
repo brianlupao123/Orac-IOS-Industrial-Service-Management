@@ -19,20 +19,21 @@ test("Contractor Logs route is restricted to Admin/Management/Operations/Supervi
   }
 });
 
-test("the existing Timesheets nav label is untouched by the two new nav items", () => {
+test("the Timesheets nav label and route are unchanged", () => {
   assert.deepEqual(NAV_ITEMS.find((item) => item.path === "/worksheets"), { path: "/worksheets", label: "Timesheets" });
 });
 
-test("the two new nav items use distinct labels from the existing Timesheets entry", () => {
-  const dailyItem = NAV_ITEMS.find((item) => item.path === "/daily-timesheets");
-  const contractorItem = NAV_ITEMS.find((item) => item.path === "/contractor-logs");
-  assert.equal(dailyItem.label, "Daily Time Sheets");
-  assert.equal(contractorItem.label, "Contractor Logs");
-  assert.notEqual(dailyItem.label, "Timesheets");
+test("two concepts in the navigation: Timesheets (the daily record) and Worksheets (the monthly register); legacy forms are not in the menu", () => {
+  const labels = NAV_ITEMS.map((item) => item.label);
+  assert.ok(labels.includes("Timesheets") && labels.includes("Worksheets"));
+  assert.deepEqual(NAV_ITEMS.find((item) => item.path === "/monthly-worksheets"), { path: "/monthly-worksheets", label: "Worksheets" });
+  for (const gone of ["/daily-timesheets", "/contractor-logs"]) assert.ok(!NAV_ITEMS.some((item) => item.path === gone), `${gone} is no longer a menu entry`);
+  assert.ok(!labels.includes("Daily Time Sheets") && !labels.includes("Contractor Logs") && !labels.includes("Field Worksheets"));
 });
 
-test("a Technician sees Daily Time Sheets in navigation but not Contractor Logs", () => {
+test("a Technician sees Timesheets but not Worksheets (the register shows colleagues' hours); legacy routes stay reachable for history", () => {
   const nav = visibleNavigation(ROLES.TECHNICIAN).map((item) => item.path);
-  assert.ok(nav.includes("/daily-timesheets"));
-  assert.ok(!nav.includes("/contractor-logs"));
+  assert.ok(nav.includes("/worksheets"));
+  assert.ok(!nav.includes("/monthly-worksheets"));
+  assert.equal(canAccessRoute(ROLES.TECHNICIAN, "/daily-timesheets"), true, "link compatibility");
 });
