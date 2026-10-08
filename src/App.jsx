@@ -28,6 +28,7 @@ import ContractorLogPage from "./pages/ContractorLogPage.jsx";
 import DailyTimesheetPrintPage from "./pages/DailyTimesheetPrintPage.jsx";
 import ContractorLogPrintPage from "./pages/ContractorLogPrintPage.jsx";
 import WorksheetRegisterPage from "./pages/WorksheetRegisterPage.jsx";
+import TimesheetWorkflowPage from "./pages/TimesheetWorkflowPage.jsx";
 import WorksheetRegisterPrintPage from "./pages/WorksheetRegisterPrintPage.jsx";
 import LegacyHistoryPage from "./pages/LegacyHistoryPage.jsx";
 
@@ -103,6 +104,7 @@ export default function App() {
         <Route path="/worksheets" element={<GuardedRoute user={user} path="/worksheets"><WorksheetsPage user={user} /></GuardedRoute>} />
         <Route path="/timesheets" element={<Navigate to="/worksheets" replace />} />
         <Route path="/monthly-worksheets" element={<GuardedRoute user={user} path="/monthly-worksheets"><WorksheetRegisterPage user={user} /></GuardedRoute>} />
+        <Route path="/timesheet-workflow" element={<GuardedRoute user={user} path="/timesheet-workflow"><TimesheetWorkflowPage user={user} /></GuardedRoute>} />
         <Route path="/legacy-history" element={<GuardedRoute user={user} path="/legacy-history"><LegacyHistoryPage /></GuardedRoute>} />
         <Route path="/daily-timesheets" element={<GuardedRoute user={user} path="/daily-timesheets"><DailyTimesheetPage user={user} /></GuardedRoute>} />
         <Route path="/contractor-logs" element={<GuardedRoute user={user} path="/contractor-logs"><ContractorLogPage user={user} /></GuardedRoute>} />

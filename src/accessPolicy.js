@@ -9,7 +9,13 @@ export const ROLES = Object.freeze({
   CLIENT_VIEWER: "Client Viewer"
 });
 
+import { tsFlags } from "./timesheetWorkflowFlags.js";
+
 const operationalRoles = [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR];
+
+const F = tsFlags();
+const withSalesFinance = (roles) => (F.workflowUi ? [...roles, ROLES.SALES, ROLES.FINANCE] : roles);
+const withoutOpsSupervisor = (roles) => (F.opsRestrict ? roles.filter((r) => ![ROLES.OPERATIONS, ROLES.SUPERVISOR].includes(r)) : roles);
 
 export const ROUTE_ACCESS = Object.freeze({
   "/portal": [ROLES.CLIENT_VIEWER],
@@ -27,12 +33,14 @@ export const ROUTE_ACCESS = Object.freeze({
   // Client Viewer has no internal-request access. The server still decides
   // every action, including request creation and lifecycle transitions.
   "/internal-requests": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.SALES, ROLES.FINANCE, ROLES.OPERATIONS, ROLES.SUPERVISOR, ROLES.TECHNICIAN],
-  "/worksheets": [...operationalRoles, ROLES.TECHNICIAN],
+  "/worksheets": withSalesFinance([...operationalRoles, ROLES.TECHNICIAN]),
   "/daily-timesheets": [...operationalRoles, ROLES.TECHNICIAN],
   "/contractor-logs": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR],
   // Worksheet = the automatically generated monthly register. It shows colleagues' hours, so
   // Technician and Client Viewer are excluded; the server enforces every action.
-  "/monthly-worksheets": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR],
+  "/monthly-worksheets": withoutOpsSupervisor(withSalesFinance([ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR])),
+  // Timesheet workflow packet: Sales paper capture, Finance variance control, Admin authority/policy.
+  ...(F.workflowUi ? { "/timesheet-workflow": [ROLES.ADMIN, ROLES.SALES, ROLES.FINANCE] } : {}),
   // Read-only history of the older forms, in the one Timesheet shape.
   "/legacy-history": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR],
   "/inventory": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],
@@ -40,7 +48,7 @@ export const ROUTE_ACCESS = Object.freeze({
   "/operational-data": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE],
   "/documents": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE, ROLES.CLIENT_VIEWER],
   "/admin": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],
-  "/kiosk": operationalRoles,
+  "/kiosk": F.kioskHidden ? [ROLES.ADMIN] : operationalRoles,
   // Mirrors the backend viewContracts policy. Supervisor is excluded because
   // contracts have no supervisor-assignment relation to scope against, and a
   // Client Viewer only ever receives its own client's records from the API.
@@ -56,6 +64,7 @@ export const NAV_ITEMS = Object.freeze([
   { path: "/internal-requests", label: "Internal Requests" },
   { path: "/worksheets", label: "Timesheets" },
   { path: "/monthly-worksheets", label: "Worksheets" },
+  ...(F.workflowUi ? [{ path: "/timesheet-workflow", label: "Timesheet Workflow" }] : []),
   { path: "/inventory", label: "Inventory" },
   { path: "/reports", label: "Reports" },
   { path: "/operational-data", label: "Operational Data" },
@@ -80,7 +89,7 @@ export const NAV_GROUPS = Object.freeze([
   {
     id: "field-work",
     label: "Field Work",
-    paths: ["/worksheets", "/monthly-worksheets"]
+    paths: F.workflowUi ? ["/worksheets", "/monthly-worksheets", "/timesheet-workflow"] : ["/worksheets", "/monthly-worksheets"]
   },
   {
     id: "inventory",
