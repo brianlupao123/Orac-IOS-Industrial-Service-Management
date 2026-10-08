@@ -1,4 +1,5 @@
 import React from "react";
+import { statusLabel } from "../timesheetWorkflowFlags.js";
 
 /**
  * Reusable status badge with semantic color.
@@ -20,6 +21,8 @@ const STATUS_MAP = {
   // worksheet render as the default gray badge.
   Supervisor_Approved:     "bg-emerald-100 text-emerald-800",
   Returned_For_Correction: "bg-red-100 text-red-800",
+  Client_Acknowledged:    "bg-emerald-100 text-emerald-800",
+  Captured_From_Signed_Paper: "bg-emerald-100 text-emerald-800",
   Completed:            "bg-emerald-100 text-emerald-800",
   Returned:             "bg-orange-100 text-orange-800",
   // Dispatches
@@ -37,7 +40,7 @@ const STATUS_MAP = {
 export default function StatusBadge({ status }) {
   const normalized = (status || "").replace(/\s+/g, "_");
   const classes = STATUS_MAP[normalized] || STATUS_MAP[status] || "bg-gray-100 text-gray-700";
-  const display = (status || "Unknown").replace(/_/g, " ");
+  const display = statusLabel(status);
   return (
     <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${classes}`}>
       {display}

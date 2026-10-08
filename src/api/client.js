@@ -725,3 +725,26 @@ export const maintenanceSchedules = {
     return request(`/maintenance-schedules/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(payload) });
   }
 };
+
+// Timesheet workflow packet (contract steps 3-9). Every endpoint is flag-guarded on the server and
+// answers 409 FEATURE_DISABLED until its flag is on. No rate field is ever sent or received here
+// except hours in the variance read. Client identity always comes from the signed-in account.
+export const timesheetWorkflow = {
+  clientReturn(id, reason) { return request(`/field_worksheets/${encodeURIComponent(id)}/client-return`, { method: "POST", body: JSON.stringify({ reason }) }); },
+  batchConfirm(ids, { signer_name, signer_role }) { return request("/field_worksheets/batch-confirm", { method: "POST", body: JSON.stringify({ ids, signer_name, signer_role, acknowledgement: true }) }); },
+  getPolicy() { return request("/timesheet-policy"); },
+  updatePolicy(patch) { return request("/timesheet-policy", { method: "PATCH", body: JSON.stringify(patch) }); },
+  listAuthorities() { return request("/timesheet-authorities"); },
+  createAuthority(body) { return request("/timesheet-authorities", { method: "POST", body: JSON.stringify(body) }); },
+  revokeAuthority(id) { return request(`/timesheet-authorities/${encodeURIComponent(id)}/revoke`, { method: "POST", body: "{}" }); },
+  setClientCutover(clientId, timesheet_cutover_date) { return request(`/clients/${encodeURIComponent(clientId)}/timesheet-cutover`, { method: "PATCH", body: JSON.stringify({ timesheet_cutover_date }) }); },
+  capturePaper(body) { return request("/field_worksheets/paper-capture", { method: "POST", body: JSON.stringify(body) }); },
+  logCustody(body) { return request("/timesheet-paper-custody", { method: "POST", body: JSON.stringify(body) }); },
+  rateFreeList() { return request("/timesheets/rate-free"); },
+  paperSampling(month) { return request(`/timesheets/paper-sampling?month=${encodeURIComponent(month)}`); },
+  runReminders() { return request("/timesheets/reminders/run", { method: "POST", body: "{}" }); },
+  variance(dispatchId) { return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/invoice-variance`); },
+  requestOverride(dispatchId, body) { return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/variance-override`, { method: "POST", body: JSON.stringify(body) }); },
+  approveOverride(id) { return request(`/variance-overrides/${encodeURIComponent(id)}/approve`, { method: "POST", body: "{}" }); },
+  resolvePostInvoice(id, note) { return request(`/field_worksheets/${encodeURIComponent(id)}/resolve-post-invoice`, { method: "POST", body: JSON.stringify({ note }) }); }
+};
