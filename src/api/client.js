@@ -141,6 +141,7 @@ async function request(path, options = {}) {
     // generic failure without parsing the message text.
     const error = new Error(message);
     error.status = res.status;
+    if (body.code) error.code = body.code; // machine-readable server code (e.g. STALE_HASH)
     throw error;
   }
   // Every backend response is { success: true, data: ... } â€” always unwrap.
@@ -261,6 +262,16 @@ export const purchaseOrders = {
     if (typeof reason === "string" && reason.trim()) body.reason = reason.trim();
     return request(`/purchase_orders/${encodeURIComponent(poId)}/amendments`, { method: "POST", body: JSON.stringify(body) });
   }
+};
+
+// V5 signature evidence. Evidence-only: no account, role, OTP or rate is sent or read.
+export const v5Signature = {
+  state(sheetId) { return request(`/field_worksheets/${encodeURIComponent(sheetId)}/v5-signature-state`); },
+  recordPaper(sheetId, payload) { return request(`/field_worksheets/${encodeURIComponent(sheetId)}/v5-paper-signature`, { method: "POST", body: JSON.stringify(payload) }); },
+  confirm(sheetId, payload) { return request(`/field_worksheets/${encodeURIComponent(sheetId)}/v5-supervisor-confirmation`, { method: "POST", body: JSON.stringify(payload) }); },
+  contacts(dispatchId) { return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/v5-client-supervisor-contacts`); },
+  addContact(dispatchId, payload) { return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/v5-client-supervisor-contacts`, { method: "POST", body: JSON.stringify(payload) }); },
+  withdrawContact(contactId) { return request(`/v5-client-supervisor-contacts/${encodeURIComponent(contactId)}/withdraw`, { method: "POST", body: JSON.stringify({}) }); }
 };
 
 export const dispatch = {

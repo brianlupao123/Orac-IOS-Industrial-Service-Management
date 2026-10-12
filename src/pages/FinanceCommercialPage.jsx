@@ -5,6 +5,7 @@ import StatusBadge from "../components/StatusBadge.jsx";
 import { ICONS } from "../components/icons.jsx";
 import { ErrorBanner, PageEmptyState } from "../components/PageStates.jsx";
 import { formatAmount } from "../quoteModel.js";
+import V5BillingReadinessPanel from "../components/V5BillingReadinessPanel.jsx";
 import {
   EMPTY_AMENDMENT_FORM, EMPTY_VERIFY_FORM, buildAmendmentPayload, buildVerifyPoPayload, canApproveAmendment,
   canVerifyPo, shouldTransitionAfterVerify, validateAmendmentForm, validateVerifyPoForm
@@ -22,7 +23,7 @@ import {
 const inputClass = "w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm";
 const buttonClass = "rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50";
 
-export default function FinanceCommercialPage() {
+export default function FinanceCommercialPage({ user }) {
   const [pos, setPos] = useState([]);
   const [quoteList, setQuoteList] = useState([]);
   const [clients, setClients] = useState([]);
@@ -233,6 +234,7 @@ export default function FinanceCommercialPage() {
                 {ready.map((row) => (
                   <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-gray-100 px-3 py-2">
                     <p className="text-sm text-orac-slate">{row.dispatch_number || row.id} {"\u00b7"} {quoteLabel(row.quotation_id)}</p>
+                    <div className="w-full"><V5BillingReadinessPanel user={user} dispatchId={row.id} label={row.dispatch_number || row.id} /></div>
                     <button type="button" disabled={busyId === row.id} onClick={() => invoice(row)} className={`${buttonClass} border-emerald-300 text-emerald-800 hover:bg-emerald-50`}>{busyId === row.id ? "Invoicing..." : "Create invoice"}</button>
                   </li>
                 ))}

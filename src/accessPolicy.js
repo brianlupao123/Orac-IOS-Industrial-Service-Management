@@ -10,11 +10,14 @@ export const ROLES = Object.freeze({
 });
 
 import { tsFlags } from "./timesheetWorkflowFlags.js";
+import { v5CommercialEnabled } from "./v5CommercialFlags.js";
 
 const operationalRoles = [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR];
 
 const F = tsFlags();
 const withSalesFinance = (roles) => (F.workflowUi ? [...roles, ROLES.SALES, ROLES.FINANCE] : roles);
+// V5 signature evidence: Sales and Finance reach the existing Timesheets page (display only; the server decides every action).
+const withV5SalesFinance = (roles) => (v5CommercialEnabled() ? [...new Set([...roles, ROLES.SALES, ROLES.FINANCE])] : roles);
 const withoutOpsSupervisor = (roles) => (F.opsRestrict ? roles.filter((r) => ![ROLES.OPERATIONS, ROLES.SUPERVISOR].includes(r)) : roles);
 
 export const ROUTE_ACCESS = Object.freeze({
@@ -33,7 +36,7 @@ export const ROUTE_ACCESS = Object.freeze({
   // Client Viewer has no internal-request access. The server still decides
   // every action, including request creation and lifecycle transitions.
   "/internal-requests": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.SALES, ROLES.FINANCE, ROLES.OPERATIONS, ROLES.SUPERVISOR, ROLES.TECHNICIAN],
-  "/worksheets": withSalesFinance([...operationalRoles, ROLES.TECHNICIAN]),
+  "/worksheets": withV5SalesFinance(withSalesFinance([...operationalRoles, ROLES.TECHNICIAN])),
   "/daily-timesheets": [...operationalRoles, ROLES.TECHNICIAN],
   "/contractor-logs": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR],
   // Worksheet = the automatically generated monthly register. It shows colleagues' hours, so
