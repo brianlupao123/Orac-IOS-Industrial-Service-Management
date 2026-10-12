@@ -99,7 +99,7 @@ export default function App() {
         <Route path="/portal" element={<GuardedRoute user={user} path="/portal"><ClientPortalPage /></GuardedRoute>} />
         <Route path="/service-requests" element={<GuardedRoute user={user} path="/service-requests"><ServiceRequestTriagePage /></GuardedRoute>} />
         <Route path="/quotations" element={<GuardedRoute user={user} path="/quotations"><QuotationsPage user={user} /></GuardedRoute>} />
-        <Route path="/finance" element={<GuardedRoute user={user} path="/finance"><FinanceCommercialPage /></GuardedRoute>} />
+        <Route path="/finance" element={<GuardedRoute user={user} path="/finance"><FinanceCommercialPage user={user} /></GuardedRoute>} />
         <Route path="/internal-requests" element={<GuardedRoute user={user} path="/internal-requests"><InternalRequestsPage user={user} /></GuardedRoute>} />
         <Route path="/worksheets" element={<GuardedRoute user={user} path="/worksheets"><WorksheetsPage user={user} /></GuardedRoute>} />
         <Route path="/timesheets" element={<Navigate to="/worksheets" replace />} />

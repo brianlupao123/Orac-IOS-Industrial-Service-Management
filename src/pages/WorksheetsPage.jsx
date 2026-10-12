@@ -14,12 +14,31 @@ import TimesheetFormModal from "../components/TimesheetFormModal.jsx";
 import TimesheetOutboxPanel from "../components/TimesheetOutboxPanel.jsx";
 import { cacheDispatchOptions } from "../offlineTimesheetOutbox.js";
 import { hoursSummary, signoffProgress, isTimesheetV2 } from "../lib/timesheetFormLogic.js";
+import V5SignaturePanel from "../components/V5SignaturePanel.jsx";
+import V5BillingReadinessPanel from "../components/V5BillingReadinessPanel.jsx";
+import { v5ReadinessVisible, v5SheetEligibleForPanel, v5SignatureVisible } from "../v5SignatureModel.js";
 
 const SUBMIT_ROLES = ["Admin", "Operations", "Technician", "Supervisor"];
 const KIOSK_REVIEW_ROLES = ["Admin", "Operations", "Supervisor"];
 const MATERIAL_ROLES = ["Admin", "Operations", "Technician", "Supervisor"];
 const PERIOD_PACK_ROLES = ["Admin", "Operations"];
 function localStore() { try { return window.localStorage; } catch { return null; } }
+
+// Read-only verified-hours view for the commercial roles. Choose a dispatch, then load it.
+function V5ReadinessByDispatch({ user, dispatches }) {
+  const [id, setId] = useState("");
+  const options = dispatches || [];
+  return (
+    <div className="space-y-2">
+      <label htmlFor="v5-ready-dispatch" className="block text-sm font-semibold text-gray-600">Verified hours by dispatch (V5, read-only)</label>
+      <select id="v5-ready-dispatch" value={id} onChange={(e) => setId(e.target.value)} className="min-h-[44px] w-full rounded-lg border border-gray-300 bg-white px-3 text-sm dark:bg-transparent">
+        <option value="">Choose a dispatch</option>
+        {options.map((d) => <option key={d.id} value={d.id}>{d.dispatch_number || d.id}</option>)}
+      </select>
+      {id && <V5BillingReadinessPanel key={id} user={user} dispatchId={id} label={options.find((d) => d.id === id)?.dispatch_number || id} />}
+    </div>
+  );
+}
 
 export default function WorksheetsPage({ user }) {
   const [items, setItems] = useState([]);
@@ -277,6 +296,7 @@ export default function WorksheetsPage({ user }) {
                     <p className="mt-2 text-xs text-gray-600">Materials: {ws.materials_used.map((m) => `${m.quantity}${m.unit ? ` ${m.unit}` : ""} ${m.description}`).join("; ")}</p>
                   )}
                   <WorksheetEvidence worksheet={ws} role={user.role} />
+                  {v5SignatureVisible(user.role) && v5SheetEligibleForPanel(ws) && <V5SignaturePanel ws={ws} user={user} />}
                 </div>
                 
                 <div className="flex shrink-0 flex-col gap-2">
@@ -338,6 +358,7 @@ export default function WorksheetsPage({ user }) {
         <p className="text-sm text-gray-500">Looking for an older Daily Time Sheet, Contractor Log or a Timesheet without Normal / 1.5 / 2.0? See <Link to="/legacy-history" className="font-semibold text-orac-blue underline">earlier records (read-only)</Link>. The monthly register is under <Link to="/monthly-worksheets" className="font-semibold text-orac-blue underline">Worksheets</Link>.</p>
       )}
       {MATERIAL_ROLES.includes(user.role) && <AssignedMaterialsPanel dispatches={dispatches} />}
+      {v5ReadinessVisible(user.role) && <V5ReadinessByDispatch user={user} dispatches={dispatches} />}
       {PERIOD_PACK_ROLES.includes(user.role) && <PeriodPackPanel worksheets={items} />}
 
       {/* Revise Modal */}
