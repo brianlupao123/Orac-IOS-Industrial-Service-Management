@@ -5,6 +5,7 @@ import Modal from "../components/Modal.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import { ICONS } from "../components/icons.jsx";
 import { ErrorBanner, PageEmptyState } from "../components/PageStates.jsx";
+import { v5CommercialEnabled } from "../v5CommercialFlags.js";
 import {
   EMPTY_QUOTE_LINE, formatAmount, buildCreateQuotePayload, buildUpdateQuotePayload, canApproveQuote, canSendQuote,
   lineTotal, prefillFromLead, quoteActionsFor, quoteTotal, validateQuoteForm
@@ -41,6 +42,13 @@ export default function QuotationsPage({ user }) {
   const [form, setForm] = useState(emptyForm());
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [revisionQuote, setRevisionQuote] = useState(null);
+  const [revisionReason, setRevisionReason] = useState("");
+  const [revisionError, setRevisionError] = useState("");
+  const [acceptanceQuote, setAcceptanceQuote] = useState(null);
+  const [acceptance, setAcceptance] = useState({ evidence_reference: "", evidence_channel: "amended_po", accepted_on: "", notes: "" });
+  const [acceptanceError, setAcceptanceError] = useState("");
+  const v5Visible = v5CommercialEnabled() && ["Sales", "Admin"].includes(user.role);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,6 +104,44 @@ export default function QuotationsPage({ user }) {
     setModalMode("");
     setEditingId("");
     setFormError("");
+  }
+
+  function openRevision(quote) {
+    setRevisionQuote(quote);
+    setRevisionReason("");
+    setRevisionError("");
+  }
+
+  async function createRevision(event) {
+    event.preventDefault();
+    if (revisionReason.trim().length < 3) { setRevisionError("Give a short reason for the revision."); return; }
+    setSaving(true); setRevisionError("");
+    try {
+      const lines = linesFor(revisionQuote.id).map((line) => ({
+        description: line.description,
+        quantity: Number(line.quantity),
+        unit_price: Number(line.unit_price),
+        pricing_basis: line.pricing_basis || "hourly",
+        planned_hours: line.planned_hours ?? null,
+        materials_included: Boolean(line.materials_included)
+      }));
+      await quotesApi.createRevision(revisionQuote.id, { reason: revisionReason.trim(), lines });
+      setNotice("Quotation revision created as a new draft.");
+      setRevisionQuote(null);
+      await load();
+    } catch (err) { setRevisionError(err.message); } finally { setSaving(false); }
+  }
+
+  async function recordAcceptance(event) {
+    event.preventDefault();
+    if (acceptance.evidence_reference.trim().length < 3 || !acceptance.accepted_on) { setAcceptanceError("Evidence reference and acceptance date are required."); return; }
+    setSaving(true); setAcceptanceError("");
+    try {
+      await quotesApi.recordAmendedPoEvidence(acceptanceQuote.id, { ...acceptance, evidence_reference: acceptance.evidence_reference.trim(), notes: acceptance.notes.trim() || undefined });
+      setNotice("Client acceptance evidence was recorded.");
+      setAcceptanceQuote(null);
+      await load();
+    } catch (err) { setAcceptanceError(err.message); } finally { setSaving(false); }
   }
 
   function updateLine(index, field, value) {
@@ -256,6 +302,12 @@ export default function QuotationsPage({ user }) {
                       {showApprove && (
                         <button type="button" disabled={busy} onClick={() => approveQuote(quote)} className={`${buttonClass} border-emerald-300 text-emerald-800 hover:bg-emerald-50`}>{busy ? "Working..." : "Approve"}</button>
                       )}
+                      {v5Visible && quote.status !== "Cancelled" && (
+                        <button type="button" disabled={busy} onClick={() => openRevision(quote)} className={`${buttonClass} border-orac-blue text-orac-blue hover:bg-sky-50`}>Revise quotation</button>
+                      )}
+                      {v5Visible && quote.revision_of_quote_id && (
+                        <button type="button" disabled={busy} onClick={() => { setAcceptanceQuote(quote); setAcceptance({ evidence_reference: "", evidence_channel: "amended_po", accepted_on: "", notes: "" }); setAcceptanceError(""); }} className={`${buttonClass} border-amber-300 text-amber-900 hover:bg-amber-50`}>Record client acceptance</button>
+                      )}
                       {quote.status === "Sent" && !showApprove && (
                         <p className="self-center text-xs text-gray-500">You sent this quote - a different Sales colleague, Operations, or Admin must approve it.</p>
                       )}
@@ -312,6 +364,30 @@ export default function QuotationsPage({ user }) {
             <button type="button" onClick={closeModal} className={`${buttonClass} border-gray-300 text-orac-slate hover:bg-gray-50`}>Cancel</button>
             <button type="submit" disabled={saving} className={`${buttonClass} border-orac-blue bg-orac-blue text-white hover:brightness-105`}>{saving ? "Saving..." : modalMode === "create" ? "Create draft" : "Save changes"}</button>
           </div>
+        </form>
+      </Modal>
+
+      <Modal title="Revise quotation" isOpen={Boolean(revisionQuote)} onClose={() => setRevisionQuote(null)}>
+        <form onSubmit={createRevision} className="space-y-4">
+          {revisionError && <ErrorBanner message={revisionError} />}
+          <p className="text-sm text-gray-600">A revision keeps the original quotation unchanged and creates a new commercial draft using its current line items.</p>
+          <label className="block text-sm font-semibold text-gray-700">Reason for revision
+            <textarea value={revisionReason} onChange={(event) => setRevisionReason(event.target.value)} className="mt-1 min-h-24 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+          </label>
+          <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">{revisionQuote && `${linesFor(revisionQuote.id).length} existing line item(s) will be copied. Pricing basis defaults to hourly until the quotation editor is extended.`}</div>
+          <div className="flex justify-end gap-2"><button type="button" onClick={() => setRevisionQuote(null)} className={`${buttonClass} border-gray-300 text-orac-slate hover:bg-gray-50`}>Cancel</button><button type="submit" disabled={saving} className={`${buttonClass} border-orac-blue bg-orac-blue text-white hover:brightness-105`}>{saving ? "Creating..." : "Create revision"}</button></div>
+        </form>
+      </Modal>
+
+      <Modal title="Record client acceptance" isOpen={Boolean(acceptanceQuote)} onClose={() => setAcceptanceQuote(null)}>
+        <form onSubmit={recordAcceptance} className="space-y-4">
+          {acceptanceError && <ErrorBanner message={acceptanceError} />}
+          <p className="text-sm text-gray-600">Record the amended PO or written client acceptance received by Sales. This does not create an invoice.</p>
+          <label className="block text-sm font-semibold text-gray-700">Evidence reference<input value={acceptance.evidence_reference} onChange={(event) => setAcceptance((value) => ({ ...value, evidence_reference: event.target.value }))} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" /></label>
+          <label className="block text-sm font-semibold text-gray-700">Evidence type<select value={acceptance.evidence_channel} onChange={(event) => setAcceptance((value) => ({ ...value, evidence_channel: event.target.value }))} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"><option value="amended_po">Amended PO</option><option value="written_acceptance">Written acceptance</option></select></label>
+          <label className="block text-sm font-semibold text-gray-700">Acceptance date<input type="date" value={acceptance.accepted_on} onChange={(event) => setAcceptance((value) => ({ ...value, accepted_on: event.target.value }))} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" /></label>
+          <label className="block text-sm font-semibold text-gray-700">Notes (optional)<textarea value={acceptance.notes} onChange={(event) => setAcceptance((value) => ({ ...value, notes: event.target.value }))} className="mt-1 min-h-20 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" /></label>
+          <div className="flex justify-end gap-2"><button type="button" onClick={() => setAcceptanceQuote(null)} className={`${buttonClass} border-gray-300 text-orac-slate hover:bg-gray-50`}>Cancel</button><button type="submit" disabled={saving} className={`${buttonClass} border-orac-blue bg-orac-blue text-white hover:brightness-105`}>{saving ? "Saving..." : "Record acceptance"}</button></div>
         </form>
       </Modal>
     </div>

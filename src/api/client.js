@@ -246,6 +246,12 @@ export const quotes = {
       method: "POST",
       body: JSON.stringify({ po_reference, po_amount, ...extra })
     });
+  },
+  createRevision(id, payload) {
+    return request(`/quotes/${encodeURIComponent(id)}/revisions`, { method: "POST", body: JSON.stringify(payload) });
+  },
+  recordAmendedPoEvidence(id, payload) {
+    return request(`/quotes/${encodeURIComponent(id)}/amended-po-evidence`, { method: "POST", body: JSON.stringify(payload) });
   }
 };
 
@@ -258,6 +264,9 @@ export const purchaseOrders = {
 };
 
 export const dispatch = {
+  v5BillingReadiness(dispatchId) {
+    return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/v5-billing-readiness`);
+  },
   addTimesheet(dispatchId, hours_logged, hourly_rate, extra = {}) {
     // Timesheets: hours_logged + hourly_rate (feeds invoice labor total).
     return request(`/dispatch_cards/${dispatchId}/timesheets`, {
