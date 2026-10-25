@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { serviceRequests } from "../api/client.js";
+import { serviceRequests, assistant } from "../api/client.js";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import { ICONS } from "../components/icons.jsx";
 import { ErrorBanner, PageEmptyState } from "../components/PageStates.jsx";
+import RecordAnalysisModal from "../components/RecordAnalysisModal.jsx";
+import { recordAnalysisVisible } from "../recordAnalysisFlags.js";
 import {
   SERVICE_REQUEST_LIMITS, SERVICE_REQUEST_STATUSES, canConvertToLead,
   statusLabel, statusTone, triageActionsFor, urgencyLabel
@@ -20,6 +22,8 @@ export default function ServiceRequestTriagePage() {
   const [busyId, setBusyId] = useState("");
   const [notes, setNotes] = useState({});
   const [confirmId, setConfirmId] = useState("");
+  const [analysis, setAnalysis] = useState(null);
+  const [analysisId, setAnalysisId] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -67,11 +71,24 @@ export default function ServiceRequestTriagePage() {
     }
   }
 
+  async function openAnalysis(id) {
+    setAnalysisId(id);
+    setError("");
+    try {
+      setAnalysis(await assistant.recordAnalysis("service_request", id));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setAnalysisId("");
+    }
+  }
+
   const buttonClass = "rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50";
   // Presentation-only accent so an urgent queue can be scanned at a glance; the
   // server's urgency value drives it, nothing here changes behaviour or order.
   const URGENCY_ACCENT = { urgent_downtime: "border-l-4 border-l-red-400", planned_shutdown: "border-l-4 border-l-amber-300", standard: "border-l-4 border-l-transparent" };
   const urgencyAccent = (urgency) => URGENCY_ACCENT[urgency] || URGENCY_ACCENT.standard;
+  const analysisVisible = recordAnalysisVisible();
 
   return (
     <div className="space-y-6">
@@ -121,6 +138,7 @@ export default function ServiceRequestTriagePage() {
                   {item.triaged_by_name && <div><dt className="inline font-medium">Last triaged by: </dt><dd className="inline">{item.triaged_by_name}</dd></div>}
                 </dl>
                 {item.triage_note && <p className="mt-2 text-sm text-gray-600"><span className="font-medium">Triage note:</span> {item.triage_note}</p>}
+                {analysisVisible && <div className="mt-4 border-t border-gray-100 pt-4"><button type="button" disabled={Boolean(analysisId)} onClick={() => openAnalysis(item.id)} className={`${buttonClass} border-gray-300 text-orac-slate hover:bg-gray-50`}>{analysisId === item.id ? "Loading analysis..." : "Analyze evidence"}</button></div>}
 
                 {actions.length > 0 && (
                   <div className="mt-4 space-y-3 border-t border-gray-100 pt-4">
@@ -159,6 +177,7 @@ export default function ServiceRequestTriagePage() {
           })}
         </ul>
       )}
+      <RecordAnalysisModal title="Service request evidence analysis" analysis={analysis} onClose={() => setAnalysis(null)} />
     </div>
   );
 }

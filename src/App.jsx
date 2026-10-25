@@ -31,6 +31,8 @@ import WorksheetRegisterPage from "./pages/WorksheetRegisterPage.jsx";
 import TimesheetWorkflowPage from "./pages/TimesheetWorkflowPage.jsx";
 import WorksheetRegisterPrintPage from "./pages/WorksheetRegisterPrintPage.jsx";
 import LegacyHistoryPage from "./pages/LegacyHistoryPage.jsx";
+import DispatchJobCardPage from "./pages/DispatchJobCardPage.jsx";
+import InvoiceReadinessPage from "./pages/InvoiceReadinessPage.jsx";
 
 function GuardedRoute({ user, path, children }) {
   return canAccessRoute(user.role, path) ? children : <AccessDeniedPage />;
@@ -112,6 +114,8 @@ export default function App() {
         <Route path="/contracts" element={<GuardedRoute user={user} path="/contracts"><ContractsPage user={user} /></GuardedRoute>} />
         <Route path="/inventory" element={<GuardedRoute user={user} path="/inventory"><InventoryPage user={user} /></GuardedRoute>} />
         <Route path="/reports" element={<GuardedRoute user={user} path="/reports"><ReportsPage user={user} /></GuardedRoute>} />
+        <Route path="/job-cards/:id" element={<GuardedRoute user={user} path="/job-cards"><DispatchJobCardPage user={user} /></GuardedRoute>} />
+        <Route path="/invoice-readiness/:id" element={<GuardedRoute user={user} path="/invoice-readiness"><InvoiceReadinessPage /></GuardedRoute>} />
         <Route path="/operational-data" element={<GuardedRoute user={user} path="/operational-data"><OperationalDataPage user={user} /></GuardedRoute>} />
         <Route path="/documents" element={<GuardedRoute user={user} path="/documents"><DocumentsPage user={user} /></GuardedRoute>} />
         <Route path="/admin" element={<GuardedRoute user={user} path="/admin"><AdminPage user={user} /></GuardedRoute>} />

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { summary, collections } from "../api/client.js";
+import { summary, collections, quotes as quotesApi } from "../api/client.js";
 import IconStatCard from "../components/IconStatCard.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import DataTable from "../components/DataTable.jsx";
@@ -9,6 +9,7 @@ import { ErrorBanner } from "../components/PageStates.jsx";
 import { ICONS } from "../components/icons.jsx";
 import AIAssistantPanel from "../components/AIAssistantPanel.jsx";
 import { canAccessRoute } from "../accessPolicy.js";
+import { formatMoney } from "../lib/format.js";
 
 /**
  * Role-aware operational dashboard.
@@ -40,6 +41,29 @@ export default function DashboardPage({ user }) {
   const [pendingAccessCount, setPendingAccessCount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [dispatchingId, setDispatchingId] = useState(null);
+  const [dispatchNotice, setDispatchNotice] = useState("");
+  const [dispatchError, setDispatchError] = useState("");
+
+  async function handleDispatch(quoteId) {
+    setDispatchingId(quoteId);
+    setDispatchNotice("");
+    setDispatchError("");
+    try {
+      await quotesApi.transition(quoteId, "Field_Dispatch");
+      setDispatchNotice(`Quotation dispatched to field successfully.`);
+      const [newQuotes, newDispatches] = await Promise.all([
+        collections.list("quotes"),
+        collections.list("dispatch_cards")
+      ]);
+      setQuotes(newQuotes);
+      setDispatches(newDispatches);
+    } catch (err) {
+      setDispatchError(err.message || "Failed to dispatch quotation to field.");
+    } finally {
+      setDispatchingId(null);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -169,6 +193,7 @@ export default function DashboardPage({ user }) {
     roleCards.push(
       <IconStatCard
         key="access_requests"
+        statusFirst
         label="Pending Access Requests"
         value={pendingAccessCount}
         iconPath={ICONS.users}
@@ -184,6 +209,7 @@ export default function DashboardPage({ user }) {
     roleCards.push(
       <IconStatCard
         key="blocked_amendments"
+        statusFirst
         label="Blocked Amendments"
         value={stats?.blocked_amendments ?? 0}
         iconPath={ICONS.warning}
@@ -203,6 +229,7 @@ export default function DashboardPage({ user }) {
     roleCards.push(
       <IconStatCard
         key="worksheets_review"
+        statusFirst
         label="Timesheets Pending Review"
         value={pendingReviewCount}
         iconPath={ICONS.clock}
@@ -228,6 +255,7 @@ export default function DashboardPage({ user }) {
       />,
       <IconStatCard
         key="returned_for_correction"
+        statusFirst
         label="Returned for Correction"
         value={stats?.returned_for_correction ?? 0}
         iconPath={ICONS.warning}
@@ -253,6 +281,7 @@ export default function DashboardPage({ user }) {
       />,
       <IconStatCard
         key="returned_worksheets"
+        statusFirst
         label="Returned for Correction"
         value={stats?.returned_for_correction ?? 0}
         iconPath={ICONS.warning}
@@ -289,6 +318,7 @@ export default function DashboardPage({ user }) {
       />,
       <IconStatCard
         key="submitted_worksheets"
+        statusFirst
         label="Awaiting Review"
         value={stats?.pending_review ?? 0}
         iconPath={ICONS.clock}
@@ -300,19 +330,28 @@ export default function DashboardPage({ user }) {
     );
   }
 
+  const hasQuotesTable = !isFieldDashboard;
+  const hasDispatchesTable = OPERATIONAL_DASHBOARD_ROLES.includes(user.role);
+
   return (
-    <div data-evidence="dashboard-ready" className="space-y-6 animate-in fade-in duration-500">
-      <PageHeaderBanner eyebrow={user.role} title={greeting} subtitle={`Welcome back, ${user.name || user.email}`} iconPath={ICONS.dashboard} aside={new Date().toLocaleDateString("en-ZA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} />
+    <div data-evidence="dashboard-ready" className="space-y-5 animate-in fade-in duration-300">
+      <PageHeaderBanner
+        eyebrow={user.role}
+        title={greeting}
+        subtitle={`Welcome back, ${user.name || user.email}`}
+        iconPath={ICONS.dashboard}
+        aside={new Date().toLocaleDateString("en-ZA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+      />
 
       {/* Urgent / actionable work comes first, ahead of general totals, so the
           most important next step is visible without scrolling past low-priority
           counts. Order follows: role title -> priorities -> overview -> secondary. */}
       {roleCards.length > 0 && (
-        <div id="evidence-section-role-priorities" data-evidence-target="evidence-section-role-priorities" className="space-y-2">
-          <div className="text-sm font-semibold text-orac-slate">
+        <div id="evidence-section-role-priorities" data-evidence-target="evidence-section-role-priorities" className="space-y-2.5">
+          <h2 className="text-base font-semibold text-orac-slate">
             Priorities and action items
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {roleCards}
           </div>
         </div>
@@ -320,8 +359,8 @@ export default function DashboardPage({ user }) {
 
       {!isFieldDashboard && (
         <div className="space-y-2">
-          <div className="text-sm font-semibold text-orac-slate">Overview</div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 className="text-sm font-semibold text-orac-slate">Overview</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <IconStatCard
               label={user.role === "Client Viewer" ? "My Organization" : "Total Clients"}
               value={stats?.clients}
@@ -334,7 +373,7 @@ export default function DashboardPage({ user }) {
               label="Total Quotes"
               value={stats?.quotes}
               iconPath={ICONS.clipboard}
-              tone={stats?.quotes > 0 ? "blue" : "neutral"}
+              tone="neutral"
               evidenceTarget="evidence-kpi-quotes"
               onClick={commercialDestination ? () => navigate(commercialDestination) : undefined}
             />
@@ -342,7 +381,7 @@ export default function DashboardPage({ user }) {
               label="Dispatches"
               value={stats?.dispatches}
               iconPath={ICONS.truck}
-              tone={stats?.dispatches > 0 ? "amber" : "neutral"}
+              tone="neutral"
               evidenceTarget="evidence-kpi-dispatches"
               onClick={() => navigate(canWorksheets ? "/worksheets" : commercialDestination || "/")}
             />
@@ -350,7 +389,7 @@ export default function DashboardPage({ user }) {
               label="Invoices"
               value={stats?.invoices}
               iconPath={ICONS.money}
-              tone={stats?.invoices > 0 ? "green" : "neutral"}
+              tone="neutral"
               evidenceTarget="evidence-kpi-invoices"
               onClick={commercialDestination ? () => navigate(commercialDestination) : undefined}
             />
@@ -358,67 +397,96 @@ export default function DashboardPage({ user }) {
         </div>
       )}
 
-      {/* Pipeline Status Breakdown */}
+      {/* Pipeline status breakdown — slim inline strip per UX review F11 */}
       {!isFieldDashboard && stats?.status_counts && Object.keys(stats.status_counts).length > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-orac-slate">Pipeline status breakdown</h2>
-              <p className="mt-1 text-sm text-slate-600">Current quotation distribution across workflow stages</p>
-            </div>
-            {canReports && (
-              <button
-                onClick={() => navigate("/reports")}
-                className="text-sm font-semibold text-orac-blue hover:underline self-start sm:self-auto"
-              >
-                View Pipeline Report &rarr;
-              </button>
-            )}
+        <div className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+          <div className="flex items-center gap-2 shrink-0">
+            <h2 className="text-sm font-semibold text-orac-slate">Pipeline status:</h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div className="flex flex-wrap items-center gap-2 flex-1">
             {Object.entries(stats.status_counts).map(([status, count]) => (
               <div
                 key={status}
                 id={`evidence-pipeline-${String(status).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}
                 data-evidence-target={`evidence-pipeline-${String(status).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}
                 onClick={canReports ? () => navigate("/reports") : undefined}
-                className={`flex flex-col justify-between rounded-lg border border-gray-100 bg-gray-50/70 p-3 transition-all ${
-                  canReports ? "hover:bg-white hover:border-gray-300 hover:shadow-sm cursor-pointer" : ""
+                className={`inline-flex items-center gap-2 rounded-md border border-gray-100 bg-gray-50/70 px-2.5 py-1 text-xs transition-colors ${
+                  canReports ? "hover:bg-white hover:border-gray-300 hover:shadow-xs cursor-pointer" : ""
                 }`}
               >
-                <div className="mb-2">
-                  <StatusBadge status={status} />
+                <StatusBadge status={status} />
+                <span className="font-bold text-gray-900 tabular-nums">{count}</span>
+              </div>
+            ))}
+          </div>
+          {canReports && (
+            <button
+              onClick={() => navigate("/reports")}
+              className="inline-flex min-h-[44px] items-center text-xs font-semibold text-orac-blue hover:underline shrink-0"
+            >
+              View report &rarr;
+            </button>
+          )}
+        </div>
+      )}
+
+      {["Admin", "Operations"].includes(user.role) && quotes.some((q) => q.status === "PO_Verified") && (
+        <div data-evidence="operations-dispatch-queue" className="rounded-xl border border-sky-200 bg-white p-4 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-orac-slate">Verified Quotations Ready for Field Dispatch</h2>
+              <p className="text-xs text-gray-500">PO verification complete. Authorized for Operations dispatch to create a Dispatch Card.</p>
+            </div>
+            <span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-800 border border-sky-100">
+              {quotes.filter((q) => q.status === "PO_Verified").length} ready
+            </span>
+          </div>
+          {dispatchNotice && <p className="text-xs text-emerald-700 bg-emerald-50 rounded p-2">{dispatchNotice}</p>}
+          {dispatchError && <p className="text-xs text-red-700 bg-red-50 rounded p-2">{dispatchError}</p>}
+          <div className="divide-y divide-gray-100">
+            {quotes.filter((q) => q.status === "PO_Verified").map((q) => (
+              <div key={q.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2.5 gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-sm text-gray-900">{q.quotation_number || q.quote_number || q.id}</span>
+                  <StatusBadge status={q.status} />
                 </div>
-                <div className="text-2xl font-bold text-gray-900 tabular-nums">
-                  {count}
-                </div>
+                <button
+                  type="button"
+                  disabled={dispatchingId === q.id}
+                  onClick={() => handleDispatch(q.id)}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-orac-blue bg-orac-blue px-4 py-2 text-xs font-semibold text-white shadow-xs hover:brightness-105 disabled:opacity-50 transition-all shrink-0"
+                >
+                  {dispatchingId === q.id ? "Dispatching..." : "Dispatch to field"}
+                </button>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Activity tables */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Activity tables — full width when only one table exists for the role */}
+      <div className={`grid gap-5 ${hasQuotesTable && hasDispatchesTable ? "lg:grid-cols-2" : "grid-cols-1"}`}>
         {/* Recent quotes */}
-        {!isFieldDashboard && <DataTable
-          title="Recent Quotes"
-          columns={["Number", "Status", "Total"]}
-          rows={quotes.slice(0, 8)}
-          emptyText="No quotes yet"
-          renderRow={(q) => (
-            <tr key={q.id} className="transition-colors hover:bg-gray-50">
-              <td className="px-4 py-2.5 font-medium text-orac-slate">{q.quotation_number || q.quote_number || q.id}</td>
-              <td className="px-4 py-2.5"><StatusBadge status={q.status} /></td>
-              <td className="px-4 py-2.5 tabular-nums">{q.total_amount != null ? `R ${Number(q.total_amount).toLocaleString()}` : "—"}</td>
-            </tr>
-          )}
-        />}
+        {hasQuotesTable && (
+          <DataTable
+            title="Recent quotes"
+            columns={["Number", "Status", "Total"]}
+            rows={quotes.slice(0, 8)}
+            emptyText="No quotes yet"
+            renderRow={(q) => (
+              <tr key={q.id} className="transition-colors hover:bg-gray-50">
+                <td className="px-4 py-2.5 font-medium text-orac-slate">{q.quotation_number || q.quote_number || q.id}</td>
+                <td className="px-4 py-2.5"><StatusBadge status={q.status} /></td>
+                <td className="px-4 py-2.5 tabular-nums">{formatMoney(q.total_amount)}</td>
+              </tr>
+            )}
+          />
+        )}
 
         {/* Recent dispatches (not for Client Viewer) */}
-        {OPERATIONAL_DASHBOARD_ROLES.includes(user.role) && (
+        {hasDispatchesTable && (
           <DataTable
-            title="Recent Dispatches"
+            title="Recent dispatches"
             columns={["ID", "Status", "Site"]}
             rows={dispatches.slice(0, 8)}
             emptyText="No dispatches yet"
@@ -436,20 +504,20 @@ export default function DashboardPage({ user }) {
       {/* Timesheets (for operational roles) */}
       {user.role !== "Client Viewer" && user.role !== "Finance" && worksheets.length > 0 && (
         <div id="evidence-section-worksheets" data-evidence-target="evidence-section-worksheets">
-        <DataTable
-          title="Timesheets"
-          columns={["Activity", "Hours", "Status", "Technician"]}
-          rows={worksheets.slice(0, 6)}
-          emptyText="No timesheets"
-          renderRow={(ws) => (
-            <tr key={ws.id} className="transition-colors hover:bg-gray-50">
-              <td className="px-4 py-2.5 font-medium text-orac-slate">{ws.activity || "—"}</td>
-              <td className="px-4 py-2.5 tabular-nums">{ws.hours ?? "—"}</td>
-              <td className="px-4 py-2.5"><StatusBadge status={ws.status} /></td>
-              <td className="px-4 py-2.5 text-gray-500">{ws.technician_name || "—"}</td>
-            </tr>
-          )}
-        />
+          <DataTable
+            title="Timesheets"
+            columns={["Activity", "Hours", "Status", "Technician"]}
+            rows={worksheets.slice(0, 6)}
+            emptyText="No timesheets"
+            renderRow={(ws) => (
+              <tr key={ws.id} className="transition-colors hover:bg-gray-50">
+                <td className="px-4 py-2.5 font-medium text-orac-slate">{ws.activity || "—"}</td>
+                <td className="px-4 py-2.5 tabular-nums">{ws.hours ?? "—"}</td>
+                <td className="px-4 py-2.5"><StatusBadge status={ws.status} /></td>
+                <td className="px-4 py-2.5 text-gray-500">{ws.technician_name || "—"}</td>
+              </tr>
+            )}
+          />
         </div>
       )}
 

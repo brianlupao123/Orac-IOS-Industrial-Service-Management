@@ -29,6 +29,7 @@ export default function DailyTimesheetPage({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [comment, setComment] = useState({});
+  const [reviewingId, setReviewingId] = useState(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalError, setModalError] = useState("");
@@ -119,12 +120,16 @@ export default function DailyTimesheetPage({ user }) {
   }
 
   async function handleReview(id, decision) {
+    if (reviewingId) return;
+    setReviewingId(id);
     try {
       await dailyTimesheets.review(id, decision, comment[id] || "");
       setComment((prev) => ({ ...prev, [id]: "" }));
       await load();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setReviewingId(null);
     }
   }
 
@@ -133,7 +138,7 @@ export default function DailyTimesheetPage({ user }) {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="space-y-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold text-orac-slate">Daily Time Sheets (legacy)</h1>
@@ -183,8 +188,22 @@ export default function DailyTimesheetPage({ user }) {
                             placeholder="Comment (required to return)"
                             className="w-40 rounded border border-gray-200 px-2 py-1 text-xs"
                           />
-                          <button onClick={() => handleReview(item.id, "approve")} className="text-sm font-semibold text-emerald-700 hover:underline">Approve</button>
-                          <button onClick={() => handleReview(item.id, "return")} className="text-sm font-semibold text-red-700 hover:underline">Return</button>
+                          <button
+                            type="button"
+                            disabled={Boolean(reviewingId)}
+                            onClick={() => handleReview(item.id, "approve")}
+                            className={`text-sm font-semibold text-emerald-700 hover:underline ${reviewingId ? "opacity-50 cursor-not-allowed" : ""}`}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            disabled={Boolean(reviewingId)}
+                            onClick={() => handleReview(item.id, "return")}
+                            className={`text-sm font-semibold text-red-700 hover:underline ${reviewingId ? "opacity-50 cursor-not-allowed" : ""}`}
+                          >
+                            Return
+                          </button>
                         </>
                       )}
                     </div>
@@ -244,7 +263,15 @@ export default function DailyTimesheetPage({ user }) {
                     <tr key={index} className="bg-gray-50">
                       <td colSpan={7} className="border border-gray-200 px-2 py-1 text-center text-gray-400">&mdash; (skip day) &mdash;</td>
                       <td className="border border-gray-200 px-1 py-1 text-center">
-                        <button onClick={() => removeRow(index)} className="text-red-600">x</button>
+                        <button
+                          type="button"
+                          onClick={() => removeRow(index)}
+                          className="text-red-600 hover:text-red-800 p-1"
+                          aria-label="Remove row"
+                          title="Remove row"
+                        >
+                          x
+                        </button>
                       </td>
                     </tr>
                   ) : (
@@ -257,7 +284,15 @@ export default function DailyTimesheetPage({ user }) {
                       <td className="border border-gray-200 p-0"><input value={row.ot_20} onChange={(e) => updateRow(index, { ot_20: e.target.value })} className="w-10 px-1 py-1" /></td>
                       <td className="border border-gray-200 p-0"><input value={row.description} onChange={(e) => updateRow(index, { description: e.target.value })} className="w-full px-1 py-1" /></td>
                       <td className="border border-gray-200 px-1 py-1 text-center">
-                        <button onClick={() => removeRow(index)} className="text-red-600">x</button>
+                        <button
+                          type="button"
+                          onClick={() => removeRow(index)}
+                          className="text-red-600 hover:text-red-800 p-1"
+                          aria-label="Remove row"
+                          title="Remove row"
+                        >
+                          x
+                        </button>
                       </td>
                     </tr>
                   )

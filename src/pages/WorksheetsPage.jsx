@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { collections, worksheets, dispatch, documents } from "../api/client.js";
+import { assistant, collections, worksheets, dispatch, documents } from "../api/client.js";
+import { canAccessRoute } from "../accessPolicy.js";
 import StatCard from "../components/StatCard.jsx";
 import Modal from "../components/Modal.jsx";
 import SignaturePad from "../components/SignaturePad.jsx";
@@ -8,6 +9,8 @@ import WorksheetEvidence, { StatusPill } from "../components/WorksheetEvidence.j
 import KioskReviewPanel from "../components/KioskReviewPanel.jsx";
 import AssignedMaterialsPanel from "../components/AssignedMaterialsPanel.jsx";
 import PeriodPackPanel from "../components/PeriodPackPanel.jsx";
+import RecordAnalysisModal from "../components/RecordAnalysisModal.jsx";
+import { recordAnalysisVisible } from "../recordAnalysisFlags.js";
 import { displayTrade } from "../constants/trades.js";
 import { canEditWorksheet, canReviewWorksheet, canReviseWorksheet, worksheetStatusLabel } from "../fieldStatusModel.js";
 import TimesheetFormModal from "../components/TimesheetFormModal.jsx";
@@ -59,6 +62,26 @@ export default function WorksheetsPage({ user }) {
   const [reviseTarget, setReviseTarget] = useState(null);
   const [reviseReason, setReviseReason] = useState("");
   const [reviseError, setReviseError] = useState("");
+
+  const [analysis, setAnalysis] = useState(null);
+  const [analyzingId, setAnalyzingId] = useState(null);
+
+  async function handleAnalysis(id) {
+    try {
+      setAnalyzingId(id);
+      const res = await assistant.recordAnalysis("field_worksheet", id);
+      setAnalysis(res);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setAnalyzingId(null);
+    }
+  }
+
+  function dispatchLabel(id) {
+    const d = dispatches.find((item) => item.id === id);
+    return d?.dispatch_number || id;
+  }
 
   const canSubmit = SUBMIT_ROLES.includes(user.role);
 
@@ -257,6 +280,16 @@ export default function WorksheetsPage({ user }) {
                     <span className="font-semibold text-gray-900 text-lg">{ws.activity || "Timesheet"}</span>
                     <StatusPill status={ws.status} />
                   </div>
+                  <div data-evidence="timesheet-record-context" className="flex items-center gap-3 text-xs text-gray-500 mb-2">
+                    <span>Timesheet {ws.id}</span>
+                    {canAccessRoute(user.role, "/job-cards") ? (
+                      <Link to={`/job-cards/${encodeURIComponent(ws.dispatch_card_id)}`} className="text-orac-blue hover:underline">
+                        Dispatch {dispatchLabel(ws.dispatch_card_id)}
+                      </Link>
+                    ) : (
+                      <span>Dispatch {dispatchLabel(ws.dispatch_card_id)}</span>
+                    )}
+                  </div>
                   
                   <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500 mb-3">
                     <div className="flex items-center gap-1.5">
@@ -315,6 +348,16 @@ export default function WorksheetsPage({ user }) {
                     <button type="button" onClick={() => { setReviseTarget(ws); setReviseReason(""); setReviseError(""); }} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-slate-200">Revise (new draft)</button>
                   )}
                   <button type="button" onClick={() => downloadPdf(ws.id)} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-slate-200">Download PDF</button>
+                  {recordAnalysisVisible() && (
+                    <button
+                      type="button"
+                      onClick={() => handleAnalysis(ws.id)}
+                      disabled={analyzingId === ws.id}
+                      className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-slate-200"
+                    >
+                      {analyzingId === ws.id ? "Analyzing..." : "Timesheet evidence analysis"}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -392,6 +435,13 @@ export default function WorksheetsPage({ user }) {
             />
           </div>
         </Modal>
+      )}
+      {analysis && (
+        <RecordAnalysisModal
+          title="Timesheet evidence analysis"
+          analysis={analysis}
+          onClose={() => setAnalysis(null)}
+        />
       )}
     </div>
   );

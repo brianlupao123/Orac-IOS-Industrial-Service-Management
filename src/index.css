@@ -46,6 +46,11 @@
   --orac-info-bg: #f0f9ff;
   --orac-info-border: #0369a1;
 
+  /* Table */
+  --orac-table-font-size: 14px;
+  --orac-table-font-variant: tabular-nums;
+  --orac-selected-bg: #e0f2fe;
+
   color-scheme: light;
 }
 
@@ -79,11 +84,20 @@ html[data-theme="dark"] {
   --orac-info-text: #7fc4f5;
   --orac-info-bg: #12283f;
   --orac-info-border: #3f8cc2;
+
+  /* Table */
+  --orac-table-font-size: 14px;
+  --orac-table-font-variant: tabular-nums;
+  --orac-selected-bg: #17304d;
 }
 
 /* =========================================================================
    GLOBAL BASE STYLES
    ========================================================================= */
+
+html {
+  scroll-padding-top: 80px;
+}
 
 html,
 body {
@@ -306,6 +320,7 @@ html[data-theme="dark"] .border-emerald-100,
 html[data-theme="dark"] .border-emerald-200,
 html[data-theme="dark"] .border-emerald-300,
 html[data-theme="dark"] .border-emerald-500,
+html[data-theme="dark"] .border-emerald-600,
 html[data-theme="dark"] .border-green-200 {
   border-color: var(--orac-success-border) !important;
   }
@@ -337,7 +352,8 @@ html[data-theme="dark"] .text-red-950 {
 html[data-theme="dark"] .border-red-100,
 html[data-theme="dark"] .border-red-200,
 html[data-theme="dark"] .border-red-300,
-html[data-theme="dark"] .border-red-400 {
+html[data-theme="dark"] .border-red-400,
+html[data-theme="dark"] .border-red-500 {
   border-color: var(--orac-danger-border) !important;
   }
 html[data-theme="dark"] .ring-red-900\/5 { --tw-ring-color: rgba(255, 154, 168, 0.18) !important; }
@@ -364,6 +380,7 @@ html[data-theme="dark"] .text-orange-800 {
 html[data-theme="dark"] .border-amber-100,
 html[data-theme="dark"] .border-amber-200,
 html[data-theme="dark"] .border-amber-300,
+html[data-theme="dark"] .border-amber-400,
 html[data-theme="dark"] .border-amber-500 {
   border-color: var(--orac-warning-border) !important;
   }
@@ -411,3 +428,7 @@ html[data-theme="dark"] .theme-toggle {
   border-color: var(--orac-border-strong) !important;
   color: var(--orac-text-primary) !important;
   }
+
+/* Deep-linked record (Reports "Open"): visible focus so the person can see which record was opened. */
+[data-record-id]:focus { outline: 2px solid #00488C; outline-offset: 3px; border-radius: 0.5rem; }
+html[data-theme="dark"] [data-record-id]:focus { outline-color: #7CC4F0; }

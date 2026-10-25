@@ -63,16 +63,23 @@ export default function RequestAccess() {
               role — the role you select below is a request, not a guarantee.
             </p>
 
-            <label className="text-xs font-medium text-gray-600 block mb-1">Full name</label>
+            <label htmlFor="request-name" className="text-sm font-medium text-gray-700 block mb-1">Full name</label>
             <input
+              id="request-name"
+              name="name"
+              autoComplete="name"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm mb-3"
               required
             />
 
-            <label className="text-xs font-medium text-gray-600 block mb-1">Email address</label>
+            <label htmlFor="request-email" className="text-sm font-medium text-gray-700 block mb-1">Email address</label>
             <input
+              id="request-email"
+              name="email"
+              autoComplete="email"
+              inputMode="email"
               type="email"
               value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
@@ -90,10 +97,12 @@ export default function RequestAccess() {
               />
             </div>
 
-            <label className="text-xs font-medium text-gray-600 block mb-1">
+            <label htmlFor="request-reason" className="text-sm font-medium text-gray-700 block mb-1">
               Reason (optional)
             </label>
             <textarea
+              id="request-reason"
+              name="reason"
               value={form.reason}
               onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
               rows={3}

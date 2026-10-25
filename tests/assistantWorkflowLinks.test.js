@@ -28,6 +28,8 @@ const ROUTE_CONTRACT = {
   "/kiosk": ["Admin", "Management", "Operations", "Supervisor"],
   "/inventory": ["Admin", "Management", "Operations"],
   "/reports": ["Admin", "Management", "Operations", "Supervisor", "Sales", "Finance"],
+  "/job-cards": ["Admin", "Management", "Operations", "Supervisor", "Technician"],
+  "/invoice-readiness": ["Admin", "Management", "Finance"],
   "/operational-data": ["Admin", "Management", "Operations", "Supervisor", "Technician", "Sales", "Finance"],
   "/documents": ALL_ROLES,
   "/contracts": ["Admin", "Management", "Operations", "Client Viewer"],
@@ -63,8 +65,9 @@ test("assistant API client only calls /ai/ endpoints", () => {
   const block = client.slice(client.indexOf("export const assistant = {"));
   const assistantBlock = block.slice(0, block.indexOf("\n};") + 3);
   const paths = [...assistantBlock.matchAll(/request\("([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(paths.sort(), ["/ai/attention", "/ai/briefing", "/ai/chat", "/ai/explain", "/ai/feedback", "/ai/health", "/ai/workflow"]);
+  assert.deepEqual(paths.sort(), ["/ai/attention", "/ai/briefing", "/ai/chat", "/ai/explain", "/ai/feedback", "/ai/health", "/ai/record-analysis", "/ai/workflow"]);
   assert.match(assistantBlock, /workflow\(articleId\)/);
+  assert.match(assistantBlock, /recordAnalysis\(recordType, recordId\)/);
 });
 
 test("panel is honest about what it is and offers role-scoped workflow guides", () => {

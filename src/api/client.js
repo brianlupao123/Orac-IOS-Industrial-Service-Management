@@ -220,6 +220,9 @@ export const assistant = {
   workflow(articleId) {
     return request("/ai/workflow", { method: "POST", body: JSON.stringify({ article_id: articleId }) });
   },
+  recordAnalysis(recordType, recordId) {
+    return request("/ai/record-analysis", { method: "POST", body: JSON.stringify({ record_type: recordType, record_id: recordId }) });
+  },
   flag(requestId) {
     return request("/ai/feedback", { method: "POST", body: JSON.stringify({ request_id: requestId }) });
   }
@@ -248,6 +251,12 @@ export const quotes = {
       body: JSON.stringify({ po_reference, po_amount, ...extra })
     });
   },
+  rejectPo(id, reason) {
+    return request(`/quotes/${id}/reject-po`, {
+      method: "POST",
+      body: JSON.stringify({ reason })
+    });
+  },
   createRevision(id, payload) {
     return request(`/quotes/${encodeURIComponent(id)}/revisions`, { method: "POST", body: JSON.stringify(payload) });
   },
@@ -274,7 +283,50 @@ export const v5Signature = {
   withdrawContact(contactId) { return request(`/v5-client-supervisor-contacts/${encodeURIComponent(contactId)}/withdraw`, { method: "POST", body: JSON.stringify({}) }); }
 };
 
+// V5 invoice writer. Requests name evidence only; money, tax and numbering are
+// calculated by the server. Both V5 server flags remain authoritative.
+export const v5InvoiceWriter = {
+  workspace(dispatchId) { return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/v5-invoice-draft-workspace`); },
+  drafts(dispatchId) { return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/v5-invoice-drafts`); },
+  createDraft(dispatchId, payload) { return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/v5-invoice-drafts`, { method: "POST", body: JSON.stringify(payload) }); },
+  issueDraft(draftId, payload) { return request(`/v5-invoice-drafts/${encodeURIComponent(draftId)}/issue`, { method: "POST", body: JSON.stringify(payload) }); }
+};
+
+// Legacy billing uses a separate controlled path from the V5 evidence writer.
+// The server calculates all money and evidence from stored records; this client
+// sends only a retry-safe command key.
+export const legacyInvoiceDrafts = {
+  list(dispatchId) { return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/legacy-invoice-drafts`); },
+  create(dispatchId, payload) { return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/legacy-invoice-drafts`, { method: "POST", body: JSON.stringify(payload) }); },
+  issue(draftId, payload) { return request(`/legacy-invoice-drafts/${encodeURIComponent(draftId)}/issue`, { method: "POST", body: JSON.stringify(payload) }); }
+};
+
+export const invoices = {
+  settlement(invoiceId) { return request(`/invoices/${encodeURIComponent(invoiceId)}/settlement`); },
+  recordPayment(invoiceId, { idempotency_key, ...payment }) {
+    return request(`/invoices/${encodeURIComponent(invoiceId)}/payments`, {
+      method: "POST", headers: { "Idempotency-Key": idempotency_key }, body: JSON.stringify(payment)
+    });
+  },
+  voidPayment(invoiceId, paymentId, reason) {
+    return request(`/invoices/${encodeURIComponent(invoiceId)}/payments/${encodeURIComponent(paymentId)}/void`, {
+      method: "POST", body: JSON.stringify({ reason })
+    });
+  },
+  void(invoiceId, reason) {
+    return request(`/invoices/${encodeURIComponent(invoiceId)}/void`, { method: "POST", body: JSON.stringify({ reason }) });
+  }
+};
+
 export const dispatch = {
+  // Read-only, role-scoped operational summary. The server removes financial
+  // values and assignment details that the current role is not allowed to see.
+  jobCard(dispatchId) {
+    return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/job-card`);
+  },
+  invoiceReadiness(dispatchId) {
+    return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/invoice-readiness`);
+  },
   v5BillingReadiness(dispatchId) {
     return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/v5-billing-readiness`);
   },

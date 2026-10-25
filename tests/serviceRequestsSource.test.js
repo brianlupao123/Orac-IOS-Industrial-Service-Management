@@ -35,6 +35,9 @@ test("the client panel and triage page use only the approved API operations", ()
   assert.match(triage, /serviceRequests\.triageDecision\(/);
   assert.match(triage, /serviceRequests\.convertToLead\(/);
   assert.doesNotMatch(triage, /serviceRequests\.(create|mine)/);
+  assert.match(triage, /assistant\.recordAnalysis\("service_request", id\)/);
+  assert.match(triage, /recordAnalysisVisible\(\)/);
+  assert.match(triage, /Service request evidence analysis/);
   assert.doesNotMatch(triage + panel, /collections\.list|quotes\.|leads\.create|dispatch\.|admin\./, "no other API is used");
 });
 

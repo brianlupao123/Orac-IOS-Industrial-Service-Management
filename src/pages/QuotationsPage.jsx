@@ -1,14 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { collections, quotes as quotesApi } from "../api/client.js";
+import { assistant, collections, documents, quotes as quotesApi } from "../api/client.js";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import Modal from "../components/Modal.jsx";
+import RecordAnalysisModal from "../components/RecordAnalysisModal.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import { ICONS } from "../components/icons.jsx";
 import { ErrorBanner, PageEmptyState } from "../components/PageStates.jsx";
 import { v5CommercialEnabled } from "../v5CommercialFlags.js";
+import { recordAnalysisVisible } from "../recordAnalysisFlags.js";
 import {
-  EMPTY_QUOTE_LINE, formatAmount, buildCreateQuotePayload, buildUpdateQuotePayload, canApproveQuote, canSendQuote,
-  lineTotal, prefillFromLead, quoteActionsFor, quoteTotal, validateQuoteForm
+  EMPTY_QUOTE_LINE, formatAmount, formatUSD, buildCreateQuotePayload, buildUpdateQuotePayload, canApproveQuote, canDispatchQuote, canSendQuote,
+  lineTotal, prefillFromLead, quoteActionsFor, quoteTotal, validateQuoteForm,
+  CANONICAL_UNITS_OF_MEASURE, COST_TYPES, ITEM_TYPES, TAX_STATUSES, PROVISIONAL_VAT_NOTICE, calculateQuoteBreakdown
 } from "../quoteModel.js";
 
 // Sales quotation workflow: create a Draft (optionally starting from an
@@ -25,7 +28,33 @@ import {
 // to whatever the ID a lead already carries. See ROLE_OWNER_DECISIONS in the
 // delivery packet, items #C-1 and #C-2.
 
-const emptyForm = () => ({ client_id: "", equipment_tag_id: "", lines: [{ ...EMPTY_QUOTE_LINE }] });
+const emptyForm = () => ({
+  client_id: "",
+  equipment_tag_id: "",
+  currency: "USD",
+  tax_status: "provisional",
+  applied_tax_rate: 0.15,
+  discount_percent: 0,
+  validity_days: 30,
+  scope_summary: "",
+  assumptions: "",
+  work_packages: [{ id: "wp_01", code: "WP-01", title: "General Scope", name: "General Scope", sequence: 1 }],
+  lines: [{ ...EMPTY_QUOTE_LINE }]
+});
+
+function QuoteEvidenceSummary({ quote, clientName }) {
+  const acceptance = quote.amended_po_evidence;
+  return (
+    <dl className="mt-4 grid gap-x-4 gap-y-2 border-t border-gray-100 pt-3 text-xs text-gray-600 sm:grid-cols-2" data-evidence="quote-summary">
+      <div><dt className="font-medium text-gray-700">Quote record</dt><dd>{quote.id}</dd></div>
+      <div><dt className="font-medium text-gray-700">Client record</dt><dd>{clientName(quote.client_id)}</dd></div>
+      {quote.revision_of_quote_id && <div><dt className="font-medium text-gray-700">Revision of</dt><dd>{quote.revision_of_quote_id}</dd></div>}
+      {acceptance && <div><dt className="font-medium text-gray-700">Client acceptance evidence</dt><dd>{acceptance.evidence_reference || "Reference not recorded"}{acceptance.accepted_on ? ` on ${acceptance.accepted_on}` : ""}</dd></div>}
+      {quote.commercial_acceptance_status && <div><dt className="font-medium text-gray-700">Commercial state</dt><dd>{quote.commercial_acceptance_status.replaceAll("_", " ")}</dd></div>}
+      {!quote.revision_of_quote_id && !acceptance && !quote.commercial_acceptance_status && <div><dt className="font-medium text-gray-700">Evidence position</dt><dd>No revision or client-acceptance evidence recorded on this quote.</dd></div>}
+    </dl>
+  );
+}
 
 export default function QuotationsPage({ user }) {
   const [quoteList, setQuoteList] = useState([]);
@@ -48,7 +77,11 @@ export default function QuotationsPage({ user }) {
   const [acceptanceQuote, setAcceptanceQuote] = useState(null);
   const [acceptance, setAcceptance] = useState({ evidence_reference: "", evidence_channel: "amended_po", accepted_on: "", notes: "" });
   const [acceptanceError, setAcceptanceError] = useState("");
+  const [analysis, setAnalysis] = useState(null);
+  const [analysisError, setAnalysisError] = useState("");
+  const [analysisBusyId, setAnalysisBusyId] = useState("");
   const v5Visible = v5CommercialEnabled() && ["Sales", "Admin"].includes(user.role);
+  const analysisVisible = recordAnalysisVisible();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -85,17 +118,45 @@ export default function QuotationsPage({ user }) {
   function openCreate(lead) {
     setModalMode("create");
     setEditingId("");
-    setForm(lead ? prefillFromLead(lead) : emptyForm());
+    if (lead) {
+      const prefilled = prefillFromLead(lead);
+      setForm({
+        ...emptyForm(),
+        client_id: prefilled.client_id,
+        equipment_tag_id: prefilled.equipment_tag_id,
+        lines: prefilled.lines.map((l) => ({ ...EMPTY_QUOTE_LINE, ...l }))
+      });
+    } else {
+      setForm(emptyForm());
+    }
     setFormError("");
   }
 
   function openEdit(quote) {
     setModalMode("edit");
     setEditingId(quote.id);
+    const existingLines = linesFor(quote.id);
     setForm({
       client_id: quote.client_id || "",
       equipment_tag_id: quote.equipment_tag_id || "",
-      lines: linesFor(quote.id).map((line) => ({ description: line.description, quantity: line.quantity, unit_price: line.unit_price })) || [{ ...EMPTY_QUOTE_LINE }]
+      currency: quote.currency || "USD",
+      tax_status: quote.tax_status || "provisional",
+      applied_tax_rate: quote.applied_tax_rate ?? 0.15,
+      discount_percent: quote.discount_percent || 0,
+      validity_days: quote.validity_days || 30,
+      scope_summary: quote.scope_summary || "",
+      assumptions: quote.assumptions || "",
+      work_packages: quote.work_packages && quote.work_packages.length > 0 ? quote.work_packages.map((wp) => ({ ...wp, title: wp.title || wp.name, name: wp.name || wp.title })) : [{ id: "wp_01", code: "WP-01", title: "General Scope", name: "General Scope", sequence: 1 }],
+      lines: existingLines.length > 0 ? existingLines.map((line) => ({
+        description: line.description || "",
+        quantity: line.quantity ?? 1,
+        unit_price: line.unit_price ?? 0,
+        unit_of_measure: line.unit_of_measure || "each",
+        cost_type: line.cost_type || "material",
+        resource_role: line.resource_role || "",
+        work_package_id: line.work_package_id || "wp_01",
+        item_type: line.item_type || "standard"
+      })) : [{ ...EMPTY_QUOTE_LINE }]
     });
     setFormError("");
   }
@@ -151,8 +212,28 @@ export default function QuotationsPage({ user }) {
     });
   }
 
-  function addLine() {
-    setForm((current) => ({ ...current, lines: [...current.lines, { ...EMPTY_QUOTE_LINE }] }));
+  function addWorkPackage() {
+    const nextNum = form.work_packages.length + 1;
+    const nextId = `wp_${String(nextNum).padStart(2, "0")}`;
+    setForm((current) => ({
+      ...current,
+      work_packages: [...current.work_packages, { id: nextId, code: `WP-${String(nextNum).padStart(2, "0")}`, title: `Work Package ${nextNum}`, name: `Work Package ${nextNum}`, sequence: nextNum }]
+    }));
+  }
+
+  function updateWorkPackage(id, val) {
+    setForm((current) => ({
+      ...current,
+      work_packages: current.work_packages.map((wp) => (wp.id === id ? { ...wp, title: val, name: val } : wp))
+    }));
+  }
+
+  function addLine(wpId) {
+    const defaultWp = wpId || form.work_packages[0]?.id || "wp_01";
+    setForm((current) => ({
+      ...current,
+      lines: [...current.lines, { ...EMPTY_QUOTE_LINE, work_package_id: defaultWp }]
+    }));
   }
 
   function removeLine(index) {
@@ -227,6 +308,34 @@ export default function QuotationsPage({ user }) {
     }
   }
 
+  
+  async function dispatchQuote(quote) {
+    setBusyId(quote.id);
+    setError("");
+    setNotice("");
+    try {
+      await quotesApi.transition(quote.id, "Field_Dispatch");
+      setNotice(`${quote.quote_number || quote.id} was dispatched to the field.`);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusyId("");
+    }
+  }
+
+  async function analyzeQuote(quote) {
+    setAnalysisBusyId(quote.id);
+    setAnalysisError("");
+    try {
+      setAnalysis(await assistant.recordAnalysis("quote", quote.id));
+    } catch (err) {
+      setAnalysisError(err.message);
+    } finally {
+      setAnalysisBusyId("");
+    }
+  }
+
   const buttonClass = "rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50";
 
   return (
@@ -240,6 +349,7 @@ export default function QuotationsPage({ user }) {
       />
 
       {error && <ErrorBanner message={error} />}
+      {analysisError && <ErrorBanner message={analysisError} />}
       {notice && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</p>}
 
       {openLeads.length > 0 && (
@@ -278,17 +388,28 @@ export default function QuotationsPage({ user }) {
               const total = quoteTotal(lines);
               const busy = busyId === quote.id;
               const showApprove = canApproveQuote(quote, user);
+              const showDispatch = canDispatchQuote(quote, user);
               return (
                 <li key={quote.id} className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h2 className="text-base font-semibold text-orac-slate">{quote.quote_number || quote.id}</h2>
-                      <p className="text-sm text-gray-600">{clientName(quote.client_id)} · {lines.length} line{lines.length === 1 ? "" : "s"} · {formatAmount(quote.total_amount ?? total)}</p>
+                      <p className="text-sm text-gray-600">{clientName(quote.client_id)} · {lines.length} line{lines.length === 1 ? "" : "s"} · USD {formatAmount(quote.total_amount ?? total)}</p>
                     </div>
-                    <StatusBadge status={quote.status} />
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => documents.download("quotes", quote.id)}
+                        className="rounded border border-gray-300 bg-white px-2.5 py-1 text-xs font-semibold text-orac-slate hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                      >
+                        Download PDF
+                      </button>
+                      <StatusBadge status={quote.status} />
+                    </div>
                   </div>
+                  <QuoteEvidenceSummary quote={quote} clientName={clientName} />
 
-                  {(actions.canEdit || actions.canSend || actions.canCancel || showApprove) && (
+                  {(actions.canEdit || actions.canSend || actions.canCancel || showApprove || showDispatch) && (
                     <div className="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-4">
                       {actions.canEdit && (
                         <button type="button" disabled={busy} onClick={() => openEdit(quote)} className={`${buttonClass} border-gray-300 text-orac-slate hover:bg-gray-50`}>Edit</button>
@@ -299,6 +420,9 @@ export default function QuotationsPage({ user }) {
                       {actions.canCancel && (
                         <button type="button" disabled={busy} onClick={() => cancelQuote(quote)} className={`${buttonClass} border-red-200 text-red-700 hover:bg-red-50`}>{busy ? "Working..." : "Cancel"}</button>
                       )}
+                      {showDispatch && (
+                        <button type="button" disabled={busy} onClick={() => dispatchQuote(quote)} className={`${buttonClass} border-orac-blue bg-orac-blue text-white hover:brightness-105`}>{busy ? "Working..." : "Dispatch to field"}</button>
+                      )}
                       {showApprove && (
                         <button type="button" disabled={busy} onClick={() => approveQuote(quote)} className={`${buttonClass} border-emerald-300 text-emerald-800 hover:bg-emerald-50`}>{busy ? "Working..." : "Approve"}</button>
                       )}
@@ -308,8 +432,15 @@ export default function QuotationsPage({ user }) {
                       {v5Visible && quote.revision_of_quote_id && (
                         <button type="button" disabled={busy} onClick={() => { setAcceptanceQuote(quote); setAcceptance({ evidence_reference: "", evidence_channel: "amended_po", accepted_on: "", notes: "" }); setAcceptanceError(""); }} className={`${buttonClass} border-amber-300 text-amber-900 hover:bg-amber-50`}>Record client acceptance</button>
                       )}
+                      {analysisVisible && (
+                        <button type="button" disabled={analysisBusyId === quote.id} onClick={() => analyzeQuote(quote)} className={`${buttonClass} border-gray-300 text-orac-slate hover:bg-gray-50`}>{analysisBusyId === quote.id ? "Analyzing..." : "Analyze evidence"}</button>
+                      )}
                       {quote.status === "Sent" && !showApprove && (
-                        <p className="self-center text-xs text-gray-500">You sent this quote - a different Sales colleague, Operations, or Admin must approve it.</p>
+                        <p className="self-center text-xs text-gray-500">
+                          {quote.sent_by && quote.sent_by === user.id
+                            ? "You sent this quote - a different Sales colleague, Operations, or Admin must approve it."
+                            : "Quotations exceeding USD $5,000 or containing commercial discounts require Management approval."}
+                        </p>
                       )}
                     </div>
                   )}
@@ -338,26 +469,245 @@ export default function QuotationsPage({ user }) {
             {modalMode === "edit" && <p className="mt-1 text-xs text-gray-500">The client cannot be changed once a quotation is created.</p>}
           </div>
 
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <span className="text-sm font-semibold text-gray-700">Line items</span>
-              <button type="button" onClick={addLine} className="text-xs font-semibold text-orac-blue hover:underline">+ Add line</button>
+          {/* Commercial & Scope Settings */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label htmlFor="quote-scope" className="mb-1 block text-xs font-semibold text-gray-700">Scope summary</label>
+              <textarea
+                id="quote-scope"
+                rows={2}
+                placeholder="Scope of work overview..."
+                value={form.scope_summary || ""}
+                onChange={(e) => setForm((cur) => ({ ...cur, scope_summary: e.target.value }))}
+                className="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-xs"
+              />
             </div>
-            <p className="mb-2 text-xs text-gray-500">Manually priced lines only. Catalog pricing lookup is not yet available to Sales accounts.</p>
-            <div className="space-y-2">
-              {form.lines.map((line, index) => (
-                <div key={index} className="flex flex-wrap items-start gap-2 rounded-md border border-gray-100 p-2">
-                  <input type="text" placeholder="Description" value={line.description} onChange={(event) => updateLine(index, "description", event.target.value)} className="min-w-[10rem] flex-1 rounded-md border border-gray-300 px-2 py-1.5 text-sm" />
-                  <input type="number" min="0" step="any" placeholder="Qty" value={line.quantity} onChange={(event) => updateLine(index, "quantity", event.target.value)} className="w-20 rounded-md border border-gray-300 px-2 py-1.5 text-sm" />
-                  <input type="number" min="0" step="any" placeholder="Unit price" value={line.unit_price} onChange={(event) => updateLine(index, "unit_price", event.target.value)} className="w-28 rounded-md border border-gray-300 px-2 py-1.5 text-sm" />
-                  <span className="pt-1.5 text-sm text-gray-600">{formatAmount(lineTotal(line))}</span>
-                  {form.lines.length > 1 && (
-                    <button type="button" onClick={() => removeLine(index)} className="pt-1.5 text-sm text-red-600 hover:underline">Remove</button>
-                  )}
+            <div>
+              <label htmlFor="quote-assumptions" className="mb-1 block text-xs font-semibold text-gray-700">Assumptions & exclusions</label>
+              <textarea
+                id="quote-assumptions"
+                rows={2}
+                placeholder="Key assumptions, site escort, permits..."
+                value={form.assumptions || ""}
+                onChange={(e) => setForm((cur) => ({ ...cur, assumptions: e.target.value }))}
+                className="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-xs"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-3 rounded-lg border border-gray-100 bg-gray-50/70 p-3 sm:grid-cols-4">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-600">Currency</label>
+              <div className="rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-orac-slate">USD ($)</div>
+            </div>
+            <div>
+              <label htmlFor="quote-validity" className="mb-1 block text-xs font-medium text-gray-600">Validity (days)</label>
+              <input
+                id="quote-validity"
+                type="number"
+                min="1"
+                value={form.validity_days || 30}
+                onChange={(e) => setForm((cur) => ({ ...cur, validity_days: Number(e.target.value) || 30 }))}
+                className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs"
+              />
+            </div>
+            <div>
+              <label htmlFor="quote-discount" className="mb-1 block text-xs font-medium text-gray-600">Discount (%)</label>
+              <input
+                id="quote-discount"
+                type="number"
+                min="0"
+                max="100"
+                step="0.5"
+                value={form.discount_percent || 0}
+                onChange={(e) => setForm((cur) => ({ ...cur, discount_percent: Number(e.target.value) || 0 }))}
+                className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs"
+              />
+            </div>
+            <div>
+              <label htmlFor="quote-tax" className="mb-1 block text-xs font-medium text-gray-600">Tax treatment</label>
+              <select
+                id="quote-tax"
+                value={form.tax_status || "provisional"}
+                onChange={(e) => setForm((cur) => ({ ...cur, tax_status: e.target.value }))}
+                className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs"
+              >
+                <option value="provisional">Provisional (15%)</option>
+                <option value="taxable">Taxable (15%)</option>
+                <option value="zero-rated">Zero-Rated (0%)</option>
+                <option value="exempt">Exempt (0%)</option>
+                <option value="unconfigured">Unconfigured</option>
+              </select>
+            </div>
+          </div>
+
+          {form.tax_status === "provisional" && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
+              <span className="font-semibold">Notice:</span> {PROVISIONAL_VAT_NOTICE}
+            </div>
+          )}
+
+          {/* Work Packages Management */}
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-700">Work packages</span>
+              <button type="button" onClick={addWorkPackage} className="text-xs font-semibold text-orac-blue hover:underline">+ Add work package</button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(form.work_packages || []).map((wp) => (
+                <div key={wp.id} className="flex items-center gap-1.5 rounded border border-gray-200 bg-white px-2 py-1 text-xs">
+                  <span className="font-mono text-[10px] text-gray-400">{wp.id}:</span>
+                  <input
+                    type="text"
+                    value={wp.title || wp.name || ""}
+                    onChange={(e) => updateWorkPackage(wp.id, e.target.value)}
+                    className="w-32 rounded border-0 p-0 text-xs font-medium text-gray-700 focus:ring-0"
+                  />
                 </div>
               ))}
             </div>
-            <p className="mt-2 text-right text-sm font-semibold text-orac-slate">Total: {formatAmount(quoteTotal(form.lines))}</p>
+          </div>
+
+          {/* Line items table */}
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-sm font-semibold text-gray-700">Structured line items</span>
+              <button type="button" onClick={() => addLine()} className="text-xs font-semibold text-orac-blue hover:underline">+ Add line</button>
+            </div>
+            <p className="mb-2 text-xs text-gray-500">Assign lines to work packages with cost type, resource role, and approved units of measure.</p>
+            <div className="space-y-2">
+              {form.lines.map((line, index) => (
+                <div key={index} className="grid gap-2 rounded-lg border border-gray-200 bg-white p-2.5 sm:grid-cols-12 sm:items-center">
+                  <div className="sm:col-span-2">
+                    <select
+                      value={line.work_package_id || "wp_01"}
+                      onChange={(e) => updateLine(index, "work_package_id", e.target.value)}
+                      className="w-full rounded border border-gray-300 px-1.5 py-1 text-xs"
+                      title="Work package"
+                    >
+                      {(form.work_packages || []).map((wp) => (
+                        <option key={wp.id} value={wp.id}>{wp.title || wp.name || wp.id}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <select
+                      value={line.cost_type || "material"}
+                      onChange={(e) => updateLine(index, "cost_type", e.target.value)}
+                      className="w-full rounded border border-gray-300 px-1.5 py-1 text-xs"
+                      title="Cost type"
+                    >
+                      {COST_TYPES.map((ct) => (
+                        <option key={ct} value={ct}>{ct}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <input
+                      type="text"
+                      placeholder="Role / Resource"
+                      value={line.resource_role || ""}
+                      onChange={(e) => updateLine(index, "resource_role", e.target.value)}
+                      className="w-full rounded border border-gray-300 px-1.5 py-1 text-xs"
+                      title="Resource role or generic trade"
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <input
+                      type="text"
+                      placeholder="Description"
+                      value={line.description}
+                      onChange={(e) => updateLine(index, "description", e.target.value)}
+                      className="w-full rounded border border-gray-300 px-1.5 py-1 text-xs"
+                    />
+                  </div>
+                  <div className="sm:col-span-1">
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="Qty"
+                      value={line.quantity}
+                      onChange={(e) => updateLine(index, "quantity", e.target.value)}
+                      className="w-full rounded border border-gray-300 px-1.5 py-1 text-xs"
+                    />
+                  </div>
+                  <div className="sm:col-span-1">
+                    <select
+                      value={line.unit_of_measure || "each"}
+                      onChange={(e) => updateLine(index, "unit_of_measure", e.target.value)}
+                      className="w-full rounded border border-gray-300 px-1 py-1 text-xs"
+                      title="Unit of measure"
+                    >
+                      {CANONICAL_UNITS_OF_MEASURE.map((uom) => (
+                        <option key={uom} value={uom}>{uom}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-1">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Rate"
+                      value={line.unit_price}
+                      onChange={(e) => updateLine(index, "unit_price", e.target.value)}
+                      className="w-full rounded border border-gray-300 px-1 py-1 text-xs"
+                      title="Unit price (USD)"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between sm:col-span-12 sm:justify-end sm:gap-3">
+                    <span className="text-xs font-semibold text-gray-600">Line: {formatUSD(lineTotal(line))}</span>
+                    {form.lines.length > 1 && (
+                      <button type="button" onClick={() => removeLine(index)} className="text-xs text-red-600 hover:underline">Remove</button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Commercial Breakdown Summary */}
+            {(() => {
+              const breakdown = calculateQuoteBreakdown(form.lines, form.discount_percent, form.tax_status, form.applied_tax_rate);
+              const requiresMgmt = breakdown.grandTotal > 5000 || Number(form.discount_percent) > 0;
+              return (
+                <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between text-gray-600">
+                      <span>Subtotal (excl. VAT):</span>
+                      <span className="font-medium text-gray-800">{formatUSD(breakdown.preTax)}</span>
+                    </div>
+                    {Number(form.discount_percent) > 0 && (
+                      <>
+                        <div className="flex justify-between text-emerald-700">
+                          <span>Discount ({form.discount_percent}%):</span>
+                          <span className="font-medium">-{formatUSD(breakdown.discount)}</span>
+                        </div>
+                        <div className="flex justify-between text-gray-600">
+                          <span>Net Subtotal:</span>
+                          <span className="font-medium text-gray-800">{formatUSD(breakdown.netSubtotal)}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex justify-between text-gray-600">
+                      <span>
+                        VAT {form.tax_status === "provisional" ? "(15% Provisional)" : form.tax_status === "taxable" ? "(15%)" : form.tax_status === "zero-rated" ? "(Zero-Rated)" : form.tax_status === "exempt" ? "(Exempt)" : "(Unconfigured)"}:
+                      </span>
+                      <span className="font-medium text-gray-800">{formatUSD(breakdown.tax)}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-gray-300 pt-1 text-sm font-bold text-orac-slate">
+                      <span>Grand Total (USD):</span>
+                      <span>{formatUSD(breakdown.grandTotal)}</span>
+                    </div>
+                  </div>
+                  {requiresMgmt && (
+                    <p className="mt-2 text-xs font-medium text-amber-800">
+                      ⚠️ Approval note: This quotation will require Management/Director approval ({breakdown.grandTotal > 5000 && Number(form.discount_percent) > 0 ? "exceeds USD $5,000 and has commercial discount" : breakdown.grandTotal > 5000 ? "exceeds USD $5,000" : "has commercial discount"}).
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
@@ -378,6 +728,8 @@ export default function QuotationsPage({ user }) {
           <div className="flex justify-end gap-2"><button type="button" onClick={() => setRevisionQuote(null)} className={`${buttonClass} border-gray-300 text-orac-slate hover:bg-gray-50`}>Cancel</button><button type="submit" disabled={saving} className={`${buttonClass} border-orac-blue bg-orac-blue text-white hover:brightness-105`}>{saving ? "Creating..." : "Create revision"}</button></div>
         </form>
       </Modal>
+
+      <RecordAnalysisModal title="Quote evidence analysis" analysis={analysis} onClose={() => setAnalysis(null)} />
 
       <Modal title="Record client acceptance" isOpen={Boolean(acceptanceQuote)} onClose={() => setAcceptanceQuote(null)}>
         <form onSubmit={recordAcceptance} className="space-y-4">

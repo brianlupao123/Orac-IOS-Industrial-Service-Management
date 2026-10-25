@@ -277,7 +277,7 @@ function KioskEntry({ user }) {
   const supervisors = supervisorInfo?.supervisors || [];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-3 pb-4 border-b border-orac-border">
         <div className="p-2 bg-orac-navy/10 rounded-lg">

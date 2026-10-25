@@ -342,7 +342,7 @@ export default function ContractsPage({ user }) {
       : "Your organisation's service contracts and planned maintenance. This view is read-only.";
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="space-y-6">
       <PageHeaderBanner title="Contracts & Maintenance" subtitle={subtitle} iconPath={ICONS.document} />
 
       {notice && (

@@ -48,6 +48,12 @@ export const ROUTE_ACCESS = Object.freeze({
   "/legacy-history": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR],
   "/inventory": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],
   "/reports": [...operationalRoles, ROLES.SALES, ROLES.FINANCE],
+  // Read-only operational record. The server further scopes Supervisor and
+  // Technician access to dispatches they are assigned to.
+  "/job-cards": [...operationalRoles, ROLES.TECHNICIAN],
+  // A commercial, read-only explanation of the server's invoice gate. It is
+  // intentionally not navigation: it opens from Invoice Ready records.
+  "/invoice-readiness": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.FINANCE],
   "/operational-data": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE],
   "/documents": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE, ROLES.CLIENT_VIEWER],
   "/admin": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],

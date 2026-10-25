@@ -49,11 +49,15 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
-                Email Address
+              <label htmlFor="login-email" className="mb-2 block text-sm font-semibold text-gray-700">
+                Email address
               </label>
               <input
+                id="login-email"
+                name="email"
                 type="email"
+                autoComplete="username"
+                inputMode="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@company.com"
@@ -65,10 +69,12 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
+              <label htmlFor="login-password" className="mb-2 block text-sm font-semibold text-gray-700">
                 Password
               </label>
               <input
+                id="login-password"
+                name="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

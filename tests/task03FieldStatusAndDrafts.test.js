@@ -124,7 +124,11 @@ test("rates, costs, tokens, passwords and signatures are never stored in a draft
   assert.equal(clean.crewHours.t1.normal, 8);
   assert.equal(clean.nested.ok, "yes");
   const s = memoryStorage(); saveDraft(s, "u1", "kiosk", "a", dirty);
-  assert.ok(!s.getItem(draftKey("u1", "kiosk", "a")).includes("45"));
+  const stored = JSON.parse(s.getItem(draftKey("u1", "kiosk", "a")));
+  assert.equal(stored.data.crewHours.t1.hourly_rate, undefined);
+  assert.ok(!("hourly_rate" in stored.data.crewHours.t1));
+  assert.ok(!JSON.stringify(stored.data).includes("hourly_rate"));
+  assert.ok(!JSON.stringify(stored.data).includes("45"));
 });
 
 test("a failing or missing storage never throws and simply yields no draft", () => {

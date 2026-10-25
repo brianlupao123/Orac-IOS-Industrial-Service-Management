@@ -75,8 +75,11 @@ export default function ResetPassword() {
           <form onSubmit={handleSubmit}>
             <p className="text-sm text-gray-500 mb-4">Resetting password for {email}</p>
 
-            <label className="text-xs font-medium text-gray-600 block mb-1">New password</label>
+            <label htmlFor="reset-new-password" className="text-sm font-medium text-gray-700 block mb-1">New password</label>
             <input
+              id="reset-new-password"
+              name="new-password"
+              autoComplete="new-password"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -85,8 +88,11 @@ export default function ResetPassword() {
               required
             />
 
-            <label className="text-xs font-medium text-gray-600 block mb-1">Confirm password</label>
+            <label htmlFor="reset-confirm-password" className="text-sm font-medium text-gray-700 block mb-1">Confirm password</label>
             <input
+              id="reset-confirm-password"
+              name="confirm-password"
+              autoComplete="new-password"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

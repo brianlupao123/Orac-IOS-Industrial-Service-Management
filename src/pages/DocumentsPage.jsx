@@ -24,7 +24,13 @@ export default function DocumentsPage({ user }) {
 
   useEffect(() => {
     let active = true;
-    Promise.all(available.map(async (name) => [name, await collections.list(name)]))
+    Promise.all(available.map(async (name) => {
+      const list = await collections.list(name);
+      const filtered = user.role === "Client Viewer" && name === "quotes"
+        ? (list || []).filter((q) => q.status !== "Draft")
+        : list;
+      return [name, filtered];
+    }))
       .then((items) => { if (active) setRecords(Object.fromEntries(items)); })
       .catch((err) => { if (active) setError(err.message); })
       .finally(() => { if (active) setLoading(false); });
@@ -36,7 +42,7 @@ export default function DocumentsPage({ user }) {
     try { await documents.download(type, id); } catch (err) { setError(err.message); } finally { setDownloading(""); }
   }
 
-  return <div data-evidence="documents-ready" className="mx-auto max-w-7xl space-y-6">
+  return <div data-evidence="documents-ready" className="space-y-6">
     <PageHeaderBanner eyebrow="Controlled records" title="Documents" subtitle="Download authorised PDF records across the quote-to-invoice workflow." iconPath={ICONS.document} />
     {error && <ErrorBanner message={error} />}
     {loading ? <div data-evidence="documents-loading" className="py-16 text-center text-sm text-slate-500">Loading authorised documents...</div> : available.map((type) => <DocumentTable key={type} type={type} rows={records[type] || []} downloading={downloading} onDownload={download} />)}

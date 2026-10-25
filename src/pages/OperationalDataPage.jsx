@@ -33,7 +33,7 @@ export default function OperationalDataPage({ user }) {
   }
 
   return (
-    <div data-evidence="operational-data-ready" className="mx-auto max-w-7xl space-y-6">
+    <div data-evidence="operational-data-ready" className="space-y-6">
       <PageHeaderBanner eyebrow="Controlled operations" title="Operational Data" subtitle="Review data before import, export Pastel-ready files, and inspect role-scoped activity." iconPath={ICONS.document} />
       {error && <ErrorBanner message={error} />}
 

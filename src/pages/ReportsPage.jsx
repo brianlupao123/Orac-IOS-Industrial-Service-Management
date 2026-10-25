@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { reports } from "../api/client.js";
+import { documents, reports } from "../api/client.js";
+import { canAccessRoute } from "../accessPolicy.js";
 import DataTable from "../components/DataTable.jsx";
+import RecordLink from "../components/RecordLink.jsx";
 import StatCard from "../components/StatCard.jsx";
+import StatusSummary from "../components/StatusSummary.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import { ErrorBanner } from "../components/PageStates.jsx";
 import { ICONS } from "../components/icons.jsx";
 import { csvCell } from "../csvSafe.js";
+import { formatMoney, formatNumber, formatSignedMoney } from "../lib/format.js";
 
 const REPORT_TABS = [
   { key: "pipeline", label: "Pipeline", roles: ["Admin", "Management", "Sales"] },
@@ -17,12 +21,31 @@ const REPORT_TABS = [
   { key: "variance", label: "Variance", roles: ["Admin", "Management", "Finance", "Operations", "Supervisor"] }
 ];
 
+const QUOTE_STATUS_MEANING = {
+  Draft: "Being prepared. Can still be edited or cancelled.",
+  Sent: "Sent to the client, waiting for a response.",
+  Approved_Pending_PO: "Client approved. Waiting for a purchase order.",
+  PO_Verified: "Purchase order checked and accepted.",
+  Field_Dispatch: "Work has been dispatched to the field.",
+  Invoiced: "An invoice has been raised.",
+  Cancelled: "Cancelled before completion.",
+};
+const QUOTE_STATUS_TONE = { Draft: "neutral", Sent: "info", Approved_Pending_PO: "warning", PO_Verified: "success", Field_Dispatch: "info", Invoiced: "success", Cancelled: "neutral" };
+
 export default function ReportsPage({ user }) {
   const visibleTabs = REPORT_TABS.filter((tab) => tab.roles.includes(user.role));
+  // Record links use the same route guard as the router. They only navigate; they never write.
+  const canQuote = canAccessRoute(user.role, "/quotations");
+  const canFinance = canAccessRoute(user.role, "/finance");
+  const canTimesheets = canAccessRoute(user.role, "/worksheets");
+  const canJobCards = canAccessRoute(user.role, "/job-cards");
+  const canInvoiceReadiness = canAccessRoute(user.role, "/invoice-readiness");
   const [active, setActive] = useState(visibleTabs[0]?.key || "");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [downloadError, setDownloadError] = useState("");
+  const [downloadingId, setDownloadingId] = useState("");
   const canExport = Boolean(data) && (Array.isArray(data) ? data.length > 0 : Object.keys(data).length > 0);
 
   useEffect(() => {
@@ -81,27 +104,67 @@ export default function ReportsPage({ user }) {
     URL.revokeObjectURL(url);
   }
 
+  async function handleEvidenceDownload(type, id) {
+    if (!id || downloadingId) return;
+    setDownloadError("");
+    setDownloadingId(id);
+    try {
+      await documents.download(type, id);
+    } catch (err) {
+      setDownloadError(err.message || "The evidence document could not be downloaded.");
+    } finally {
+      setDownloadingId("");
+    }
+  }
+
+  function evidenceAction(type, id, label = "Download PDF") {
+    return <button type="button" onClick={() => handleEvidenceDownload(type, id)} disabled={!id || Boolean(downloadingId)} className="min-h-9 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-orac-navy hover:bg-gray-50 disabled:opacity-50" aria-label={`${label}: ${id || "record"}`}>
+      {downloadingId === id ? "Preparing..." : label}
+    </button>;
+  }
+
   function renderStructuredReport() {
     if (active === "pipeline" && data?.counts && data?.by_status && typeof data.counts === "object" && typeof data.by_status === "object") {
-      return <div className="space-y-6 p-5">
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">{Object.entries(data.counts).map(([status, count]) => <StatCard key={status} label={status.replace(/_/g, " ")} value={count} tone="blue" />)}</div>
-        {Object.entries(data.by_status).map(([status, rows]) => <DataTable key={status} title={`${status.replace(/_/g, " ")} (${Array.isArray(rows) ? rows.length : 0})`} columns={["Quote", "Client", "Total"]} rows={Array.isArray(rows) ? rows : []} emptyText="No quotes in this stage." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5 font-medium">{row.quote_number || row.id}</td><td className="px-5 py-3.5">{row.client_id || "-"}</td><td className="px-5 py-3.5">R {Number(row.total_amount || 0).toLocaleString()}</td></tr>} />)}</div>;
+      return <div className="space-y-5 py-2">
+        <section aria-labelledby="pipeline-summary-title" className="space-y-3">
+          <h2 id="pipeline-summary-title" className="text-sm font-semibold text-gray-700">Quotation pipeline</h2>
+          <StatusSummary label="Quotes by stage" items={Object.entries(data.counts).map(([status, count]) => ({ key: status, label: status.replace(/_/g, " "), meaning: QUOTE_STATUS_MEANING[status], count, tone: QUOTE_STATUS_TONE[status] || "neutral" }))} />
+        </section>
+        <section aria-label="Quotation stages" className="space-y-4">
+          {Object.entries(data.by_status).map(([status, rows]) => <DataTable key={status} title={`${status.replace(/_/g, " ")} (${Array.isArray(rows) ? rows.length : 0})`} columns={["Quote", "Client", "Total"]} rows={Array.isArray(rows) ? rows : []} renderActions={(row) => <div className="flex flex-wrap items-center gap-2">{canQuote && <RecordLink user={user} path="/quotations" param="quote" id={row.id} what="quote" name={row.quote_number} />}{evidenceAction("quotes", row.id)}</div>} emptyStateClassName="px-5 py-6 flex flex-col items-center justify-center text-center" emptyText="No quotes in this stage." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5 font-medium">{row.quote_number || row.id}</td><td className="px-5 py-3.5">{row.client_id || "-"}</td><td className="px-5 py-3.5">{formatMoney(row.total_amount)}</td></tr>} />)}
+        </section>
+      </div>;
     }
     if (active === "po-compliance" && Array.isArray(data?.approved_awaiting_po) && Array.isArray(data?.requires_amendment) && Array.isArray(data?.urgent_pending_verification)) {
-      return <div className="space-y-6 p-5">
-        <DataTable title="Approved Quotes Awaiting PO" columns={["Quote", "Client"]} rows={data.approved_awaiting_po} emptyText="No quotes awaiting a purchase order." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5 font-medium">{row.quote_number || row.id}</td><td className="px-5 py-3.5">{row.client_id || "-"}</td></tr>} />
-        <DataTable title="Purchase Orders Requiring Amendment" columns={["PO", "PO Amount", "Logged Value"]} rows={data.requires_amendment} emptyText="No purchase orders require amendment." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5 font-medium">{row.po_reference || row.id}</td><td className="px-5 py-3.5">R {Number(row.po_amount || 0).toLocaleString()}</td><td className="px-5 py-3.5 text-red-600">R {Number(row.logged_value || 0).toLocaleString()}</td></tr>} />
-        <DataTable title="Urgent Dispatch Awaiting PO Verification" columns={["PO", "Quotation", "Status"]} rows={data.urgent_pending_verification} emptyText="No urgent dispatches await PO verification." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5">{row.id}</td><td className="px-5 py-3.5">{row.quotation_id || "-"}</td><td className="px-5 py-3.5"><StatusBadge status="Approved_Pending_PO" /></td></tr>} />
+      return <div className="space-y-5 py-2">
+        <section aria-labelledby="po-summary-title" className="space-y-3">
+          <h2 id="po-summary-title" className="text-sm font-semibold text-gray-700">Purchase order overview</h2>
+          <StatusSummary label="Purchase order compliance" items={[
+            { key: "awaiting", label: "Approved awaiting PO", meaning: "Approved quotes with no purchase order received yet.", count: data.approved_awaiting_po.length, tone: data.approved_awaiting_po.length ? "warning" : "neutral" },
+            { key: "amendment", label: "Requires amendment", meaning: "Purchase orders flagged for amendment.", count: data.requires_amendment.length, tone: data.requires_amendment.length ? "danger" : "neutral" },
+            { key: "legacy", label: "Legacy dispatch exceptions", meaning: "Work started before PO verification (legacy records).", count: data.urgent_pending_verification.length, tone: data.urgent_pending_verification.length ? "danger" : "neutral" },
+          ]} />
+          <p role="note" className="text-sm text-red-800">Legacy records only: work started before PO verification. This exception list does not authorize dispatch; current policy requires a verified PO first.</p>
+        </section>
+        <section aria-label="Purchase order compliance lists" className="space-y-4">
+          <DataTable title="Approved Quotes Awaiting PO" columns={["Quote", "Client"]} rows={data.approved_awaiting_po} renderActions={(row) => <div className="flex flex-wrap items-center gap-2">{canQuote && <RecordLink user={user} path="/quotations" param="quote" id={row.id} what="quote" name={row.quote_number} />}{evidenceAction("quotes", row.id)}</div>} emptyStateClassName="px-5 py-6 flex flex-col items-center justify-center text-center" emptyText="No approved quotes are waiting for a purchase order." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5 font-medium">{row.quote_number || row.id}</td><td className="px-5 py-3.5">{row.client_id || "-"}</td></tr>} />
+          <DataTable title="Purchase Orders Requiring Amendment" columns={["PO", "PO Amount", "Logged Value"]} rows={data.requires_amendment} renderActions={(row) => <div className="flex flex-wrap items-center gap-2">{canFinance && <RecordLink user={user} path="/finance" param="po" id={row.id} what="purchase order" name={row.po_reference || row.id} />}{evidenceAction("purchase_orders", row.id)}</div>} emptyStateClassName="px-5 py-6 flex flex-col items-center justify-center text-center" emptyText="No purchase orders require amendment." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5 font-medium">{row.po_reference || row.id}</td><td className="px-5 py-3.5">{formatMoney(row.po_amount)}</td><td className="px-5 py-3.5 text-red-600">{formatMoney(row.logged_value)}</td></tr>} />
+          <DataTable title="Legacy Exceptions: Dispatch Started Before PO Verification" columns={["PO", "Quotation", "Risk"]} rows={data.urgent_pending_verification} renderActions={(row) => <div className="flex flex-wrap items-center gap-2">{canFinance && <RecordLink user={user} path="/finance" param="po" id={row.id} what="purchase order" name={row.po_reference || row.id} />}{evidenceAction("purchase_orders", row.id)}</div>} emptyStateClassName="px-5 py-6 flex flex-col items-center justify-center text-center" emptyText="No legacy dispatch exceptions are awaiting PO verification." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5">{row.id}</td><td className="px-5 py-3.5">{row.quotation_id || "-"}</td><td className="px-5 py-3.5"><span role="status" className="inline-block rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">Exception - PO unverified</span></td></tr>} />
+        </section>
       </div>;
     }
     if (active === "worksheets" && Array.isArray(data?.pending_review) && Array.isArray(data?.returned_for_correction) && typeof data?.approved_count === "number") {
-      return <div className="space-y-6 p-5"><div className="grid gap-3 sm:grid-cols-3"><StatCard label="Approved" value={data.approved_count} tone="green" /><StatCard label="Pending Review" value={data.pending_review.length} tone={data.pending_review.length ? "amber" : "slate"} /><StatCard label="Returned" value={data.returned_for_correction.length} tone={data.returned_for_correction.length ? "red" : "slate"} /></div><DataTable title="Timesheets Pending Review" columns={["Timesheet", "Dispatch", "Date", "Hours"]} rows={data.pending_review} emptyText="No timesheets are pending review." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5">{row.id}</td><td className="px-5 py-3.5">{row.dispatch_card_id}</td><td className="px-5 py-3.5">{row.work_date || "-"}</td><td className="px-5 py-3.5">{row.hours ?? "-"}</td></tr>} /><DataTable title="Timesheets Returned for Correction" columns={["Timesheet", "Dispatch", "Comment"]} rows={data.returned_for_correction} emptyText="No timesheets have been returned." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5">{row.id}</td><td className="px-5 py-3.5">{row.dispatch_card_id}</td><td className="px-5 py-3.5">{row.supervisor_comment || "-"}</td></tr>} /></div>;
+      return <div className="space-y-5 py-2"><section aria-labelledby="timesheet-summary-title" className="space-y-3"><h2 id="timesheet-summary-title" className="text-sm font-semibold text-gray-700">Timesheet review overview</h2><StatusSummary label="Timesheet review" items={[{ key: "pending", label: "Pending review", meaning: "Timesheets waiting for review.", count: data.pending_review.length, tone: data.pending_review.length ? "warning" : "neutral" }, { key: "returned", label: "Returned", meaning: "Returned to the technician for correction.", count: data.returned_for_correction.length, tone: data.returned_for_correction.length ? "danger" : "neutral" }, { key: "approved", label: "Approved", meaning: "Reviewed and approved.", count: data.approved_count, tone: "success" }]} /></section><section aria-label="Timesheet review lists" className="space-y-4"><DataTable title="Timesheets Pending Review" columns={["Timesheet", "Dispatch", "Date", "Hours"]} rows={data.pending_review} renderActions={(row) => <div className="flex flex-wrap items-center gap-2">{canTimesheets && <RecordLink user={user} path="/worksheets" param="timesheet" id={row.id} what="timesheet" name={row.id} />}{evidenceAction("field_worksheets", row.id)}</div>} emptyStateClassName="px-5 py-6 flex flex-col items-center justify-center text-center" emptyText="No timesheets are pending review." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5">{row.id}</td><td className="px-5 py-3.5">{row.dispatch_card_id}</td><td className="px-5 py-3.5">{row.work_date || "-"}</td><td className="px-5 py-3.5">{row.hours ?? "-"}</td></tr>} /><DataTable title="Timesheets Returned for Correction" columns={["Timesheet", "Dispatch", "Comment"]} rows={data.returned_for_correction} renderActions={(row) => <div className="flex flex-wrap items-center gap-2">{canTimesheets && <RecordLink user={user} path="/worksheets" param="timesheet" id={row.id} what="timesheet" name={row.id} />}{evidenceAction("field_worksheets", row.id)}</div>} emptyStateClassName="px-5 py-6 flex flex-col items-center justify-center text-center" emptyText="No timesheets have been returned." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5">{row.id}</td><td className="px-5 py-3.5">{row.dispatch_card_id}</td><td className="px-5 py-3.5">{row.supervisor_comment || "-"}</td></tr>} /></section></div>;
     }
     if (active === "dispatch" && Array.isArray(data)) {
       const startedBeforePoCount = data.filter((row) => row.started_before_po).length;
-      return <div className="space-y-6 p-5">
-        <div className="grid gap-3 sm:grid-cols-3"><StatCard label="Dispatches" value={data.length} tone="blue" /><StatCard label="Started Before PO" value={startedBeforePoCount} tone={startedBeforePoCount ? "amber" : "slate"} /><StatCard label="Fully Approved" value={data.filter((row) => row.worksheet_count > 0 && row.approved_worksheet_count === row.worksheet_count).length} tone="green" /></div>
-        <DataTable title="Dispatch Cards" columns={["Dispatch", "Status", "Scheduled Start", "Timesheets", "PO Risk"]} rows={data} emptyText="No dispatch cards found." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50">
+      return <div className="space-y-5 py-2">
+        <StatusSummary label="Dispatch overview" items={[
+          { key: "all", label: "Dispatches", meaning: "All dispatch cards in this report.", count: data.length, tone: "info" },
+          { key: "early", label: "Started Before PO", meaning: "Work began before a purchase order was verified.", count: startedBeforePoCount, tone: startedBeforePoCount ? "warning" : "neutral" },
+          { key: "approved", label: "Fully Approved", meaning: "Every timesheet on the card is approved.", count: data.filter((row) => row.worksheet_count > 0 && row.approved_worksheet_count === row.worksheet_count).length, tone: "success" },
+        ]} />
+        <DataTable title="Dispatch Cards" columns={["Dispatch", "Status", "Scheduled Start", "Timesheets", "PO Risk"]} rows={data} renderActions={(row) => <div className="flex flex-wrap items-center gap-2">{canJobCards && <RecordLink user={user} path="/job-cards" param="id" id={row.id} what="job card" name={row.dispatch_number} />}{evidenceAction("dispatch_cards", row.id)}</div>} emptyStateClassName="px-5 py-6 flex flex-col items-center justify-center text-center" emptyText="No dispatch cards found." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50">
           <td className="px-5 py-3.5 font-medium">{row.dispatch_number || row.id}</td>
           <td className="px-5 py-3.5"><StatusBadge status={row.status} /></td>
           <td className="px-5 py-3.5">{row.scheduled_start || "-"}</td>
@@ -111,22 +174,25 @@ export default function ReportsPage({ user }) {
       </div>;
     }
     if (active === "invoice-ready" && Array.isArray(data)) {
-      return <div className="space-y-6 p-5">
-        <div className="grid gap-3 sm:grid-cols-1"><StatCard label="Ready to Invoice" value={data.length} tone={data.length ? "green" : "slate"} /></div>
-        <DataTable title="Dispatches Ready to Invoice" columns={["Dispatch", "Quotation"]} rows={data} emptyText="No dispatches are ready to invoice." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5 font-medium">{row.dispatch_number || row.id}</td><td className="px-5 py-3.5">{row.quotation_id || "-"}</td></tr>} />
+      return <div className="space-y-5 py-2">
+        <section aria-labelledby="invoice-ready-summary-title" className="space-y-3">
+          <h2 id="invoice-ready-summary-title" className="text-sm font-semibold text-gray-700">Billing handoff</h2>
+          <StatusSummary label="Billing handoff summary" items={[{ key: "ready", label: "Dispatches ready for pricing review", count: data.length, tone: data.length ? "success" : "neutral" }]} />
+        </section>
+        <DataTable title="Dispatches Ready to Invoice" columns={["Dispatch", "Quotation"]} rows={data} actionLabel="Evidence" renderActions={(row) => <div className="flex flex-wrap items-center gap-2">{canInvoiceReadiness && <RecordLink user={user} path="/invoice-readiness" param="id" id={row.id} what="invoice readiness" name={row.dispatch_number} />}{canJobCards && <RecordLink user={user} path="/job-cards" param="id" id={row.id} what="job card" name={row.dispatch_number} />}{evidenceAction("dispatch_cards", row.id, "Job card PDF")}</div>} emptyStateClassName="px-5 py-6 flex flex-col items-center justify-center text-center" emptyText="No dispatches are ready for pricing review." renderRow={(row) => <tr key={row.id} className="hover:bg-gray-50"><td className="px-5 py-3.5 font-medium">{row.dispatch_number || row.id}</td><td className="px-5 py-3.5">{row.quotation_id || "-"}</td></tr>} />
       </div>;
     }
     if (active === "variance" && Array.isArray(data)) {
       const totalVariance = data.reduce((sum, row) => sum + Number(row.variance || 0), 0);
-      return <div className="space-y-6 p-5">
-        <div className="grid gap-3 sm:grid-cols-2"><StatCard label="Purchase Orders Over Budget" value={data.length} tone={data.length ? "red" : "slate"} /><StatCard label="Total Variance" value={`R ${totalVariance.toLocaleString()}`} tone={totalVariance > 0 ? "red" : "slate"} /></div>
-        <DataTable title="PO Variance (Logged Value vs PO Amount)" columns={["PO", "PO Amount", "Logged Value", "Variance"]} rows={data} emptyText="No purchase orders have a variance." renderRow={(row) => {
+      return <div className="space-y-5 py-2">
+        <div className="grid gap-3 sm:grid-cols-2"><StatCard label="Purchase Orders Over Budget" value={data.length} tone={data.length ? "red" : "slate"} /><StatCard label="Total Variance" value={formatMoney(totalVariance)} tone={totalVariance > 0 ? "red" : "slate"} /></div>
+        <DataTable title="PO Variance (Logged Value vs PO Amount)" columns={["PO", "PO Amount", "Logged Value", "Variance"]} rows={data} renderActions={(row) => user.role === "Supervisor" ? <span className="text-sm text-gray-500">Not available to this role</span> : <div className="flex flex-wrap items-center gap-2">{canFinance && <RecordLink user={user} path="/finance" param="po" id={row.id} what="purchase order" name={row.po_reference || row.id} />}{evidenceAction("purchase_orders", row.id)}</div>} emptyStateClassName="px-5 py-6 flex flex-col items-center justify-center text-center" emptyText="No purchase orders have a variance." renderRow={(row) => {
           const variance = Number(row.variance || 0);
           return <tr key={row.id} className="hover:bg-gray-50">
             <td className="px-5 py-3.5 font-medium">{row.po_reference || row.id}</td>
-            <td className="px-5 py-3.5">R {Number(row.po_amount || 0).toLocaleString()}</td>
-            <td className="px-5 py-3.5">R {Number(row.logged_value || 0).toLocaleString()}</td>
-            <td className="px-5 py-3.5"><span data-evidence="variance-amount" className={`font-semibold ${variance > 0 ? "text-red-600" : variance < 0 ? "text-emerald-600" : "text-gray-500"}`}>{variance > 0 ? "+" : ""}R {variance.toLocaleString()}</span></td>
+            <td className="px-5 py-3.5">{formatMoney(row.po_amount)}</td>
+            <td className="px-5 py-3.5">{formatMoney(row.logged_value)}</td>
+            <td className="px-5 py-3.5"><span data-evidence="variance-amount" className={`font-semibold ${variance > 0 ? "text-red-600" : variance < 0 ? "text-emerald-600" : "text-gray-500"}`}>{formatSignedMoney(variance)}</span></td>
           </tr>;
         }} />
       </div>;
@@ -135,15 +201,15 @@ export default function ReportsPage({ user }) {
   }
 
   return (
-    <div data-evidence="reports-page" className="flex h-[calc(100vh-8rem)] flex-col gap-4 animate-in fade-in duration-500">
+    <div data-evidence="reports-page" className="min-w-0 space-y-4 animate-in fade-in duration-500">
       {/* Header and Controls */}
       <div>
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-stretch">
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
           <PageHeaderBanner className="min-w-0" eyebrow="Operational intelligence" title="Operational Reports" subtitle="Read-only views and exports. Reports do not change quotes, purchase orders, dispatches, stock, or invoices." iconPath={ICONS.report} />
           <button
             onClick={handleExportCsv}
             disabled={loading || !canExport}
-            className="flex items-center justify-center gap-2 rounded-lg bg-orac-blue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-500 disabled:opacity-50"
+            className="flex min-h-11 items-center justify-center gap-2 self-start rounded-lg bg-orac-blue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-500 disabled:opacity-50 sm:self-auto"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -172,14 +238,15 @@ export default function ReportsPage({ user }) {
 
       {/* Data Viewer */}
       {error && <ErrorBanner message={error} />}
+      {downloadError && <ErrorBanner message={downloadError} />}
       
-      <div className="flex-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm flex flex-col relative z-0">
+      <div className="min-w-0">
         {loading ? (
-          <div data-evidence="reports-loading" className="flex flex-1 items-center justify-center text-gray-400">Loading report data...</div>
+          <div data-evidence="reports-loading" className="flex min-h-40 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500">Loading report data...</div>
         ) : (
-          <div className="flex-1 overflow-auto">
+          <div>
             {!data || (Array.isArray(data) && data.length === 0) ? (
-              <div data-evidence="reports-empty" className="flex h-full items-center justify-center text-sm text-gray-400">No data found for this report.</div>
+              <div data-evidence="reports-empty" className="flex min-h-36 items-center justify-center rounded-lg border border-gray-200 bg-white px-5 text-sm text-gray-500">No data found for this report.</div>
             ) : renderStructuredReport() ? (
               renderStructuredReport()
             ) : Array.isArray(data) ? (

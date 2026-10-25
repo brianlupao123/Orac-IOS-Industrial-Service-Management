@@ -17,7 +17,7 @@ export default function LegacyHistoryPage() {
   const shown = useMemo(() => rows.filter((r) => kind === "all" || r.legacy_kind === kind), [rows, kind]);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-4">
+    <div className="space-y-4">
       <div>
         <h1 className="text-xl font-bold text-orac-slate">Earlier records (read-only)</h1>
         <p className="text-sm text-gray-500 max-w-3xl">

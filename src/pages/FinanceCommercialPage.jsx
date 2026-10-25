@@ -1,15 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { collections, purchaseOrders as poApi, quotes as quotesApi, reports } from "../api/client.js";
+import { assistant, collections, purchaseOrders as poApi, quotes as quotesApi, reports } from "../api/client.js";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import { ICONS } from "../components/icons.jsx";
 import { ErrorBanner, PageEmptyState } from "../components/PageStates.jsx";
+import RecordAnalysisModal from "../components/RecordAnalysisModal.jsx";
 import { formatAmount } from "../quoteModel.js";
 import V5BillingReadinessPanel from "../components/V5BillingReadinessPanel.jsx";
+import V5InvoiceWriterPanel from "../components/V5InvoiceWriterPanel.jsx";
+import LegacyInvoiceDraftPanel from "../components/LegacyInvoiceDraftPanel.jsx";
+import InvoiceSettlementPanel from "../components/InvoiceSettlementPanel.jsx";
 import {
   EMPTY_AMENDMENT_FORM, EMPTY_VERIFY_FORM, buildAmendmentPayload, buildVerifyPoPayload, canApproveAmendment,
   canVerifyPo, shouldTransitionAfterVerify, validateAmendmentForm, validateVerifyPoForm
 } from "../financeModel.js";
+import { recordAnalysisVisible } from "../recordAnalysisFlags.js";
 
 // Finance commercial gates that the backend already enforces but no page
 // called: verify a client-submitted PO, approve a PO amendment, and invoice a
@@ -23,11 +28,36 @@ import {
 const inputClass = "w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm";
 const buttonClass = "rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50";
 
+function recordedAt(value) {
+  if (!value) return "Not recorded";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Not recorded" : date.toLocaleString();
+}
+
+// This is a compact read of the stored PO record, not an audit-log view. It
+// deliberately names missing verification evidence instead of implying it.
+function PurchaseOrderEvidence({ po, quote }) {
+  const verified = po.status === "verified";
+  const rejected = po.status === "rejected";
+  return (
+    <dl className="mt-3 grid gap-x-4 gap-y-2 border-t border-gray-100 pt-3 text-xs text-gray-600 sm:grid-cols-2" data-evidence="purchase-order-summary">
+      <div><dt className="font-medium text-gray-700">PO record</dt><dd>{po.id}</dd></div>
+      <div><dt className="font-medium text-gray-700">Linked quote</dt><dd>{quote?.quote_number || po.quotation_id || "Not linked"}</dd></div>
+      <div><dt className="font-medium text-gray-700">Verification</dt><dd>{verified ? `Verified by ${po.verified_by || "an unrecorded actor"} on ${recordedAt(po.verified_at)}` : (rejected ? `Rejected: ${po.rejection_reason || "Unspecified"}` : "Awaiting Finance verification")}</dd></div>
+      <div><dt className="font-medium text-gray-700">Authority amount</dt><dd>{formatAmount(po.po_amount)}</dd></div>
+      {po.document_reference && <div><dt className="font-medium text-gray-700">Document ref</dt><dd>{po.document_reference}</dd></div>}
+      {Number.isFinite(Number(po.logged_value)) && <div><dt className="font-medium text-gray-700">Logged evidence value</dt><dd>{formatAmount(po.logged_value)}</dd></div>}
+      <div><dt className="font-medium text-gray-700">Amendment state</dt><dd>{po.requires_amendment ? "Written amendment required before invoicing" : "No amendment required on this record"}</dd></div>
+    </dl>
+  );
+}
+
 export default function FinanceCommercialPage({ user }) {
   const [pos, setPos] = useState([]);
   const [quoteList, setQuoteList] = useState([]);
   const [clients, setClients] = useState([]);
   const [ready, setReady] = useState([]);
+  const [invoiceList, setInvoiceList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -36,21 +66,27 @@ export default function FinanceCommercialPage({ user }) {
   const [verifyForm, setVerifyForm] = useState({ ...EMPTY_VERIFY_FORM });
   const [amendForm, setAmendForm] = useState({ ...EMPTY_AMENDMENT_FORM });
   const [formError, setFormError] = useState("");
+  const [analysis, setAnalysis] = useState(null);
+  const [analysisError, setAnalysisError] = useState("");
+  const [analysisBusyId, setAnalysisBusyId] = useState("");
+  const analysisVisible = recordAnalysisVisible();
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const [poData, quoteData, clientData, readyData] = await Promise.all([
+      const [poData, quoteData, clientData, readyData, invoiceData] = await Promise.all([
         collections.list("purchase_orders"),
         collections.list("quotes"),
         collections.list("clients"),
-        reports.get("invoice-ready")
+        reports.get("invoice-ready"),
+        collections.list("invoices")
       ]);
       setPos(Array.isArray(poData) ? poData : []);
       setQuoteList(Array.isArray(quoteData) ? quoteData : []);
       setClients(Array.isArray(clientData) ? clientData : []);
       setReady(Array.isArray(readyData) ? readyData : []);
+      setInvoiceList(Array.isArray(invoiceData) ? invoiceData : []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -116,6 +152,12 @@ export default function FinanceCommercialPage({ user }) {
     }, `PO ${verifyForm.po_reference.trim()} verified for ${quoteLabel(po.quotation_id)}.`);
   }
 
+  function submitReject(po) {
+    const reason = window.prompt(`Enter rejection reason for PO ${po.po_reference || po.id}:`);
+    if (!reason || !reason.trim()) return;
+    return runAction(po.id, () => quotesApi.rejectPo(po.quotation_id, reason.trim()), `PO ${po.po_reference || po.id} rejected.`);
+  }
+
   function submitAmendment(event, po) {
     event.preventDefault();
     const message = validateAmendmentForm(amendForm, po.po_amount);
@@ -123,8 +165,16 @@ export default function FinanceCommercialPage({ user }) {
     return runAction(po.id, () => poApi.approveAmendment(po.id, buildAmendmentPayload(amendForm)), `Amendment approved for PO ${po.po_reference || po.id}.`);
   }
 
-  function invoice(row) {
-    return runAction(row.id, () => quotesApi.transition(row.quotation_id, "Invoiced"), `${quoteLabel(row.quotation_id)} was invoiced.`);
+  async function analyzePurchaseOrder(po) {
+    setAnalysisBusyId(po.id);
+    setAnalysisError("");
+    try {
+      setAnalysis(await assistant.recordAnalysis("purchase_order", po.id));
+    } catch (err) {
+      setAnalysisError(err.message);
+    } finally {
+      setAnalysisBusyId("");
+    }
   }
 
   return (
@@ -137,6 +187,7 @@ export default function FinanceCommercialPage({ user }) {
       />
 
       {error && <ErrorBanner message={error} />}
+      {analysisError && <ErrorBanner message={analysisError} />}
       {notice && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</p>}
 
       {loading ? (
@@ -162,6 +213,7 @@ export default function FinanceCommercialPage({ user }) {
                         </div>
                         {quote && <StatusBadge status={quote.status} />}
                       </div>
+                      <PurchaseOrderEvidence po={po} quote={quote} />
                       {canVerifyPo(po, quote) ? (
                         open ? (
                           <form onSubmit={(event) => submitVerify(event, po)} className="mt-3 space-y-2">
@@ -173,6 +225,7 @@ export default function FinanceCommercialPage({ user }) {
                             <p className="text-xs text-gray-500">Confirm these against the client's actual purchase order document before verifying.</p>
                             <div className="flex gap-2">
                               <button type="submit" disabled={busy} className={`${buttonClass} border-orac-blue bg-orac-blue text-white`}>{busy ? "Verifying..." : "Verify PO"}</button>
+                              <button type="button" disabled={busy} onClick={() => submitReject(po)} className={`${buttonClass} border-red-300 text-red-600 hover:bg-red-50`}>Reject PO</button>
                               <button type="button" onClick={closeForm} className={`${buttonClass} border-gray-300 text-orac-slate`}>Cancel</button>
                             </div>
                           </form>
@@ -182,6 +235,7 @@ export default function FinanceCommercialPage({ user }) {
                       ) : (
                         <p className="mt-2 text-xs text-gray-500">This PO cannot be verified yet: its quote must be approved and awaiting a PO.</p>
                       )}
+                      {analysisVisible && <button type="button" disabled={analysisBusyId === po.id} onClick={() => analyzePurchaseOrder(po)} className={`${buttonClass} mt-3 border-gray-300 text-orac-slate hover:bg-gray-50`}>{analysisBusyId === po.id ? "Analyzing..." : "Analyze evidence"}</button>}
                     </li>
                   );
                 })}
@@ -196,12 +250,14 @@ export default function FinanceCommercialPage({ user }) {
             ) : (
               <ul className="mt-3 space-y-3">
                 {amendments.map((po) => {
+                  const quote = quoteFor(po.quotation_id);
                   const open = openKey === `amend:${po.id}`;
                   const busy = busyId === po.id;
                   return (
                     <li key={po.id} className="rounded-md border border-amber-200 bg-amber-50 p-3">
                       <p className="text-sm font-medium text-orac-slate">{po.po_reference || po.id} {"\u00b7"} {quoteLabel(po.quotation_id)}</p>
                       <p className="text-sm text-gray-700">PO amount {formatAmount(po.po_amount)} {"\u00b7"} logged work {formatAmount(po.logged_value)}</p>
+                      <PurchaseOrderEvidence po={po} quote={quote} />
                       {open ? (
                         <form onSubmit={(event) => submitAmendment(event, po)} className="mt-3 space-y-2">
                           {formError && <ErrorBanner message={formError} />}
@@ -218,6 +274,7 @@ export default function FinanceCommercialPage({ user }) {
                       ) : (
                         <button type="button" onClick={() => openAmend(po)} className={`${buttonClass} mt-3 border-amber-300 text-amber-900 hover:bg-amber-100`}>Approve amendment</button>
                       )}
+                      {analysisVisible && <button type="button" disabled={analysisBusyId === po.id} onClick={() => analyzePurchaseOrder(po)} className={`${buttonClass} mt-3 border-gray-300 text-orac-slate hover:bg-gray-50`}>{analysisBusyId === po.id ? "Analyzing..." : "Analyze evidence"}</button>}
                     </li>
                   );
                 })}
@@ -235,14 +292,19 @@ export default function FinanceCommercialPage({ user }) {
                   <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-gray-100 px-3 py-2">
                     <p className="text-sm text-orac-slate">{row.dispatch_number || row.id} {"\u00b7"} {quoteLabel(row.quotation_id)}</p>
                     <div className="w-full"><V5BillingReadinessPanel user={user} dispatchId={row.id} label={row.dispatch_number || row.id} /></div>
-                    <button type="button" disabled={busyId === row.id} onClick={() => invoice(row)} className={`${buttonClass} border-emerald-300 text-emerald-800 hover:bg-emerald-50`}>{busyId === row.id ? "Invoicing..." : "Create invoice"}</button>
+                    {quoteFor(row.quotation_id)?.v5_commercial_workflow ? <div className="w-full"><V5InvoiceWriterPanel user={user} dispatchId={row.id} label={row.dispatch_number || row.id} /></div> : <div className="w-full"><LegacyInvoiceDraftPanel user={user} dispatchId={row.id} label={row.dispatch_number || row.id} onIssued={load} /></div>}
                   </li>
                 ))}
               </ul>
             )}
           </section>
+          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <h2 className="text-base font-semibold text-gray-700">Issued invoices and settlement</h2>
+            {invoiceList.length === 0 ? <PageEmptyState iconPath={ICONS.money} title="No issued invoices" subtitle="Issued invoices will appear here for controlled payment settlement." /> : <div className="mt-3 space-y-3">{invoiceList.map((invoice) => <InvoiceSettlementPanel key={invoice.id} invoice={invoice} user={user} onChanged={load} />)}</div>}
+          </section>
         </>
       )}
+      <RecordAnalysisModal title="Purchase order evidence analysis" analysis={analysis} onClose={() => setAnalysis(null)} />
     </div>
   );
 }

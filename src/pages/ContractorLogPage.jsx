@@ -3,6 +3,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { collections, contractorLogs } from "../api/client.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import Modal from "../components/Modal.jsx";
+import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
+import { ICONS } from "../components/icons.jsx";
 import { computeLogTotals, validateContractorLogRows } from "../lib/contractorLogLogic.js";
 
 const REVIEW_ROLES = ["Admin", "Operations", "Supervisor"];
@@ -29,6 +31,7 @@ export default function ContractorLogPage({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [comment, setComment] = useState({});
+  const [reviewingId, setReviewingId] = useState(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalError, setModalError] = useState("");
@@ -96,12 +99,16 @@ export default function ContractorLogPage({ user }) {
   }
 
   async function handleReview(id, decision) {
+    if (reviewingId) return;
+    setReviewingId(id);
     try {
       await contractorLogs.review(id, decision, comment[id] || "");
       setComment((prev) => ({ ...prev, [id]: "" }));
       await load();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setReviewingId(null);
     }
   }
 
@@ -110,16 +117,22 @@ export default function ContractorLogPage({ user }) {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-xl font-bold text-orac-slate">Contractor Logs (legacy)</h1>
-          <p className="text-sm text-gray-500">
-            Read-only history. A contractor's work is now recorded on a <Link to="/worksheets" className="font-semibold text-orac-cyan underline">Timesheet</Link>.
-            Records still in progress can be finished here; nothing new can be started.
-          </p>
-        </div>
-      </div>
+    <div>
+      <PageHeaderBanner
+        eyebrow="Legacy archive"
+        title="Contractor Logs"
+        subtitle={
+          <span>
+            Read-only history. A contractor&apos;s work is now recorded on a{" "}
+            <Link to="/worksheets" className="font-semibold text-orac-blue underline dark:text-sky-400">
+              Timesheet
+            </Link>
+            . Records still in progress can be finished here; nothing new can be started.
+          </span>
+        }
+        iconPath={ICONS.clipboard}
+        className="mb-6"
+      />
 
       {error && <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700">{error}</div>}
       {loading && <div className="text-sm text-gray-500">Loading...</div>}
@@ -157,8 +170,22 @@ export default function ContractorLogPage({ user }) {
                             placeholder="Comment (required to return)"
                             className="w-40 rounded border border-gray-200 px-2 py-1 text-xs"
                           />
-                          <button onClick={() => handleReview(item.id, "approve")} className="text-sm font-semibold text-emerald-700 hover:underline">Approve</button>
-                          <button onClick={() => handleReview(item.id, "return")} className="text-sm font-semibold text-red-700 hover:underline">Return</button>
+                          <button
+                            type="button"
+                            disabled={Boolean(reviewingId)}
+                            onClick={() => handleReview(item.id, "approve")}
+                            className={`text-sm font-semibold text-emerald-700 hover:underline ${reviewingId ? "opacity-50 cursor-not-allowed" : ""}`}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            disabled={Boolean(reviewingId)}
+                            onClick={() => handleReview(item.id, "return")}
+                            className={`text-sm font-semibold text-red-700 hover:underline ${reviewingId ? "opacity-50 cursor-not-allowed" : ""}`}
+                          >
+                            Return
+                          </button>
                         </>
                       )}
                     </div>
@@ -240,7 +267,15 @@ export default function ContractorLogPage({ user }) {
                       <td className="border border-gray-200 px-1 py-1 text-center text-gray-500">{rowTotals.total_hours || "-"}</td>
                       <td className="border border-gray-200 p-0"><input value={row.comments} onChange={(e) => updateRow(index, { comments: e.target.value })} className="w-full px-1 py-1" /></td>
                       <td className="border border-gray-200 px-1 py-1 text-center">
-                        <button onClick={() => removeRow(index)} className="text-red-600">x</button>
+                        <button
+                          type="button"
+                          onClick={() => removeRow(index)}
+                          className="text-red-600 hover:text-red-800 p-1"
+                          aria-label="Remove row"
+                          title="Remove row"
+                        >
+                          x
+                        </button>
                       </td>
                     </tr>
                   );

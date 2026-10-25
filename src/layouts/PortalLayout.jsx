@@ -2,19 +2,29 @@ import React, { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import UserProfileDropdown from "../components/UserProfileDropdown.jsx";
 import NotificationBell from "../components/NotificationBell.jsx";
-import ThemeToggle from "../components/ThemeToggle.jsx";
+import ThemeToggle, { applyStoredTheme } from "../components/ThemeToggle.jsx";
 import { visibleNavigationGroups } from "../accessPolicy.js";
 
 /**
  * Production portal layout shell.
- * Adapted from 1-feedback-system AUDashboardFrame + DashboardHeader patterns.
- * Features: branded header bar, role-gated navigation, notification bell, user dropdown.
+ * Features: 72px branded header bar matching ORAC_Portal_mockup_FINAL.html,
+ * nav icons, role-gated navigation, offline indicator, accessible mobile
+ * navigation drawer, notification bell, user profile dropdown.
  */
+
+const NAV_ICONS = {
+  workspace: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z", // grid
+  commercial: "M6 3h8l4 4v14H6z M14 3v4h4", // file
+  "field-work": "M9 4h6v3H9z M7 5H5v16h14V5h-2 M9 14l2 2 4-4", // clip
+  inventory: "M3 8l9-5 9 5v8l-9 5-9-5z M3 8l9 5 9-5 M12 13v8", // box
+  reports: "M5 20V10M12 20V4M19 20v-7" // bar
+};
 
 function WorkspaceNavMenu({ group, pathname }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
   const hasActiveItem = group.items.some((item) => item.path === pathname);
+  const iconPath = NAV_ICONS[group.id];
 
   useEffect(() => {
     const closeWhenFocusLeaves = (event) => {
@@ -32,6 +42,32 @@ function WorkspaceNavMenu({ group, pathname }) {
     }
   };
 
+  const handleTriggerKeyDown = (event) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setIsOpen(true);
+      setTimeout(() => {
+        menuRef.current?.querySelector('[role="menuitem"]')?.focus();
+      }, 0);
+    }
+  };
+
+  const handleMenuItemKeyDown = (event, idx, total) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      const items = menuRef.current?.querySelectorAll('[role="menuitem"]');
+      items?.[(idx + 1) % total]?.focus();
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      const items = menuRef.current?.querySelectorAll('[role="menuitem"]');
+      items?.[(idx - 1 + total) % total]?.focus();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      setIsOpen(false);
+      menuRef.current?.querySelector("button")?.focus();
+    }
+  };
+
   if (group.items.length === 1) {
     const [item] = group.items;
     return (
@@ -39,12 +75,17 @@ function WorkspaceNavMenu({ group, pathname }) {
         to={item.path}
         end={item.path === "/"}
         className={({ isActive }) =>
-          `whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
-            isActive ? "bg-orac-navy text-white shadow-sm" : "text-gray-600 hover:bg-white hover:text-orac-slate hover:shadow-sm"
+          `inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
+            isActive ? "bg-orac-navy text-white shadow-xs" : "text-gray-600 hover:bg-white hover:text-orac-slate hover:shadow-xs"
           }`
         }
       >
-        {item.label}
+        {iconPath && (
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d={iconPath} />
+          </svg>
+        )}
+        <span>{item.label}</span>
       </NavLink>
     );
   }
@@ -57,27 +98,35 @@ function WorkspaceNavMenu({ group, pathname }) {
         aria-haspopup="menu"
         aria-controls={`primary-nav-${group.id}`}
         onClick={() => setIsOpen((open) => !open)}
-        className={`inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
-          hasActiveItem ? "bg-orac-navy text-white shadow-sm" : "text-gray-600 hover:bg-white hover:text-orac-slate hover:shadow-sm"
+        onKeyDown={handleTriggerKeyDown}
+        className={`inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
+          hasActiveItem ? "bg-orac-navy text-white shadow-xs" : "text-gray-600 hover:bg-white hover:text-orac-slate hover:shadow-xs"
         }`}
       >
-        {group.label}
-        <span aria-hidden="true" className="text-xs">v</span>
+        {iconPath && (
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d={iconPath} />
+          </svg>
+        )}
+        <span>{group.label}</span>
+        <svg className={`h-4 w-4 shrink-0 transition-transform duration-150 ${isOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       {isOpen && (
         <div
           id={`primary-nav-${group.id}`}
           role="menu"
           aria-label={`${group.label} navigation`}
-          className="absolute left-0 top-full z-30 mt-1 min-w-56 border border-gray-200 bg-white p-1 shadow-lg"
+          className="absolute left-0 top-full z-30 mt-1 min-w-56 rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg dark:bg-slate-900 dark:border-slate-800"
         >
-          {group.items.map((item) => (
+          {group.items.map((item, idx) => (
             <NavLink
               key={item.path}
               to={item.path}
               end={item.path === "/"}
               role="menuitem"
+              tabIndex={0}
               onClick={() => setIsOpen(false)}
+              onKeyDown={(e) => handleMenuItemKeyDown(e, idx, group.items.length)}
               className={({ isActive }) =>
                 `block rounded-md px-3 py-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
                   isActive ? "bg-orac-info-bg text-orac-text-primary" : "text-orac-text-secondary hover:bg-orac-surface-muted hover:text-orac-text-primary"
@@ -96,6 +145,50 @@ function WorkspaceNavMenu({ group, pathname }) {
 export default function PortalLayout({ user, onLogout, children }) {
   const location = useLocation();
   const navGroups = visibleNavigationGroups(user.role);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef(null);
+
+  // Apply stored theme on mount
+  useEffect(() => {
+    applyStoredTheme();
+  }, []);
+
+  // Offline status tracking
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator !== "undefined" && typeof navigator.onLine === "boolean"
+      ? navigator.onLine
+      : true
+  );
+
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
+
+  // Close mobile menu on page navigation
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  // Accessible mobile menu: Escape key handler and focus trap
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    const firstFocusable = mobileMenuRef.current?.querySelector("a, button");
+    firstFocusable?.focus();
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileMenuOpen]);
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -107,11 +200,28 @@ export default function PortalLayout({ user, onLogout, children }) {
       >
         Skip to content
       </a>
-      {/* Top header bar — sticky so navigation stays reachable while scanning long pages */}
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
-          {/* Brand */}
+
+      {/* Top header bar — single 72px app bar with brand | nav | account zones */}
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-xs dark:bg-slate-900 dark:border-slate-800">
+        <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 px-4 sm:px-6" style={{ height: "72px" }}>
+          {/* Zone 1: Brand & mobile hamburger */}
           <div className="flex min-w-0 items-center gap-3">
+            {/* Mobile menu trigger button */}
+            <button
+              type="button"
+              className="flex md:hidden items-center justify-center h-10 w-10 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-orac-slate focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-nav-menu"
+            >
+              {mobileMenuOpen ? (
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              ) : (
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+              )}
+            </button>
+
             {/* Inline SVG — 6-toothed gear logo mark */}
             <svg viewBox="0 0 48 48" className="h-10 w-10 shrink-0" aria-hidden="true">
               <circle cx="24" cy="24" r="20" fill="#00488C"/>
@@ -124,20 +234,33 @@ export default function PortalLayout({ user, onLogout, children }) {
               {/* Inner wave accent */}
               <path d="M18 26 Q21 20 24 26 Q27 32 30 26" fill="none" stroke="#2FA2E3" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
-            <div className="min-w-0">
+            <div className="min-w-0 hidden sm:block">
               <div className="truncate text-base font-bold text-orac-slate">ORAC SYSTEMS</div>
-              <div className="truncate text-xs font-semibold text-orac-cyan">Operational Portal</div>
-              <div className="hidden truncate text-xs text-gray-500 sm:block">A Product of Handon Enterprises (Pvt) Ltd</div>
+              <div className="truncate text-xs font-semibold text-orac-accent">Operational Portal</div>
             </div>
           </div>
 
-          {/* Right: status + notifications + profile */}
+          {/* Zone 2: Desktop Navigation — stays route-policy-derived */}
+          <nav aria-label="Primary" className="hidden md:flex flex-1 items-center justify-center gap-1.5 overflow-visible bg-gray-50/70 rounded-lg px-2 py-1 mx-4 dark:bg-slate-800/60">
+            {navGroups.map((group) => <WorkspaceNavMenu key={group.id} group={group} pathname={location.pathname} />)}
+          </nav>
+
+          {/* Zone 3: Status + notifications + profile */}
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            {/* Live status indicator */}
-            <div className="hidden items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 md:flex">
-              <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-              <span className="text-xs font-bold text-emerald-700">Online</span>
-            </div>
+            {/* Offline indicator — shown ONLY when offline */}
+            {!isOnline && (
+              <div role="status" aria-live="polite" className="flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800">
+                <span className="h-2 w-2 rounded-full bg-amber-700 animate-pulse" aria-hidden="true" />
+                <span>Offline</span>
+              </div>
+            )}
+            {/* Online indicator — hidden on md and below to save space, visible only on large screens */}
+            {isOnline && (
+              <div className="hidden items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 lg:flex">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+                <span className="text-xs font-bold text-emerald-700">Online</span>
+              </div>
+            )}
             <ThemeToggle />
             <NotificationBell />
             <button
@@ -150,20 +273,105 @@ export default function PortalLayout({ user, onLogout, children }) {
             <UserProfileDropdown user={user} onSignOut={onLogout} />
           </div>
         </div>
-
-        {/* Navigation stays route-policy-derived but exposes compact work areas. */}
-        <nav aria-label="Primary" className="flex flex-wrap items-center gap-1 overflow-visible border-t border-gray-100 bg-gray-50/70 px-4 py-2 sm:px-6">
-          {navGroups.map((group) => <WorkspaceNavMenu key={group.id} group={group} pathname={location.pathname} />)}
-        </nav>
       </header>
 
-      {/* Main content */}
-      <main id="main-content" className="flex-1 p-4 sm:p-6">{children}</main>
+      {/* Mobile navigation drawer — accessible, full labels, no clipping */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-950/20 backdrop-blur-xs transition-opacity"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+          {/* Slide-out drawer */}
+          <aside
+            ref={mobileMenuRef}
+            id="mobile-nav-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+            className="fixed inset-y-0 left-0 z-50 flex w-full max-w-xs flex-col border-r border-gray-200 bg-white p-4 shadow-xl dark:bg-slate-900 dark:border-slate-800"
+          >
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-bold text-orac-slate dark:text-white">ORAC SYSTEMS</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 text-slate-500 hover:bg-gray-100 dark:border-slate-700"
+                aria-label="Close navigation menu"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <nav aria-label="Mobile primary" className="mt-4 flex-1 overflow-y-auto space-y-4">
+              {navGroups.map((group) => (
+                <div key={group.id} className="space-y-1">
+                  <div className="flex items-center gap-2 px-3 text-xs font-semibold text-slate-500">
+                    {NAV_ICONS[group.id] && (
+                      <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d={NAV_ICONS[group.id]} />
+                      </svg>
+                    )}
+                    <span>{group.label}</span>
+                  </div>
+                  <div className="space-y-0.5">
+                    {group.items.map((item) => {
+                      const isActive = item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path);
+                      return (
+                        <NavLink
+                          key={item.path}
+                          to={item.path}
+                          end={item.path === "/"}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`flex h-11 items-center rounded-md px-3 text-sm font-semibold transition-colors ${
+                            isActive
+                              ? "bg-orac-navy text-white shadow-xs"
+                              : "text-slate-700 hover:bg-gray-100 hover:text-orac-slate dark:text-slate-300 dark:hover:bg-slate-800"
+                          }`}
+                        >
+                          {item.label}
+                        </NavLink>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </nav>
+
+            <div className="border-t border-gray-100 pt-3 flex items-center justify-between dark:border-slate-800">
+              <div className="text-xs text-slate-500 truncate font-medium">
+                {user?.name || user?.email}
+              </div>
+              <button
+                type="button"
+                onClick={onLogout}
+                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-slate-700"
+              >
+                Sign out
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* Main content — pb-28 gives clearance so floating ORAC Guide never covers content */}
+      <main id="main-content" className="mx-auto w-full max-w-[1440px] flex-1 p-4 sm:p-6 pb-28 sm:pb-24">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white px-4 py-5 text-sm text-gray-500 sm:px-6">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><span>Orac-IOS · Orac Industrial Operations System</span><span><a className="font-semibold text-orac-blue hover:underline" href="https://oracsystems.co.zw" target="_blank" rel="noreferrer">Company site</a> · <button type="button" onClick={onLogout} className="font-semibold text-orac-blue hover:underline">Sign out</button></span></div>
-        <p className="mx-auto mt-2 max-w-7xl">&copy; {new Date().getFullYear()} Handon Enterprises (Pvt) Ltd, trading as Orac Systems.</p>
+      <footer className="border-t border-gray-200 bg-white px-4 py-5 text-sm text-gray-500 sm:px-6 dark:bg-slate-900 dark:border-slate-800">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <span>Orac-IOS · Orac Industrial Operations System</span>
+          <span>
+            <a className="font-semibold text-orac-blue hover:underline hover:text-orac-text-primary inline-flex min-h-[44px] items-center" href="https://oracsystems.co.zw" target="_blank" rel="noreferrer">Company site</a>
+            {" · "}
+            <button type="button" onClick={onLogout} className="font-semibold text-orac-blue hover:underline hover:text-orac-text-primary inline-flex min-h-[44px] items-center">Sign out</button>
+          </span>
+        </div>
+        <p className="mx-auto mt-2 max-w-[1440px]">&copy; {new Date().getFullYear()} Handon Enterprises (Pvt) Ltd, trading as Orac Systems.</p>
       </footer>
     </div>
   );

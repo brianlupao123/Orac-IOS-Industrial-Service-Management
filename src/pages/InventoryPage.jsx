@@ -48,6 +48,8 @@ export default function InventoryPage({ user }) {
 
   const [itemModal, setItemModal] = useState({ open: false, data: null });
   const [supplierModal, setSupplierModal] = useState({ open: false, data: null });
+  const [itemModalError, setItemModalError] = useState("");
+  const [supplierModalError, setSupplierModalError] = useState("");
   const [historyModal, setHistoryModal] = useState({ open: false, item: null, movements: [], loading: false, error: "" });
 
   const canManage = ["Admin", "Management", "Operations"].includes(user.role);
@@ -131,6 +133,7 @@ export default function InventoryPage({ user }) {
 
   async function handleItemSave(e) {
     e.preventDefault();
+    setItemModalError("");
     const formData = new FormData(e.target);
     const payload = Object.fromEntries(formData.entries());
     payload.quantity_on_hand = Number(payload.quantity_on_hand || 0);
@@ -146,12 +149,13 @@ export default function InventoryPage({ user }) {
       setItemModal({ open: false, data: null });
       load();
     } catch (err) {
-      alert("Error saving item: " + err.message);
+      setItemModalError("Error saving item: " + err.message);
     }
   }
 
   async function handleSupplierSave(e) {
     e.preventDefault();
+    setSupplierModalError("");
     const formData = new FormData(e.target);
     const payload = Object.fromEntries(formData.entries());
     payload.lead_time_days = Number(payload.lead_time_days || 0);
@@ -165,7 +169,7 @@ export default function InventoryPage({ user }) {
       setSupplierModal({ open: false, data: null });
       load();
     } catch (err) {
-      alert("Error saving supplier: " + err.message);
+      setSupplierModalError("Error saving supplier: " + err.message);
     }
   }
 
@@ -349,7 +353,7 @@ export default function InventoryPage({ user }) {
                   Show reorder attention only ({lowStockCount})
                 </label>
                 {canManage && (
-                  <button onClick={() => setItemModal({ open: true, data: null })} className="px-4 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg shadow-sm hover:bg-slate-700 transition-all">
+                  <button onClick={() => { setItemModalError(""); setItemModal({ open: true, data: null }); }} className="px-4 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg shadow-sm hover:bg-slate-700 transition-all">
                     + New stock item
                   </button>
                 )}
@@ -396,7 +400,7 @@ export default function InventoryPage({ user }) {
                             History
                           </button>
                           {canManage && (
-                            <button onClick={() => setItemModal({ open: true, data: i })} className="text-orac-navy font-medium hover:text-orac-ink opacity-70 group-hover:opacity-100 transition-all">
+                            <button onClick={() => { setItemModalError(""); setItemModal({ open: true, data: i }); }} className="text-orac-navy font-medium hover:text-orac-ink opacity-70 group-hover:opacity-100 transition-all">
                               Edit
                             </button>
                           )}
@@ -459,7 +463,7 @@ export default function InventoryPage({ user }) {
           <div className="space-y-4">
             <div className="flex justify-end">
               {canManage && (
-                <button onClick={() => setSupplierModal({ open: true, data: null })} className="px-4 py-2 bg-orac-blue text-white text-sm font-medium rounded-lg shadow-sm hover:bg-orac-blue/90 transition-all">
+                <button onClick={() => { setSupplierModalError(""); setSupplierModal({ open: true, data: null }); }} className="px-4 py-2 bg-orac-blue text-white text-sm font-medium rounded-lg shadow-sm hover:bg-orac-blue/90 transition-all">
                   + Add supplier
                 </button>
               )}
@@ -480,7 +484,7 @@ export default function InventoryPage({ user }) {
                     <td className="px-5 py-4 text-sm text-gray-500">{s.lead_time_days ? `${s.lead_time_days} days` : "—"}</td>
                     <td className="px-5 py-4 text-sm text-right">
                       {canManage && (
-                        <button onClick={() => setSupplierModal({ open: true, data: s })} className="text-orac-navy font-medium hover:text-orac-ink opacity-70 group-hover:opacity-100 transition-all">
+                        <button onClick={() => { setSupplierModalError(""); setSupplierModal({ open: true, data: s }); }} className="text-orac-navy font-medium hover:text-orac-ink opacity-70 group-hover:opacity-100 transition-all">
                           Edit
                         </button>
                       )}
@@ -494,8 +498,9 @@ export default function InventoryPage({ user }) {
       </div>
 
       {/* Item Modal */}
-      <Modal title={itemModal.data ? "Edit stock item" : "Create stock item"} isOpen={itemModal.open} onClose={() => setItemModal({ open: false, data: null })} size="lg">
+      <Modal title={itemModal.data ? "Edit stock item" : "Create stock item"} isOpen={itemModal.open} onClose={() => { setItemModal({ open: false, data: null }); setItemModalError(""); }} size="lg">
         <form onSubmit={handleItemSave} className="space-y-4">
+          {itemModalError && <ErrorBanner message={itemModalError} />}
           <div><label className="mb-1 block text-sm font-semibold text-gray-700">Item Code</label><input name="item_code" defaultValue={itemModal.data?.item_code || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
           <div><label className="mb-1 block text-sm font-semibold text-gray-700">Item Name</label><input name="item_name" defaultValue={itemModal.data?.item_name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
           <div className="grid grid-cols-2 gap-3">
@@ -514,15 +519,16 @@ export default function InventoryPage({ user }) {
             </select>
           </div>
           <div className="pt-4 flex justify-end gap-3">
-            <button type="button" onClick={() => setItemModal({ open: false, data: null })} className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900">Cancel</button>
+            <button type="button" onClick={() => { setItemModal({ open: false, data: null }); setItemModalError(""); }} className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900">Cancel</button>
             <button type="submit" className="px-5 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg hover:bg-slate-800 shadow-sm">Save Item</button>
           </div>
         </form>
       </Modal>
 
       {/* Supplier Modal */}
-      <Modal title={supplierModal.data ? "Edit supplier" : "Add supplier"} isOpen={supplierModal.open} onClose={() => setSupplierModal({ open: false, data: null })} size="lg">
+      <Modal title={supplierModal.data ? "Edit supplier" : "Add supplier"} isOpen={supplierModal.open} onClose={() => { setSupplierModal({ open: false, data: null }); setSupplierModalError(""); }} size="lg">
         <form onSubmit={handleSupplierSave} className="space-y-4">
+          {supplierModalError && <ErrorBanner message={supplierModalError} />}
           <div><label className="mb-1 block text-sm font-semibold text-gray-700">Supplier name</label><input name="name" defaultValue={supplierModal.data?.name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
           <div><label className="mb-1 block text-sm font-semibold text-gray-700">Contact person</label><input name="contact_person" defaultValue={supplierModal.data?.contact_person || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
           <div className="grid grid-cols-2 gap-3">
@@ -531,7 +537,7 @@ export default function InventoryPage({ user }) {
           </div>
           <div><label className="mb-1 block text-sm font-semibold text-gray-700">Lead time (days)</label><input name="lead_time_days" type="number" defaultValue={supplierModal.data?.lead_time_days || "0"} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
           <div className="pt-4 flex justify-end gap-3">
-            <button type="button" onClick={() => setSupplierModal({ open: false, data: null })} className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900">Cancel</button>
+            <button type="button" onClick={() => { setSupplierModal({ open: false, data: null }); setSupplierModalError(""); }} className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900">Cancel</button>
             <button type="submit" className="px-5 py-2 bg-orac-blue text-white text-sm font-medium rounded-lg hover:bg-orac-blue/90 shadow-sm">Save Supplier</button>
           </div>
         </form>

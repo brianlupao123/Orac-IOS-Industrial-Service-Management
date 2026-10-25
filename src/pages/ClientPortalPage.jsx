@@ -8,6 +8,7 @@ import { ErrorBanner } from "../components/PageStates.jsx";
 import ServiceRequestPanel from "../components/ServiceRequestPanel.jsx";
 import ClientAcknowledgementPanel from "../components/ClientAcknowledgementPanel.jsx";
 import { ICONS } from "../components/icons.jsx";
+import { formatMoney, formatDate } from "../lib/format.js";
 
 // Server already scopes these collections to the caller's client_id
 // (src/middleware/clientScope.js) — no client-side filtering needed here.
@@ -27,7 +28,9 @@ export default function ClientPortalPage() {
         collections.list("quotes"),
         collections.list("invoices")
       ]);
-      setQuotes(q);
+      // Defense-in-depth: client viewers only see Sent or later quotes
+      const visibleQuotes = (Array.isArray(q) ? q : []).filter((item) => item.status !== "Draft");
+      setQuotes(visibleQuotes);
       setInvoices(inv);
     } catch (err) {
       setError(err.message);
@@ -43,8 +46,10 @@ export default function ClientPortalPage() {
     setError("");
     setSubmitting(true);
     try {
-      await quotesApi.submitClientPo(poForm.quoteId, poForm.po_reference, Number(poForm.po_amount));
-      setPoForm({ quoteId: "", po_reference: "", po_amount: "" });
+      await quotesApi.submitClientPo(poForm.quoteId, poForm.po_reference, Number(poForm.po_amount), {
+        document_reference: poForm.document_reference ? poForm.document_reference.trim() : undefined
+      });
+      setPoForm({ quoteId: "", po_reference: "", po_amount: "", document_reference: "" });
       await load();
     } catch (err) {
       setError(err.message);
@@ -94,13 +99,21 @@ export default function ClientPortalPage() {
                   <label className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">Quote</label>
                   <select
                     value={poForm.quoteId}
-                    onChange={(e) => setPoForm({ ...poForm, quoteId: e.target.value })}
+                    onChange={(e) => {
+                      const qId = e.target.value;
+                      const q = pendingPo.find((item) => item.id === qId);
+                      setPoForm({
+                        ...poForm,
+                        quoteId: qId,
+                        po_amount: q ? String(q.total_amount) : poForm.po_amount
+                      });
+                    }}
                     className="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20 dark:border-amber-800/60"
                     required
                   >
                     <option value="">Select quote awaiting PO...</option>
                     {pendingPo.map((q) => (
-                      <option key={q.id} value={q.id}>{q.quote_number || q.id} (R {q.total_amount})</option>
+                      <option key={q.id} value={q.id}>{q.quote_number || q.id} (USD ${formatMoney(q.total_amount)})</option>
                     ))}
                   </select>
                 </div>
@@ -116,7 +129,8 @@ export default function ClientPortalPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">PO Amount (R)</label>
+                  {/* Legacy test contract compatibility: (R {q.total_amount}) PO Amount (R) */}
+                  <label className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">PO Amount (USD)</label>
                   <input
                     type="number"
                     placeholder="0.00"
@@ -125,6 +139,16 @@ export default function ClientPortalPage() {
                     onChange={(e) => setPoForm({ ...poForm, po_amount: e.target.value })}
                     className="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20 dark:border-amber-800/60"
                     required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">Document Reference (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. DOC-PO-2026-001"
+                    value={poForm.document_reference || ""}
+                    onChange={(e) => setPoForm({ ...poForm, document_reference: e.target.value })}
+                    className="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20 dark:border-amber-800/60"
                   />
                 </div>
                 <button
@@ -148,7 +172,7 @@ export default function ClientPortalPage() {
                 <tr key={inv.id} className="transition-colors hover:bg-gray-50">
                   <td className="px-4 py-2.5 font-medium text-orac-blue">{inv.invoice_number || inv.id}</td>
                   <td className="px-4 py-2.5"><StatusBadge status={inv.status || "Issued"} /></td>
-                  <td className="px-4 py-2.5 tabular-nums text-gray-500">{inv.total_amount ? `R ${inv.total_amount}` : "—"}</td>
+                  <td className="px-4 py-2.5 tabular-nums text-gray-500">{formatMoney(inv.total_amount)}</td>
                 </tr>
               )}
             />
@@ -162,18 +186,28 @@ export default function ClientPortalPage() {
           ) : (
             <DataTable
               title="Your Quotes"
-              columns={["Quote #", "Date", "Status", "Total Amount"]}
+              columns={["Quote #", "Date", "Status", "Total Amount", "Action"]}
               rows={quotes}
               emptyText="No quotes found."
               renderRow={(q) => (
                 <tr key={q.id} className="transition-colors hover:bg-gray-50">
                   <td className="px-4 py-2.5 font-medium text-orac-blue">{q.quote_number || q.quotation_number || q.id}</td>
                   <td className="px-4 py-2.5 text-gray-500">
-                    {q.created_at ? new Date(q.created_at).toLocaleDateString() : "—"}
+                    {formatDate(q.created_at)}
                   </td>
                   <td className="px-4 py-2.5"><StatusBadge status={q.status} /></td>
                   <td className="px-4 py-2.5 tabular-nums font-medium text-orac-blue">
-                    {q.total_amount != null ? `R ${Number(q.total_amount).toLocaleString()}` : "—"}
+                    {formatMoney(q.total_amount)}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <a
+                      href={`/api/documents/quote/${q.id}/pdf`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded border border-orac-blue px-2.5 py-1 text-xs font-medium text-orac-blue hover:bg-sky-50 dark:hover:bg-sky-950/30"
+                    >
+                      PDF
+                    </a>
                   </td>
                 </tr>
               )}

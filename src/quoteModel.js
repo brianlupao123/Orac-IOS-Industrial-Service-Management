@@ -13,6 +13,34 @@ export const QUOTE_STATUSES = Object.freeze([
   "Draft", "Sent", "Approved_Pending_PO", "PO_Verified", "Field_Dispatch", "Invoiced", "Cancelled"
 ]);
 
+export const APPROVED_UNITS_OF_MEASURE = Object.freeze([
+  "hours", "days", "metres", "m2", "m²", "m3", "m³", "kg", "tonnes", "each", "lot", "set"
+]);
+
+export const CANONICAL_UNITS_OF_MEASURE = Object.freeze([
+  "hours", "days", "metres", "m²", "m³", "kg", "tonnes", "each", "lot", "set"
+]);
+
+export const COST_TYPES = Object.freeze([
+  "labour", "material", "equipment", "transport"
+]);
+
+export const ITEM_TYPES = Object.freeze([
+  "standard", "optional", "provisional_sum"
+]);
+
+export const TAX_STATUSES = Object.freeze([
+  "taxable", "zero-rated", "exempt", "unconfigured", "provisional"
+]);
+
+export const DEFAULT_PROVISIONAL_VAT_RATE = 0.15;
+export const PROVISIONAL_VAT_NOTICE = "Provisional — accountant confirmation required";
+export const APPROVAL_THRESHOLD_USD = 5000;
+export const CLIENT_VISIBLE_QUOTE_STATUSES = Object.freeze([
+  "Sent", "Approved_Pending_PO", "PO_Verified", "Field_Dispatch", "Invoiced"
+]);
+
+
 const STATUS_LABELS = Object.freeze({
   Draft: "Draft",
   Sent: "Sent",
@@ -49,12 +77,36 @@ export function canApproveQuote(quote, actor) {
   if (quote?.status !== "Sent") return false;
   if (!actor) return false;
   if (actor.role === "Sales" && quote.sent_by && quote.sent_by === actor.id) return false;
+  const totalCents = Number.isInteger(quote.grand_total_cents)
+    ? quote.grand_total_cents
+    : Math.round(Number(quote.total_amount || 0) * 100);
+  const isAboveThreshold = totalCents > 500000;
+  const hasDiscount = Number(quote.discount_percent || 0) > 0;
+  if ((isAboveThreshold || hasDiscount) && !["Management", "Admin"].includes(actor.role)) {
+    return false;
+  }
   return true;
+}
+
+
+export function canDispatchQuote(quote, actor) {
+  if (quote?.status !== "PO_Verified") return false;
+  if (!actor) return false;
+  return ["Admin", "Operations"].includes(actor.role);
 }
 
 export const canSendQuote = (quote, lineCount) => quote?.status === "Draft" && Boolean(quote?.client_id) && lineCount > 0;
 
-export const EMPTY_QUOTE_LINE = Object.freeze({ description: "", quantity: 1, unit_price: 0 });
+export const EMPTY_QUOTE_LINE = Object.freeze({
+  description: "",
+  quantity: 1,
+  unit_price: 0,
+  unit_of_measure: "each",
+  cost_type: "material",
+  resource_role: "",
+  work_package_id: "wp_01",
+  item_type: "standard"
+});
 
 export function lineTotal(line) {
   const quantity = Number(line?.quantity);
@@ -94,6 +146,23 @@ export function buildCreateQuotePayload(form = {}) {
   const payload = { client_id: String(form.client_id || ""), lines: buildLinesPayload(form.lines) };
   const equipmentTagId = String(form.equipment_tag_id || "").trim();
   if (equipmentTagId) payload.equipment_tag_id = equipmentTagId;
+  if (form.currency) payload.currency = form.currency;
+  else if (form.tax_status || form.work_packages || form.scope_summary) payload.currency = "USD";
+  if (form.tax_status) payload.tax_status = form.tax_status;
+  if (form.applied_tax_rate !== undefined && form.applied_tax_rate !== null) payload.applied_tax_rate = Number(form.applied_tax_rate);
+  if (form.discount_percent !== undefined && Number(form.discount_percent) > 0) payload.discount_percent = Number(form.discount_percent);
+  if (form.validity_days !== undefined && form.validity_days !== 30) payload.validity_days = Number(form.validity_days);
+  if (form.scope_summary) payload.scope_summary = String(form.scope_summary).trim();
+  if (form.assumptions) payload.assumptions = String(form.assumptions).trim();
+  if (form.work_packages && form.work_packages.length > 0) {
+    payload.work_packages = form.work_packages.map((wp, idx) => ({
+      id: wp.id || `wp_${String(idx + 1).padStart(2, "0")}`,
+      title: wp.title || wp.name || `Work Package ${idx + 1}`,
+      name: wp.name || wp.title || `Work Package ${idx + 1}`,
+      code: wp.code || `WP-${String(idx + 1).padStart(2, "0")}`,
+      sequence: Number(wp.sequence) || (idx + 1)
+    }));
+  }
   return payload;
 }
 
@@ -104,6 +173,21 @@ export function buildUpdateQuotePayload(form = {}) {
   const payload = { lines: buildLinesPayload(form.lines) };
   const equipmentTagId = String(form.equipment_tag_id || "").trim();
   if (equipmentTagId) payload.equipment_tag_id = equipmentTagId;
+  if (form.tax_status) payload.tax_status = form.tax_status;
+  if (form.applied_tax_rate !== undefined && form.applied_tax_rate !== null) payload.applied_tax_rate = Number(form.applied_tax_rate);
+  if (form.discount_percent !== undefined && Number(form.discount_percent) > 0) payload.discount_percent = Number(form.discount_percent);
+  if (form.validity_days !== undefined && form.validity_days !== 30) payload.validity_days = Number(form.validity_days);
+  if (form.scope_summary) payload.scope_summary = String(form.scope_summary).trim();
+  if (form.assumptions) payload.assumptions = String(form.assumptions).trim();
+  if (form.work_packages && form.work_packages.length > 0) {
+    payload.work_packages = form.work_packages.map((wp, idx) => ({
+      id: wp.id || `wp_${String(idx + 1).padStart(2, "0")}`,
+      title: wp.title || wp.name || `Work Package ${idx + 1}`,
+      name: wp.name || wp.title || `Work Package ${idx + 1}`,
+      code: wp.code || `WP-${String(idx + 1).padStart(2, "0")}`,
+      sequence: Number(wp.sequence) || (idx + 1)
+    }));
+  }
   return payload;
 }
 
@@ -112,22 +196,22 @@ export function buildUpdateQuotePayload(form = {}) {
 // collection (see ROLE_OWNER_DECISIONS #C-1), so every line here is a plain,
 // manually-priced line rather than a linked catalog item.
 function buildLinesPayload(lines) {
-  return (Array.isArray(lines) ? lines : []).map((line) => ({
-    catalog_item_id: null,
-    description: String(line?.description ?? "").trim(),
-    quantity: Number(line?.quantity) || 0,
-    unit_price: Number(line?.unit_price) || 0
-  }));
+  return (Array.isArray(lines) ? lines : []).map((line) => {
+    const item = {
+      catalog_item_id: null,
+      description: String(line?.description ?? "").trim(),
+      quantity: Number(line?.quantity) || 0,
+      unit_price: Number(line?.unit_price) || 0
+    };
+    if (line?.unit_of_measure) item.unit_of_measure = line.unit_of_measure;
+    if (line?.cost_type) item.cost_type = line.cost_type;
+    if (line?.resource_role && line.resource_role !== "-") item.resource_role = String(line.resource_role).trim();
+    if (line?.work_package_id) item.work_package_id = line.work_package_id;
+    if (line?.item_type) item.item_type = line.item_type;
+    return item;
+  });
 }
 
-// A lead is offered as a quoting starting point once Sales/Operations has
-// accepted the underlying service request and converted it (service_requests
-// status Accepted -> Converted_To_Lead creates exactly one lead; see
-// serviceRequestsController.convertServiceRequestToLead). The backend has no
-// field marking a lead as "already quoted" (CreateQuoteSchema carries no
-// lead_id), so this list is necessarily a convenience prefill only - see
-// ROLE_OWNER_DECISIONS #C-2 for why a quote cannot be linked back to its
-// originating lead yet.
 export function prefillFromLead(lead) {
   return {
     client_id: lead?.client_id || "",
@@ -142,4 +226,28 @@ export function prefillFromLead(lead) {
 export function formatAmount(value) {
   const n = Number(value);
   return (Number.isFinite(n) ? n : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+export function formatUSD(value) {
+  const n = Number(value);
+  const safe = Number.isFinite(n) ? n : 0;
+  return '$' + safe.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+export function calculateQuoteBreakdown(lines = [], discountPercent = 0, taxStatus = "provisional", appliedTaxRate = 0.15) {
+  let preTax = 0;
+  for (const line of lines) {
+    if ((line?.item_type || "standard") === "standard") {
+      preTax += (Number(line?.quantity) || 0) * (Number(line?.unit_price) || 0);
+    }
+  }
+  const discount = preTax * ((Number(discountPercent) || 0) / 100);
+  const netSubtotal = Math.max(0, preTax - discount);
+  let taxRate = 0;
+  if (taxStatus === "taxable" || taxStatus === "provisional") {
+    taxRate = appliedTaxRate != null ? Number(appliedTaxRate) : DEFAULT_PROVISIONAL_VAT_RATE;
+  }
+  const tax = netSubtotal * taxRate;
+  const grandTotal = netSubtotal + tax;
+  return { preTax, discount, netSubtotal, taxRate, tax, grandTotal };
 }

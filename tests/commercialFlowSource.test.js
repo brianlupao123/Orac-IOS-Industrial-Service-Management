@@ -18,12 +18,50 @@ test("Quotations page gates Approve through canApproveQuote and always sends nul
   assert.match(read("src/quoteModel.js"), /catalog_item_id: null/);
 });
 
+test("Quote cards show only recorded quote, revision and client-acceptance evidence", () => {
+  const page = read("src/pages/QuotationsPage.jsx");
+  assert.match(page, /data-evidence="quote-summary"/);
+  assert.match(page, /revision_of_quote_id/);
+  assert.match(page, /amended_po_evidence/);
+  assert.match(page, /No revision or client-acceptance evidence recorded on this quote/);
+  assert.doesNotMatch(page, /collections\.list\("purchase_orders"\)/);
+});
+
+test("Quote evidence analysis is separately flag-gated and remains a typed read-only request", () => {
+  const page = read("src/pages/QuotationsPage.jsx");
+  const client = read("src/api/client.js");
+  assert.match(page, /recordAnalysisVisible\(\)/);
+  assert.match(page, /assistant\.recordAnalysis\("quote", quote\.id\)/);
+  assert.match(read("src/components/RecordAnalysisModal.jsx"), /does not approve, verify, authorize or change a record/);
+  assert.match(client, /recordAnalysis\(recordType, recordId\)/);
+  assert.match(client, /\/ai\/record-analysis/);
+  assert.match(read("src/recordAnalysisFlags.js"), /VITE_ORAC_RECORD_TRAIL_V1/);
+});
+
 test("Finance page reads only Finance-readable data and never touches stock, dispatch or worksheets", () => {
   const page = read("src/pages/FinanceCommercialPage.jsx");
   const collectionsRead = [...page.matchAll(/collections\.list\("([a-z_]+)"\)/g)].map((m) => m[1]).sort();
   assert.deepEqual(collectionsRead, ["clients", "purchase_orders", "quotes"]);
   assert.match(page, /reports\.get\("invoice-ready"\)/);
   assert.doesNotMatch(page, /dispatch_cards|field_worksheets|stock_items|inventory|catalog_items/);
+});
+
+test("Finance PO cards identify stored authority, verification and amendment evidence without reading audit logs", () => {
+  const page = read("src/pages/FinanceCommercialPage.jsx");
+  assert.match(page, /data-evidence="purchase-order-summary"/);
+  assert.match(page, /verified_by/);
+  assert.match(page, /verified_at/);
+  assert.match(page, /logged_value/);
+  assert.match(page, /Written amendment required before invoicing/);
+  assert.doesNotMatch(page, /collections\.list\("audit_logs"\)/);
+});
+
+test("Finance PO analysis is separately flag-gated and uses only the typed record-analysis request", () => {
+  const page = read("src/pages/FinanceCommercialPage.jsx");
+  assert.match(page, /recordAnalysisVisible\(\)/);
+  assert.match(page, /assistant\.recordAnalysis\("purchase_order", po\.id\)/);
+  assert.match(page, /Purchase order evidence analysis/);
+  assert.match(read("src/components/RecordAnalysisModal.jsx"), /source-backed summary/);
 });
 
 test("Finance page performs exactly the three server-gated actions and verifies before advancing the quote", () => {
