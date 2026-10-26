@@ -38,10 +38,10 @@ test("Quote evidence analysis is separately flag-gated and remains a typed read-
   assert.match(read("src/recordAnalysisFlags.js"), /VITE_ORAC_RECORD_TRAIL_V1/);
 });
 
-test("Finance page reads only Finance-readable data and never touches stock, dispatch or worksheets", () => {
+test("Finance page reads only Finance-readable commercial data and never touches stock, dispatch or worksheets", () => {
   const page = read("src/pages/FinanceCommercialPage.jsx");
   const collectionsRead = [...page.matchAll(/collections\.list\("([a-z_]+)"\)/g)].map((m) => m[1]).sort();
-  assert.deepEqual(collectionsRead, ["clients", "purchase_orders", "quotes"]);
+  assert.deepEqual(collectionsRead, ["clients", "invoices", "purchase_orders", "quotes"]);
   assert.match(page, /reports\.get\("invoice-ready"\)/);
   assert.doesNotMatch(page, /dispatch_cards|field_worksheets|stock_items|inventory|catalog_items/);
 });
@@ -64,13 +64,15 @@ test("Finance PO analysis is separately flag-gated and uses only the typed recor
   assert.match(read("src/components/RecordAnalysisModal.jsx"), /source-backed summary/);
 });
 
-test("Finance page performs exactly the three server-gated actions and verifies before advancing the quote", () => {
+test("Finance page verifies PO evidence, then uses controlled invoice draft and settlement panels", () => {
   const page = read("src/pages/FinanceCommercialPage.jsx");
   assert.match(page, /quotesApi\.verifyPo\(/);
   assert.match(page, /shouldTransitionAfterVerify\(quote\)/);
   assert.match(page, /quotesApi\.transition\(po\.quotation_id, "PO_Verified"\)/);
   assert.match(page, /poApi\.approveAmendment\(/);
-  assert.match(page, /quotesApi\.transition\(row\.quotation_id, "Invoiced"\)/);
+  assert.match(page, /LegacyInvoiceDraftPanel/);
+  assert.match(page, /InvoiceSettlementPanel/);
+  assert.doesNotMatch(page, /quotesApi\.transition\([^\n]+"Invoiced"\)/);
   assert.ok(page.indexOf("quotesApi.verifyPo(") < page.indexOf('"PO_Verified"'), "PO is recorded before the state transition");
 });
 
