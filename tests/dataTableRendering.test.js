@@ -69,6 +69,7 @@ test("DataTable renders status components and never hides custom badge content",
   assert.ok(html.includes("In Progress"), "StatusBadge label must render");
   assert.ok(html.includes("<th"), "Headers must render");
   assert.ok(html.includes("Status</th>"), "Status column must not be auto-hidden");
+  assert.match(html, /role="region" aria-label="Status Test table" tabindex="0"/, "The scrollable table must have a keyboard-focusable, named region");
 });
 
 test("DataTable preserves icon-only action columns even with hideEmptyColumns enabled", async () => {

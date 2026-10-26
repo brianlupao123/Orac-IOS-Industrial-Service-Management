@@ -143,7 +143,12 @@ export default function DataTable({
           <p className="text-sm text-gray-500 font-medium">{emptyText}</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div
+          className="overflow-x-auto"
+          role="region"
+          aria-label={title ? `${title} table` : "Data table"}
+          tabIndex={0}
+        >
           <table className="w-full text-sm">
             <thead className="bg-gray-50/50">
               <tr className="border-b border-gray-100 text-left text-sm font-semibold text-gray-600">
