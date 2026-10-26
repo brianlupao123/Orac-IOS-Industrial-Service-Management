@@ -16,5 +16,6 @@ deliverables/
 orac-ppt-render/
 .orac-document-build/
 evidence/uat/
+evidence/phase5-browser-uat/
 
 dist-uat/
