@@ -450,7 +450,7 @@ export default function QuotationsPage({ user }) {
         </ul>
       )}
 
-      <Modal title={modalMode === "create" ? "New quotation" : "Edit draft quotation"} isOpen={Boolean(modalMode)} onClose={closeModal}>
+      <Modal title={modalMode === "create" ? "New quotation" : "Edit draft quotation"} isOpen={Boolean(modalMode)} onClose={closeModal} size="xl">
         <form onSubmit={submitForm} className="space-y-4">
           {formError && <ErrorBanner message={formError} />}
 
@@ -472,25 +472,25 @@ export default function QuotationsPage({ user }) {
           {/* Commercial & Scope Settings */}
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label htmlFor="quote-scope" className="mb-1 block text-xs font-semibold text-gray-700">Scope summary</label>
+              <label htmlFor="quote-scope" className="mb-1 block text-sm font-semibold text-gray-700">Scope summary</label>
               <textarea
                 id="quote-scope"
                 rows={2}
                 placeholder="Scope of work overview..."
                 value={form.scope_summary || ""}
                 onChange={(e) => setForm((cur) => ({ ...cur, scope_summary: e.target.value }))}
-                className="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-xs"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label htmlFor="quote-assumptions" className="mb-1 block text-xs font-semibold text-gray-700">Assumptions & exclusions</label>
+              <label htmlFor="quote-assumptions" className="mb-1 block text-sm font-semibold text-gray-700">Assumptions & exclusions</label>
               <textarea
                 id="quote-assumptions"
                 rows={2}
                 placeholder="Key assumptions, site escort, permits..."
                 value={form.assumptions || ""}
                 onChange={(e) => setForm((cur) => ({ ...cur, assumptions: e.target.value }))}
-                className="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-xs"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
               />
             </div>
           </div>
@@ -559,6 +559,7 @@ export default function QuotationsPage({ user }) {
                   <span className="font-mono text-[10px] text-gray-400">{wp.id}:</span>
                   <input
                     type="text"
+                    aria-label={`Work package name ${wp.id}`}
                     value={wp.title || wp.name || ""}
                     onChange={(e) => updateWorkPackage(wp.id, e.target.value)}
                     className="w-32 rounded border-0 p-0 text-xs font-medium text-gray-700 focus:ring-0"
@@ -577,13 +578,14 @@ export default function QuotationsPage({ user }) {
             <p className="mb-2 text-xs text-gray-500">Assign lines to work packages with cost type, resource role, and approved units of measure.</p>
             <div className="space-y-2">
               {form.lines.map((line, index) => (
-                <div key={index} className="grid gap-2 rounded-lg border border-gray-200 bg-white p-2.5 sm:grid-cols-12 sm:items-center">
+                <div key={index} className="grid gap-3 rounded-lg border border-gray-200 bg-white p-3 sm:grid-cols-6 sm:items-center">
                   <div className="sm:col-span-2">
                     <select
                       value={line.work_package_id || "wp_01"}
                       onChange={(e) => updateLine(index, "work_package_id", e.target.value)}
-                      className="w-full rounded border border-gray-300 px-1.5 py-1 text-xs"
+                      className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
                       title="Work package"
+                      aria-label={`Line ${index + 1} work package`}
                     >
                       {(form.work_packages || []).map((wp) => (
                         <option key={wp.id} value={wp.id}>{wp.title || wp.name || wp.id}</option>
@@ -594,8 +596,9 @@ export default function QuotationsPage({ user }) {
                     <select
                       value={line.cost_type || "material"}
                       onChange={(e) => updateLine(index, "cost_type", e.target.value)}
-                      className="w-full rounded border border-gray-300 px-1.5 py-1 text-xs"
+                      className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
                       title="Cost type"
+                      aria-label={`Line ${index + 1} cost type`}
                     >
                       {COST_TYPES.map((ct) => (
                         <option key={ct} value={ct}>{ct}</option>
@@ -608,17 +611,19 @@ export default function QuotationsPage({ user }) {
                       placeholder="Role / Resource"
                       value={line.resource_role || ""}
                       onChange={(e) => updateLine(index, "resource_role", e.target.value)}
-                      className="w-full rounded border border-gray-300 px-1.5 py-1 text-xs"
+                      className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
                       title="Resource role or generic trade"
+                      aria-label={`Line ${index + 1} resource role`}
                     />
                   </div>
                   <div className="sm:col-span-3">
                     <input
                       type="text"
                       placeholder="Description"
+                      aria-label={`Line ${index + 1} description`}
                       value={line.description}
                       onChange={(e) => updateLine(index, "description", e.target.value)}
-                      className="w-full rounded border border-gray-300 px-1.5 py-1 text-xs"
+                      className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
                     />
                   </div>
                   <div className="sm:col-span-1">
@@ -627,17 +632,19 @@ export default function QuotationsPage({ user }) {
                       min="0"
                       step="any"
                       placeholder="Qty"
+                      aria-label={`Line ${index + 1} quantity`}
                       value={line.quantity}
                       onChange={(e) => updateLine(index, "quantity", e.target.value)}
-                      className="w-full rounded border border-gray-300 px-1.5 py-1 text-xs"
+                      className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
                     />
                   </div>
                   <div className="sm:col-span-1">
                     <select
                       value={line.unit_of_measure || "each"}
                       onChange={(e) => updateLine(index, "unit_of_measure", e.target.value)}
-                      className="w-full rounded border border-gray-300 px-1 py-1 text-xs"
+                      className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
                       title="Unit of measure"
+                      aria-label={`Line ${index + 1} unit of measure`}
                     >
                       {CANONICAL_UNITS_OF_MEASURE.map((uom) => (
                         <option key={uom} value={uom}>{uom}</option>
@@ -652,11 +659,12 @@ export default function QuotationsPage({ user }) {
                       placeholder="Rate"
                       value={line.unit_price}
                       onChange={(e) => updateLine(index, "unit_price", e.target.value)}
-                      className="w-full rounded border border-gray-300 px-1 py-1 text-xs"
+                      className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
                       title="Unit price (USD)"
+                      aria-label={`Line ${index + 1} unit price in USD`}
                     />
                   </div>
-                  <div className="flex items-center justify-between sm:col-span-12 sm:justify-end sm:gap-3">
+                  <div className="flex items-center justify-between sm:col-span-6 sm:justify-end sm:gap-3">
                     <span className="text-xs font-semibold text-gray-600">Line: {formatUSD(lineTotal(line))}</span>
                     {form.lines.length > 1 && (
                       <button type="button" onClick={() => removeLine(index)} className="text-xs text-red-600 hover:underline">Remove</button>
