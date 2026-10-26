@@ -14,7 +14,7 @@ const requiredSettlementText = [
   "Received",
   "Outstanding",
   "UAT-PHASE5-RECEIPT-001",
-  "reversed"
+  "Reversed"
 ];
 
 function assertIncludes(text, expected) {

@@ -178,7 +178,7 @@ export default function FinanceCommercialPage({ user }) {
   }
 
   return (
-    <div className="space-y-6" data-evidence="finance-commercial-page">
+    <div className="space-y-5" data-evidence="finance-commercial-page">
       <PageHeaderBanner
         eyebrow="Finance"
         title="PO & Invoicing"
@@ -194,10 +194,10 @@ export default function FinanceCommercialPage({ user }) {
         <div className="py-12 text-center text-gray-400">Loading finance work...</div>
       ) : (
         <>
-          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-semibold text-gray-700">Purchase orders awaiting verification</h2>
+          <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 className="text-base font-semibold text-gray-800">Purchase orders awaiting verification</h2>
             {pending.length === 0 ? (
-              <PageEmptyState iconPath={ICONS.document} title="Nothing to verify" subtitle="Client-submitted purchase orders appear here." />
+              <PageEmptyState compact iconPath={ICONS.document} title="Nothing to verify" subtitle="Client-submitted purchase orders appear here." />
             ) : (
               <ul className="mt-3 space-y-3">
                 {pending.map((po) => {
@@ -243,10 +243,10 @@ export default function FinanceCommercialPage({ user }) {
             )}
           </section>
 
-          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-semibold text-gray-700">PO amendments required</h2>
+          <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 className="text-base font-semibold text-gray-800">PO amendments required</h2>
             {amendments.length === 0 ? (
-              <PageEmptyState iconPath={ICONS.document} title="No amendments needed" subtitle="A PO appears here when logged work exceeds its approved amount." />
+              <PageEmptyState compact iconPath={ICONS.document} title="No amendments needed" subtitle="A PO appears here when logged work exceeds its approved amount." />
             ) : (
               <ul className="mt-3 space-y-3">
                 {amendments.map((po) => {
@@ -282,10 +282,10 @@ export default function FinanceCommercialPage({ user }) {
             )}
           </section>
 
-          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-semibold text-gray-700">Ready to invoice</h2>
+          <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 className="text-base font-semibold text-gray-800">Ready to invoice</h2>
             {ready.length === 0 ? (
-              <PageEmptyState iconPath={ICONS.money} title="Nothing ready to invoice" subtitle="Work appears here once its PO is verified, no amendment is outstanding and a supervisor has approved a worksheet." />
+              <PageEmptyState compact iconPath={ICONS.money} title="Nothing ready to invoice" subtitle="Work appears here once its PO is verified, no amendment is outstanding and a supervisor has approved a worksheet." />
             ) : (
               <ul className="mt-3 space-y-2">
                 {ready.map((row) => (
@@ -298,8 +298,8 @@ export default function FinanceCommercialPage({ user }) {
               </ul>
             )}
           </section>
-          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-semibold text-gray-700">Issued invoices and settlement</h2>
+          <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 className="text-base font-semibold text-gray-800">Issued invoices and settlement</h2>
             {invoiceList.length === 0 ? <PageEmptyState iconPath={ICONS.money} title="No issued invoices" subtitle="Issued invoices will appear here for controlled payment settlement." /> : <div className="mt-3 space-y-3">{invoiceList.map((invoice) => <InvoiceSettlementPanel key={invoice.id} invoice={invoice} user={user} onChanged={load} />)}</div>}
           </section>
         </>
