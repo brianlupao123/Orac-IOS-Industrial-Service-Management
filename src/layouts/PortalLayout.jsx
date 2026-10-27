@@ -209,7 +209,7 @@ export default function PortalLayout({ user, onLogout, children }) {
             {/* Mobile menu trigger button */}
             <button
               type="button"
-              className="flex md:hidden items-center justify-center h-10 w-10 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-orac-slate focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40"
+              className="flex md:hidden items-center justify-center h-11 w-11 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-orac-slate focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40"
               onClick={() => setMobileMenuOpen((open) => !open)}
               aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
               aria-expanded={mobileMenuOpen}
@@ -300,7 +300,7 @@ export default function PortalLayout({ user, onLogout, children }) {
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 text-slate-500 hover:bg-gray-100 dark:border-slate-700"
+                className="flex h-11 w-11 items-center justify-center rounded-md border border-gray-200 text-slate-500 hover:bg-gray-100 dark:border-slate-700"
                 aria-label="Close navigation menu"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>

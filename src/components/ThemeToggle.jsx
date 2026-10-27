@@ -73,7 +73,7 @@ export default function ThemeToggle({ inMenu = false, className = "" }) {
     <button
       type="button"
       onClick={toggleTheme}
-      className={`theme-toggle inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:border-orac-blue hover:text-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/30 ${className}`}
+      className={`theme-toggle inline-flex h-11 w-11 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:border-orac-blue hover:text-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/30 ${className}`}
       aria-label={label}
       title={label}
     >

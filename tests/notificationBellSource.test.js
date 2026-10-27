@@ -49,6 +49,6 @@ test("mobile layout: viewport-anchored panel on small screens, bounded height", 
 });
 
 test("the bell button meets a 40px target and only polls while the tab is visible", () => {
-  assert.match(bell, /h-10 w-10/);
+  assert.match(bell, /h-11 w-11/);
   assert.match(bell, /document\.hidden/);
 });
