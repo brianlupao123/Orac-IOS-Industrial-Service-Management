@@ -10,7 +10,7 @@ import AdminEntitiesTab from "./AdminEntitiesTab.jsx";
 import Modal from "../components/Modal.jsx";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import TabNav from "../components/TabNav.jsx";
-import { ErrorBanner } from "../components/PageStates.jsx";
+import { ErrorBanner, PageLoadingSkeleton } from "../components/PageStates.jsx";
 import { ICONS } from "../components/icons.jsx";
 import { TECHNICIAN_TRADES } from "../constants/trades.js";
 
@@ -208,7 +208,7 @@ export default function AdminPage({ user }) {
               </button>
             </div>
             {loading ? (
-              <div className="py-12 text-center text-gray-400">Loading users...</div>
+              <PageLoadingSkeleton label="Loading users" />
             ) : (
               <DataTable
                 title="System Users"
@@ -253,7 +253,7 @@ export default function AdminPage({ user }) {
               </div>
             </div>
             {loading ? (
-              <div className="py-12 text-center text-gray-400">Loading clients...</div>
+              <PageLoadingSkeleton label="Loading clients" />
             ) : (
               <DataTable
                 title="Client Directory"

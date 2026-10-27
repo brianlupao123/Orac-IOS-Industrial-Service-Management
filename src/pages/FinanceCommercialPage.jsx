@@ -3,7 +3,7 @@ import { assistant, collections, purchaseOrders as poApi, quotes as quotesApi, r
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import { ICONS } from "../components/icons.jsx";
-import { ErrorBanner, PageEmptyState } from "../components/PageStates.jsx";
+import { ErrorBanner, PageEmptyState, PageLoadingSkeleton } from "../components/PageStates.jsx";
 import RecordAnalysisModal from "../components/RecordAnalysisModal.jsx";
 import { formatAmount } from "../quoteModel.js";
 import V5BillingReadinessPanel from "../components/V5BillingReadinessPanel.jsx";
@@ -191,7 +191,7 @@ export default function FinanceCommercialPage({ user }) {
       {notice && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</p>}
 
       {loading ? (
-        <div className="py-12 text-center text-gray-400">Loading finance work...</div>
+        <PageLoadingSkeleton label="Loading finance work" />
       ) : (
         <>
           <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">

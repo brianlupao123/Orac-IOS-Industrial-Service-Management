@@ -4,7 +4,7 @@ import DataTable from "../components/DataTable.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import IconStatCard from "../components/IconStatCard.jsx";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
-import { ErrorBanner } from "../components/PageStates.jsx";
+import { ErrorBanner, PageLoadingSkeleton } from "../components/PageStates.jsx";
 import ServiceRequestPanel from "../components/ServiceRequestPanel.jsx";
 import ClientAcknowledgementPanel from "../components/ClientAcknowledgementPanel.jsx";
 import { ICONS } from "../components/icons.jsx";
@@ -196,7 +196,7 @@ export default function ClientPortalPage() {
         {/* Right Column: Quotes List */}
         <div className="lg:col-span-2">
           {loading ? (
-            <div className="py-12 text-center text-gray-400">Loading your portal...</div>
+            <PageLoadingSkeleton label="Loading your portal" />
           ) : (
             <DataTable
               title="Your Quotes"

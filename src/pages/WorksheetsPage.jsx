@@ -19,6 +19,7 @@ import { cacheDispatchOptions } from "../offlineTimesheetOutbox.js";
 import { hoursSummary, signoffProgress, isTimesheetV2 } from "../lib/timesheetFormLogic.js";
 import V5SignaturePanel from "../components/V5SignaturePanel.jsx";
 import V5BillingReadinessPanel from "../components/V5BillingReadinessPanel.jsx";
+import { PageLoadingSkeleton } from "../components/PageStates.jsx";
 import { v5ReadinessVisible, v5SheetEligibleForPanel, v5SignatureVisible } from "../v5SignatureModel.js";
 
 const SUBMIT_ROLES = ["Admin", "Operations", "Technician", "Supervisor"];
@@ -253,7 +254,7 @@ export default function WorksheetsPage({ user }) {
       )}
 
       {loading ? (
-        <div className="py-12 text-center text-gray-400">Loading timesheets...</div>
+        <PageLoadingSkeleton label="Loading timesheets" />
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-gray-100 bg-white px-4 py-16 flex flex-col items-center justify-center shadow-sm">
           <div className="h-12 w-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-4">

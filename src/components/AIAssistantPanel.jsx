@@ -236,7 +236,7 @@ export default function AIAssistantPanel({ user }) {
       ref={launcherRef}
       type="button"
       onClick={() => setOpen(true)}
-      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-20 flex h-11 w-11 sm:h-auto sm:w-auto items-center justify-center sm:justify-start gap-2.5 rounded-full bg-orac-blue p-0 sm:px-4 sm:py-2.5 text-white shadow-lg transition-transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orac-blue/30"
+      className="orac-guide-trigger fixed right-4 z-20 flex h-11 w-11 sm:h-auto sm:w-auto items-center justify-center sm:justify-start gap-2.5 rounded-full bg-orac-blue p-0 sm:px-4 sm:py-2.5 text-white shadow-lg transition-transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orac-blue/30"
       aria-label={`Open ${user.role} ORAC guide (read-only, not generative AI)`}
       title={`Open ${copy.scope}`}
       aria-haspopup="dialog"

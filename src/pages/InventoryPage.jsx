@@ -11,7 +11,7 @@ import AttentionBand from "../components/AttentionBand.jsx";
 import Modal from "../components/Modal.jsx";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import TabNav from "../components/TabNav.jsx";
-import { ErrorBanner } from "../components/PageStates.jsx";
+import { ErrorBanner, PageLoadingSkeleton } from "../components/PageStates.jsx";
 import { ICONS } from "../components/icons.jsx";
 
 // Business wording for the ledger. reference_type (what the movement was
@@ -359,7 +359,7 @@ export default function InventoryPage({ user }) {
                 )}
               </div>
               {loading ? (
-                <div data-evidence="inventory-stock-loading" className="py-12 text-center text-gray-400">Loading inventory...</div>
+                <div data-evidence="inventory-stock-loading"><PageLoadingSkeleton label="Loading inventory" /></div>
               ) : lowStockOnly && visibleItems.length === 0 ? (
                 <div data-evidence="inventory-stock-filter-empty" className="rounded-xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-500 shadow-sm">
                   No items currently need reorder attention.

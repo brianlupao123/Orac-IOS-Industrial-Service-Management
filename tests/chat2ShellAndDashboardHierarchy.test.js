@@ -26,7 +26,7 @@ test("nav and footer no longer use the unconverted navy utility that fails dark-
 
 test("desktop navigation uses evenly distributed labelled destinations", () => {
   const file = read("src/layouts/PortalLayout.jsx");
-  assert.match(file, /orac-primary-nav hidden lg:flex[^\"]*justify-evenly/);
+  assert.match(file, /orac-primary-nav hidden min-\[900px\]:flex[^\"]*justify-evenly/);
   assert.match(file, /WorkspaceNavMenu key=\{group\.id\} group=\{group\} pathname=\{location\.pathname\}/);
 });
 
@@ -56,4 +56,12 @@ test("the floating AI assistant renders after the dashboard content in document 
   const assistantIndex = file.lastIndexOf("<AIAssistantPanel user={user} />");
   assert.ok(worksheetsIndex > -1 && assistantIndex > -1);
   assert.ok(assistantIndex > worksheetsIndex, "assistant should be last for natural tab order (it is fixed-position, so this has no visual effect)");
+});
+
+test("the floating guide clears compact labelled navigation", () => {
+  const guide = read("src/components/AIAssistantPanel.jsx");
+  const styles = read("src/index.css");
+  assert.match(guide, /className="orac-guide-trigger fixed right-4/);
+  assert.match(styles, /\.orac-guide-trigger \{ bottom: calc\(5\.5rem \+ env\(safe-area-inset-bottom\)\); \}/);
+  assert.match(styles, /@media \(min-width: 900px\) \{\s*\.orac-guide-trigger \{ right: 1\.5rem; bottom: 1\.5rem; \}/);
 });

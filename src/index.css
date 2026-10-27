@@ -161,22 +161,29 @@ body {
 .orac-data-table thead { background-color: var(--orac-surface); }
 .orac-data-table th { color: var(--orac-text-secondary); }
 .orac-table-scroll { overscroll-behavior-inline: contain; }
+/* On compact screens the guide stays above the labelled tab bar rather than
+   competing with it. The desktop position resumes with the 900px shell. */
+.orac-guide-trigger { bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
 
 @media (max-width: 767px) {
   :root { --orac-gutter: 16px; }
 }
 
-/* The navigation stays labelled as long as the desktop shell can support it.
-   Between 1024px and 1199px the logo mark keeps the header balanced while the
-   text navigation receives the width it needs. */
-@media (min-width: 1024px) and (max-width: 1199px) {
+/* The navigation stays labelled from 900px upward. Up to 1150px the logo mark
+   keeps the header balanced while the text navigation receives the width it
+   needs. */
+@media (min-width: 900px) and (max-width: 1150px) {
   .orac-brand-copy { display: none; }
   .orac-primary-nav .orac-nav-item { padding-inline: 0.65rem; }
 }
 
+@media (min-width: 900px) {
+  .orac-guide-trigger { right: 1.5rem; bottom: 1.5rem; }
+}
+
 /* Compact screens use labelled primary tabs; the accessible drawer remains
    available for the full set of role-scoped destinations. */
-@media (max-width: 1023px) {
+@media (max-width: 899px) {
   .orac-mobile-tabs {
     position: fixed;
     z-index: 30;

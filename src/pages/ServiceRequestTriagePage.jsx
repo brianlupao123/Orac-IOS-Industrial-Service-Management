@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { serviceRequests, assistant } from "../api/client.js";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import { ICONS } from "../components/icons.jsx";
-import { ErrorBanner, PageEmptyState } from "../components/PageStates.jsx";
+import { ErrorBanner, PageEmptyState, PageLoadingSkeleton } from "../components/PageStates.jsx";
 import RecordAnalysisModal from "../components/RecordAnalysisModal.jsx";
 import { recordAnalysisVisible } from "../recordAnalysisFlags.js";
 import {
@@ -107,7 +107,7 @@ export default function ServiceRequestTriagePage() {
       {notice && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</p>}
 
       {loading ? (
-        <div className="py-12 text-center text-gray-400">Loading service requests...</div>
+        <PageLoadingSkeleton label="Loading service requests" />
       ) : items.length === 0 ? (
         !error && (
           <div className="rounded-lg border border-gray-200 bg-white shadow-sm">

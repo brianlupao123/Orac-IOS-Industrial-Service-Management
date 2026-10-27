@@ -5,7 +5,7 @@ import Modal from "../components/Modal.jsx";
 import RecordAnalysisModal from "../components/RecordAnalysisModal.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import { ICONS } from "../components/icons.jsx";
-import { ErrorBanner, PageEmptyState } from "../components/PageStates.jsx";
+import { ErrorBanner, PageEmptyState, PageLoadingSkeleton } from "../components/PageStates.jsx";
 import { v5CommercialEnabled } from "../v5CommercialFlags.js";
 import { recordAnalysisVisible } from "../recordAnalysisFlags.js";
 import {
@@ -370,7 +370,7 @@ export default function QuotationsPage({ user }) {
       )}
 
       {loading ? (
-        <div className="py-12 text-center text-gray-400">Loading quotations...</div>
+        <PageLoadingSkeleton label="Loading quotations" />
       ) : quoteList.length === 0 ? (
         !error && (
           <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
