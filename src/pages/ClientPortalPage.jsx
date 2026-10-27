@@ -201,7 +201,7 @@ export default function ClientPortalPage() {
                   </td>
                   <td className="px-4 py-2.5">
                     <a
-                      href={`/api/documents/quote/${q.id}/pdf`}
+                      href={`/api/documents/quotes/${q.id}.pdf`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="rounded border border-orac-blue px-2.5 py-1 text-xs font-medium text-orac-blue hover:bg-sky-50 dark:hover:bg-sky-950/30"
