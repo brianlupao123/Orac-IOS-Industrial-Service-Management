@@ -1,4 +1,5 @@
 import React from "react";
+import { Icon } from "./icons.jsx";
 
 const TONES = {
   slate:  "border-gray-100 bg-white text-gray-800 ring-1 ring-gray-900/5",
@@ -8,7 +9,9 @@ const TONES = {
   red:    "border-red-100 bg-red-50/50 text-red-900 ring-1 ring-red-900/5",
 };
 
-export default function StatCard({ label, value, tone = "slate", icon, subtitle, onClick, href }) {
+export default function StatCard({ label, value, tone = "slate", icon, iconPath, subtitle, onClick, href }) {
+  const isZero = value !== null && value !== undefined && String(value).trim() !== "" && Number(value) === 0;
+  const resolvedTone = isZero ? "slate" : tone;
   const Component = href ? "a" : onClick ? "button" : "div";
   const isInteractive = Boolean(href || onClick);
   const interactiveClasses = isInteractive
@@ -20,7 +23,7 @@ export default function StatCard({ label, value, tone = "slate", icon, subtitle,
       {...(Component === "button" ? { type: "button" } : {})}
       href={href}
       onClick={onClick}
-      className={`orac-metric-card rounded-xl border p-5 ${interactiveClasses} ${TONES[tone] || TONES.slate}`}
+      className={`orac-metric-card rounded-xl border p-5 ${interactiveClasses} ${TONES[resolvedTone] || TONES.slate}`}
     >
       <div className="flex items-start justify-between">
         <div className="flex flex-col">
@@ -34,9 +37,9 @@ export default function StatCard({ label, value, tone = "slate", icon, subtitle,
           </div>
           {subtitle && <div className="mt-2 text-sm font-medium text-gray-600">{subtitle}</div>}
         </div>
-        {icon && (
+        {(iconPath || icon) && (
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/80 text-xl shadow-sm backdrop-blur-sm border border-black/5">
-            {icon}
+            {iconPath ? <Icon path={iconPath} className="h-5 w-5" /> : icon}
           </div>
         )}
       </div>

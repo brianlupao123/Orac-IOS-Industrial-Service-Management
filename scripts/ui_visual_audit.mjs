@@ -10,6 +10,9 @@ const financeEmail = process.env.ORAC_VISUAL_AUDIT_EMAIL || "phase5-uat-finance@
 const adminEmail = process.env.ORAC_VISUAL_AUDIT_ADMIN_EMAIL || "phase5-uat-admin@fixture.invalid";
 const salesEmail = process.env.ORAC_VISUAL_AUDIT_SALES_EMAIL || "phase5-uat-sales@fixture.invalid";
 const clientEmail = process.env.ORAC_VISUAL_AUDIT_CLIENT_EMAIL || "phase5-uat-client-viewer@fixture.invalid";
+const operationsEmail = process.env.ORAC_VISUAL_AUDIT_OPERATIONS_EMAIL || "phase5-uat-operations@fixture.invalid";
+const supervisorEmail = process.env.ORAC_VISUAL_AUDIT_SUPERVISOR_EMAIL || "phase5-uat-supervisor@fixture.invalid";
+const technicianEmail = process.env.ORAC_VISUAL_AUDIT_TECHNICIAN_EMAIL || "phase5-uat-technician@fixture.invalid";
 const financePassword = process.env.ORAC_VISUAL_AUDIT_PASSWORD || "OracUAT2026!";
 const runId = new Date().toISOString().replace(/[:.]/g, "-");
 const evidenceDir = path.resolve("evidence", "ui-visual-audit", runId);
@@ -82,7 +85,7 @@ async function run() {
   const results = {
     started_at: new Date().toISOString(),
     ui_base_url: uiBaseUrl,
-    fictional_accounts: [financeEmail, adminEmail, salesEmail, clientEmail],
+    fictional_accounts: [financeEmail, adminEmail, salesEmail, clientEmail, operationsEmail, supervisorEmail, technicianEmail],
     read_only: true,
     checks: [],
     screenshots: [],
@@ -94,7 +97,10 @@ async function run() {
       { audience: "finance", email: financeEmail, pages: [["/", "Finance & Invoicing"], ["/finance", "PO & Invoicing"]] },
       { audience: "admin", email: adminEmail, pages: [["/admin", "Administration Console"], ["/inventory", "Inventory management"]] },
       { audience: "sales", email: salesEmail, pages: [["/quotations", "Quotations"]] },
-      { audience: "client", email: clientEmail, pages: [["/portal", "Client Portal"]] }
+      { audience: "client", email: clientEmail, pages: [["/portal", "Client Portal"]] },
+      { audience: "operations", email: operationsEmail, pages: [["/worksheets", "Timesheets"], ["/operational-data", "Operational Data"]] },
+      { audience: "supervisor", email: supervisorEmail, pages: [["/worksheets", "Timesheets"]] },
+      { audience: "technician", email: technicianEmail, pages: [["/worksheets", "Timesheets"]] }
     ];
     for (const audit of audits) {
       const context = await browser.newContext({ viewport: viewports[0] });

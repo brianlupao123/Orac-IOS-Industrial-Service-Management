@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { assistant, collections, worksheets, dispatch, documents } from "../api/client.js";
 import { canAccessRoute } from "../accessPolicy.js";
 import StatCard from "../components/StatCard.jsx";
+import { ICONS } from "../components/icons.jsx";
 import Modal from "../components/Modal.jsx";
 import SignaturePad from "../components/SignaturePad.jsx";
 import WorksheetEvidence, { StatusPill } from "../components/WorksheetEvidence.jsx";
@@ -195,7 +196,7 @@ export default function WorksheetsPage({ user }) {
         {canSubmit && (
           <button
             onClick={openCreate}
-            className="shrink-0 self-start sm:self-auto rounded-lg bg-orac-blue px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-105"
+            className="min-h-11 shrink-0 self-start sm:self-auto rounded-lg bg-orac-blue px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-105"
           >
             + New Timesheet
           </button>
@@ -204,14 +205,13 @@ export default function WorksheetsPage({ user }) {
 
       {/* KPI cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard label="Total Timesheets" value={counts.total} tone="slate" icon="📝" />
-        <StatCard label="In Draft" value={counts.draft} tone="slate" icon="✏️" />
-        <StatCard label="Awaiting Client" value={counts.awaitingClient} tone="amber" icon="⏳" />
-        <StatCard label="Awaiting Supervisor" value={counts.awaitingSupervisor} tone="amber" icon="🔎" />
-        <StatCard label="Approved" value={counts.approved} tone="green" icon="✅" />
+        <StatCard label="Total Timesheets" value={counts.total} tone="slate" iconPath={ICONS.clipboard} />
+        <StatCard label="In Draft" value={counts.draft} tone="slate" iconPath={ICONS.document} />
+        <StatCard label="Awaiting Client" value={counts.awaitingClient} tone="amber" iconPath={ICONS.clock} />
+        <StatCard label="Awaiting Supervisor" value={counts.awaitingSupervisor} tone="amber" iconPath={ICONS.search} />
+        <StatCard label="Approved" value={counts.approved} tone="green" iconPath={ICONS.check} />
       </div>
 
-      {notice && <div role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>}
       <TimesheetOutboxPanel user={user} refreshKey={outboxKey} onSynced={load} />
 
       {/* Filters */}
@@ -234,7 +234,7 @@ export default function WorksheetsPage({ user }) {
             aria-label="Filter timesheets by trade"
             value={tradeFilter}
             onChange={(event) => setTradeFilter(event.target.value)}
-            className="ml-auto rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600"
+            className="ml-auto min-h-11 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-600"
           >
             <option value="all">All trades</option>
             {tradeOptions.map((trade) => <option key={trade} value={trade}>{trade}</option>)}
@@ -265,7 +265,7 @@ export default function WorksheetsPage({ user }) {
           {canSubmit && (
             <button
               onClick={openCreate}
-              className="mt-4 rounded-lg bg-orac-blue px-4 py-2 text-xs font-semibold text-white shadow-sm hover:brightness-105 transition-all"
+              className="mt-4 min-h-11 rounded-lg bg-orac-blue px-4 py-2 text-sm font-semibold text-white shadow-sm hover:brightness-105 transition-all"
             >
               + Create Timesheet
             </button>
