@@ -17,5 +17,6 @@ orac-ppt-render/
 .orac-document-build/
 evidence/uat/
 evidence/phase5-browser-uat/
+evidence/ui-visual-audit/
 
 dist-uat/

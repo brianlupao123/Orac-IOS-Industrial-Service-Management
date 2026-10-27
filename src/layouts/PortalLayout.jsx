@@ -209,7 +209,7 @@ export default function PortalLayout({ user, onLogout, children }) {
             {/* Mobile menu trigger button */}
             <button
               type="button"
-              className="flex lg:hidden items-center justify-center h-11 w-11 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-orac-slate focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40"
+              className="flex xl:hidden items-center justify-center h-11 w-11 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-orac-slate focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40"
               onClick={() => setMobileMenuOpen((open) => !open)}
               aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
               aria-expanded={mobileMenuOpen}
@@ -241,7 +241,7 @@ export default function PortalLayout({ user, onLogout, children }) {
           </div>
 
           {/* Zone 2: Desktop Navigation — stays route-policy-derived */}
-          <nav aria-label="Primary" className="orac-primary-nav hidden lg:flex min-w-0 flex-1 items-center justify-start gap-1 overflow-x-auto rounded-lg bg-gray-50/70 px-2 py-1 mx-4 dark:bg-slate-800/60">
+          <nav aria-label="Primary" className="orac-primary-nav hidden xl:flex min-w-0 flex-1 items-center justify-start gap-1 overflow-x-auto rounded-lg bg-gray-50/70 px-2 py-1 mx-4 dark:bg-slate-800/60">
             {navGroups.map((group) => <WorkspaceNavMenu key={group.id} group={group} pathname={location.pathname} />)}
           </nav>
 
@@ -279,7 +279,7 @@ export default function PortalLayout({ user, onLogout, children }) {
 
       {/* Mobile navigation drawer — accessible, full labels, no clipping */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
+        <div className="fixed inset-0 z-40 xl:hidden">
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-slate-950/20 backdrop-blur-xs transition-opacity"
