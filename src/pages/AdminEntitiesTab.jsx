@@ -434,6 +434,7 @@ export default function AdminEntitiesTab({ user }) {
                 {currentConfig.parentLabel}
               </label>
               <SearchableSelect
+                ariaLabel={currentConfig.parentLabel}
                 options={parentSelectOptions}
                 value={parentId}
                 onChange={setParentId}

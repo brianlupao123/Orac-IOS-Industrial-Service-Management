@@ -182,12 +182,12 @@ export default function AdminAccessRequestsPage({ focusId = null }) {
                     <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-sm font-semibold text-gray-700">Assign actual role</label>
-                        <SearchableSelect options={roleOptions} value={effectiveRole} onChange={(v) => patch(r.id, { role: v })} />
+                        <SearchableSelect ariaLabel="Assign actual role" options={roleOptions} value={effectiveRole} onChange={(v) => patch(r.id, { role: v })} />
                       </div>
                       {effectiveRole === "Client Viewer" && (
                         <div>
                           <label className="mb-1 block text-sm font-semibold text-gray-700">Client (required)</label>
-                          <SearchableSelect options={clientOptions} value={chosen.client_id} onChange={(v) => patch(r.id, { client_id: v })} placeholder="Select client..." />
+                          <SearchableSelect ariaLabel="Client required" options={clientOptions} value={chosen.client_id} onChange={(v) => patch(r.id, { client_id: v })} placeholder="Select client..." />
                         </div>
                       )}
                     </div>

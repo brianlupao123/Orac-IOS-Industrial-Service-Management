@@ -33,6 +33,8 @@ test("searchable role selection announces its purpose and state", () => {
   assert.match(select, /role="option"/);
   assert.match(request, /id="request-role"/);
   assert.match(request, /ariaLabel="Requested role"/);
+  assert.match(read("src\/pages\/AdminAccessRequestsPage.jsx"), /ariaLabel="Assign actual role"/);
+  assert.match(read("src\/pages\/AdminEntitiesTab.jsx"), /ariaLabel=\{currentConfig\.parentLabel\}/);
 });
 
 test("the style guide states the hierarchy rule and makes no currency claim", () => {
