@@ -108,6 +108,12 @@ test("Dashboard: only workflow categories are status-first; totals and scope cou
   assert.doesNotMatch(dash, /<IconStatCard\s+label="Total (Quotes|Clients)"[\s\S]{0,200}statusFirst/);
 });
 
+test("dashboard totals use the purpose-led card treatment", () => {
+  const card = read("src/components/IconStatCard.jsx");
+  assert.match(card, /text-lg font-bold leading-snug/);
+  assert.match(card, /text-2xl font-semibold tabular-nums sm:text-\[28px\]/);
+});
+
 test("currency display on other screens is untouched", () => {
   const client = read("src/pages/ClientPortalPage.jsx");
   assert.match(client, /\(R \{q\.total_amount\}\)/);
