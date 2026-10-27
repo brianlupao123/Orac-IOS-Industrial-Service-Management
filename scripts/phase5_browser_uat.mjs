@@ -12,6 +12,7 @@ const requiredSettlementText = [
   "INV-0001",
   "Invoice total",
   "800.00",
+  "Credit notes",
   "Received",
   "Outstanding",
   "UAT-PHASE5-RECEIPT-001",
