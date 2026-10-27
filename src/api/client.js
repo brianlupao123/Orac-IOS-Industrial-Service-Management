@@ -313,6 +313,16 @@ export const invoices = {
       method: "POST", body: JSON.stringify({ reason })
     });
   },
+  createCreditNote(invoiceId, { idempotency_key, ...creditNote }) {
+    return request(`/invoices/${encodeURIComponent(invoiceId)}/credit-notes`, {
+      method: "POST", headers: { "Idempotency-Key": idempotency_key }, body: JSON.stringify(creditNote)
+    });
+  },
+  issueCreditNote(creditNoteId, idempotency_key) {
+    return request(`/credit-notes/${encodeURIComponent(creditNoteId)}/issue`, {
+      method: "POST", body: JSON.stringify({ idempotency_key })
+    });
+  },
   void(invoiceId, reason) {
     return request(`/invoices/${encodeURIComponent(invoiceId)}/void`, { method: "POST", body: JSON.stringify({ reason }) });
   }
