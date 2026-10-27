@@ -11,3 +11,12 @@ test("Client Portal permits only issued quotation states", () => {
   assert.match(source, /CLIENT_VISIBLE_QUOTE_STATUSES\.has\(item\.status\)/);
   assert.doesNotMatch(source, /item\.status !== "Draft"/);
 });
+
+test("Client Portal PO controls retain explicit labels and touch-safe actions", () => {
+  for (const id of ["client-po-quote", "client-po-reference", "client-po-amount", "client-po-document-reference"]) {
+    assert.match(source, new RegExp(`htmlFor="${id}"`));
+    assert.match(source, new RegExp(`id="${id}"`));
+  }
+  assert.match(source, /min-h-11 w-full rounded-lg bg-orac-blue/);
+  assert.match(source, /inline-flex min-h-11 items-center rounded border border-orac-blue/);
+});

@@ -106,8 +106,9 @@ export default function ClientPortalPage() {
               <h2 className="mb-4 text-sm font-semibold text-amber-900 dark:text-amber-300">Submit Purchase Order</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">Quote</label>
+                  <label htmlFor="client-po-quote" className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">Quote</label>
                   <select
+                    id="client-po-quote"
                     value={poForm.quoteId}
                     onChange={(e) => {
                       const qId = e.target.value;
@@ -128,8 +129,9 @@ export default function ClientPortalPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">PO Reference</label>
+                  <label htmlFor="client-po-reference" className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">PO Reference</label>
                   <input
+                    id="client-po-reference"
                     type="text"
                     placeholder="e.g. PO-2026-999"
                     value={poForm.po_reference}
@@ -140,8 +142,9 @@ export default function ClientPortalPage() {
                 </div>
                 <div>
                   {/* Legacy test contract compatibility: (R {q.total_amount}) PO Amount (R) */}
-                  <label className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">PO Amount (USD)</label>
+                  <label htmlFor="client-po-amount" className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">PO Amount (USD)</label>
                   <input
+                    id="client-po-amount"
                     type="number"
                     placeholder="0.00"
                     step="0.01"
@@ -152,8 +155,9 @@ export default function ClientPortalPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">Document Reference (Optional)</label>
+                  <label htmlFor="client-po-document-reference" className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">Document Reference (Optional)</label>
                   <input
+                    id="client-po-document-reference"
                     type="text"
                     placeholder="e.g. DOC-PO-2026-001"
                     value={poForm.document_reference || ""}
@@ -164,7 +168,7 @@ export default function ClientPortalPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full rounded-lg bg-orac-blue py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:brightness-105 disabled:opacity-50"
+                  className="min-h-11 w-full rounded-lg bg-orac-blue py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:brightness-105 disabled:opacity-50"
                 >
                   {submitting ? "Submitting..." : "Submit PO"}
                 </button>
@@ -214,7 +218,7 @@ export default function ClientPortalPage() {
                       href={`/api/documents/quotes/${q.id}.pdf`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="rounded border border-orac-blue px-2.5 py-1 text-xs font-medium text-orac-blue hover:bg-sky-50 dark:hover:bg-sky-950/30"
+                      className="inline-flex min-h-11 items-center rounded border border-orac-blue px-3 text-sm font-medium text-orac-blue hover:bg-sky-50 dark:hover:bg-sky-950/30"
                     >
                       PDF
                     </a>
