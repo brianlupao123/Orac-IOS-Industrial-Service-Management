@@ -33,6 +33,14 @@ async function recordPage(page, viewport, route, heading, results) {
   await page.setViewportSize({ width: viewport.width, height: viewport.height });
   await page.goto(`${uiBaseUrl}${route}`, { waitUntil: "domcontentloaded" });
   await page.getByRole("heading", { name: heading }).waitFor();
+  // Route headings render before their data requests complete. Wait for the
+  // page-level loading message to disappear so screenshots document the
+  // settled experience rather than an in-flight state.
+  await page.waitForFunction(
+    () => !document.body.textContent.includes("Loading finance work..."),
+    undefined,
+    { timeout: 15000 }
+  );
   await page.waitForTimeout(150);
 
   const metrics = await page.evaluate(() => ({
