@@ -26,3 +26,10 @@ test("primary navigation provides accessible menus and preserves direct one-item
   assert.match(src, /role="menuitem"/);
   assert.match(src, /group\.items\.length === 1/);
 });
+
+test("compact screens keep labelled primary navigation and a route-safe More menu", () => {
+  const src = readFileSync(new URL("../src/layouts/PortalLayout.jsx", import.meta.url), "utf8");
+  assert.match(src, /aria-label="Mobile primary" className="orac-mobile-tabs lg:hidden"/);
+  assert.match(src, /navGroups\.slice\(0, 4\)/);
+  assert.match(src, /<span>More<\/span>/);
+});

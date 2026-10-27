@@ -24,17 +24,15 @@ test("nav and footer no longer use the unconverted navy utility that fails dark-
   assert.match(file, /className="font-semibold text-orac-blue/);
 });
 
-test("nav bar background uses an opacity variant with a defined dark-mode override", () => {
+test("desktop navigation uses evenly distributed labelled destinations", () => {
   const file = read("src/layouts/PortalLayout.jsx");
-  // bg-gray-50/60 has no matching selector in index.css (only /30, /50, /70 are
-  // overridden), so it silently stayed light in dark mode. /70 is covered.
-  assert.doesNotMatch(file, /bg-gray-50\/60/);
-  assert.match(file, /bg-gray-50\/70/);
+  assert.match(file, /orac-primary-nav hidden lg:flex[^\"]*justify-evenly/);
+  assert.match(file, /WorkspaceNavMenu key=\{group\.id\} group=\{group\} pathname=\{location\.pathname\}/);
 });
 
 test("only one top-level sign-out affordance competes for space at narrow widths", () => {
   const file = read("src/layouts/PortalLayout.jsx");
-  assert.match(file, /hidden items-center rounded-md border border-gray-200[^"]*lg:inline-flex/);
+  assert.match(file, /orac-header-signout hidden items-center rounded-md border border-gray-200[^"]*xl:inline-flex/);
   assert.match(file, /<UserProfileDropdown user=\{user\} onSignOut=\{onLogout\} \/>/);
 });
 

@@ -145,6 +145,7 @@ body {
 .orac-primary-nav::-webkit-scrollbar { display: none; }
 .orac-nav-item { min-height: 46px; font-size: var(--orac-text-base); }
 .orac-header-divider { border-left: 1px solid var(--orac-border); }
+.orac-mobile-tabs { display: none; }
 .orac-offline-notice {
   border-bottom: 1px solid var(--orac-warning-border);
   background: var(--orac-warning-bg);
@@ -163,6 +164,50 @@ body {
 
 @media (max-width: 767px) {
   :root { --orac-gutter: 16px; }
+}
+
+/* The navigation stays labelled as long as the desktop shell can support it.
+   Between 1024px and 1199px the logo mark keeps the header balanced while the
+   text navigation receives the width it needs. */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .orac-brand-copy { display: none; }
+  .orac-primary-nav .orac-nav-item { padding-inline: 0.65rem; }
+}
+
+/* Compact screens use labelled primary tabs; the accessible drawer remains
+   available for the full set of role-scoped destinations. */
+@media (max-width: 1023px) {
+  .orac-mobile-tabs {
+    position: fixed;
+    z-index: 30;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    min-height: 62px;
+    align-items: stretch;
+    justify-content: space-evenly;
+    border-top: 1px solid var(--orac-border);
+    background: var(--orac-canvas);
+    box-shadow: 0 -4px 14px rgb(11 15 25 / 0.08);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .orac-mobile-tab {
+    display: inline-flex;
+    min-width: 0;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 4px;
+    color: var(--orac-text-secondary);
+    font-size: var(--orac-text-caption);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .orac-mobile-tab-active { color: var(--orac-accent); }
+  .orac-mobile-tab:focus-visible { outline-offset: -3px; }
 }
 
 /* Operational screens prioritise fast, fatigue-resistant reading. Components

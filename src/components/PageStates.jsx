@@ -6,7 +6,7 @@ export function ErrorBanner({ message }) {
 }
 
 export function PageEmptyState({ iconPath, title, subtitle, compact = false }) {
-  return <div data-evidence="page-empty-state" className={`flex flex-col items-center justify-center px-6 text-center ${compact ? "min-h-32 py-7" : "min-h-48 py-12"}`}><span className={`flex items-center justify-center rounded-full bg-sky-50 text-orac-blue dark:bg-sky-950/40 ${compact ? "h-9 w-9" : "h-11 w-11"}`}><Icon path={iconPath} /></span><h2 className={`${compact ? "mt-3 text-sm" : "mt-4 text-base"} font-semibold text-orac-blue`}>{title}</h2>{subtitle && <p className="mt-1 max-w-md text-sm leading-6 text-gray-600">{subtitle}</p>}</div>;
+  return <div data-evidence="page-empty-state" className={`flex flex-col items-center justify-center px-6 text-center ${compact ? "min-h-24 py-5" : "min-h-48 py-12"}`}><span className={`flex items-center justify-center rounded-full bg-sky-50 text-orac-blue dark:bg-sky-950/40 ${compact ? "h-9 w-9" : "h-11 w-11"}`}><Icon path={iconPath} /></span><h2 className={`${compact ? "mt-2 text-sm" : "mt-4 text-base"} font-semibold text-orac-blue`}>{title}</h2>{subtitle && <p className="mt-1 max-w-md text-sm leading-6 text-gray-600">{subtitle}</p>}</div>;
 }
 
 export function RestrictedState({
