@@ -14,6 +14,7 @@ const evidenceDir = path.resolve("evidence", "ui-visual-audit", runId);
 const viewports = [
   { name: "desktop", width: 1440, height: 900 },
   { name: "tablet", width: 1024, height: 800 },
+  { name: "nav-900", width: 900, height: 800 },
   { name: "mobile", width: 390, height: 844 }
 ];
 
@@ -42,6 +43,11 @@ async function recordPage(page, viewport, route, heading, results) {
     { timeout: 15000 }
   );
   await page.waitForTimeout(150);
+
+  if (viewport.name === "nav-900") {
+    assert(await page.locator(".orac-primary-nav").isVisible(), "900px must retain the labelled top navigation");
+    assert(!(await page.locator(".orac-mobile-tabs").isVisible()), "900px must not render the compact bottom tab bar");
+  }
 
   const metrics = await page.evaluate(() => ({
     viewportWidth: window.innerWidth,
