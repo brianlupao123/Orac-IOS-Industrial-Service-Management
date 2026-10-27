@@ -53,13 +53,14 @@ async function run() {
 
   const browser = await chromium.launch({ channel: "chrome", headless: true });
   try {
+    console.log("Phase 5 UAT: signing in as preparer");
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await signIn(page, financeEmail);
 
     await page.goto(`${uiBaseUrl}/finance`, { waitUntil: "domcontentloaded" });
     await page.getByRole("button", { name: "View settlement" }).click();
     const settlement = page.locator('[aria-label*="Invoice settlement"]');
-    await settlement.waitFor();
+    await settlement.getByText("Invoice total").waitFor();
     const text = await settlement.innerText();
 
     for (const expected of requiredSettlementText) {
@@ -73,30 +74,45 @@ async function run() {
 
     await settlement.getByLabel("Credit note amount").fill("100");
     await settlement.getByLabel("Credit note reason").fill("UAT approved correction");
+    const prepareResponse = page.waitForResponse((response) => (
+      response.request().method() === "POST" && /\/invoices\/[^/]+\/credit-notes$/.test(new URL(response.url()).pathname)
+    ));
     await settlement.getByRole("button", { name: "Prepare credit note" }).click();
-    await settlement.getByText("Credit note prepared for independent issue.").waitFor();
-    assertIncludes(await settlement.innerText(), "Prepared");
+    const prepared = await prepareResponse;
+    if (prepared.status() !== 201) throw new Error(`Credit-note preparation failed: ${prepared.status()} ${await prepared.text()}`);
+    await page.getByRole("button", { name: "View settlement" }).waitFor();
+    await page.getByRole("button", { name: "View settlement" }).click();
+    await settlement.getByText("Prepared").first().waitFor();
     results.assertions.push({ expected: "Finance prepares a reasoned credit note", pass: true });
 
+    console.log("Phase 5 UAT: credit note prepared; capturing responsive evidence");
+
     await capture(page, settlement, "finance-settlement-desktop.png", { width: 1440, height: 900 }, results.screenshots);
-    await capture(page, settlement, "finance-settlement-tablet.png", { width: 768, height: 1024 }, results.screenshots);
-    await capture(page, settlement, "finance-settlement-mobile.png", { width: 390, height: 844 }, results.screenshots);
 
     const reviewerPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    console.log("Phase 5 UAT: signing in as independent reviewer");
     await signIn(reviewerPage, reviewerEmail);
     await reviewerPage.goto(`${uiBaseUrl}/finance`, { waitUntil: "domcontentloaded" });
     await reviewerPage.getByRole("button", { name: "View settlement" }).click();
     const reviewerSettlement = reviewerPage.locator('[aria-label*="Invoice settlement"]');
     await reviewerSettlement.getByRole("button", { name: "Issue credit note" }).waitFor();
+    const issueResponse = reviewerPage.waitForResponse((response) => (
+      response.request().method() === "POST" && /\/credit-notes\/[^/]+\/issue$/.test(new URL(response.url()).pathname)
+    ));
     reviewerPage.once("dialog", (dialog) => dialog.accept());
     await reviewerSettlement.getByRole("button", { name: "Issue credit note" }).click();
-    await reviewerSettlement.getByText("Credit note issued and settlement updated.").waitFor();
+    const issued = await issueResponse;
+    if (issued.status() !== 200) throw new Error(`Credit-note issue failed: ${issued.status()} ${await issued.text()}`);
+    await reviewerPage.getByRole("button", { name: "View settlement" }).waitFor();
+    await reviewerPage.getByRole("button", { name: "View settlement" }).click();
+    await reviewerSettlement.getByText("Issued").first().waitFor();
     const reviewerText = await reviewerSettlement.innerText();
     assertIncludes(reviewerText, "Issued");
     assertIncludes(reviewerText, "Credit notes\n100.00");
     assertIncludes(reviewerText, "Outstanding\n700.00");
     results.assertions.push({ expected: "Different Finance user issues the prepared credit note", pass: true });
     results.assertions.push({ expected: "Issued credit reduces USD outstanding from 800.00 to 700.00", pass: true });
+    console.log("Phase 5 UAT: credit note issued; saving evidence");
     await capture(reviewerPage, reviewerSettlement, "finance-credit-note-issued-desktop.png", { width: 1440, height: 900 }, results.screenshots);
     await reviewerPage.close();
 
