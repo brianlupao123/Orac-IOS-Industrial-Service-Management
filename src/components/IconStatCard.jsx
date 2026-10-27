@@ -70,8 +70,8 @@ export default function IconStatCard({ label, value, iconPath, tone = "neutral",
             <Icon path={iconPath} className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className={`text-base font-semibold leading-snug ${styling.text}`}>{label}</p>
-            <p className={`mt-1 text-xl font-semibold tabular-nums ${styling.label}`}>{value}</p>
+            <p className={`text-lg font-bold leading-snug ${styling.text}`}>{label}</p>
+            <p className={`mt-1 text-2xl font-semibold tabular-nums sm:text-[28px] ${styling.label}`}>{value}</p>
             {subtitle && <p className={`mt-1 text-sm leading-snug ${styling.label}`}>{subtitle}</p>}
           </div>
         </div>
