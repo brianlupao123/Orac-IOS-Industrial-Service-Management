@@ -24,6 +24,17 @@ test("auth fields allow password managers and paste, with labels tied to inputs"
   }
 });
 
+test("searchable role selection announces its purpose and state", () => {
+  const select = read("src/components/SearchableSelect.jsx");
+  const request = read("src/pages/RequestAccess.jsx");
+  assert.match(select, /aria-haspopup="listbox"/);
+  assert.match(select, /aria-expanded=\{open\}/);
+  assert.match(select, /aria-label=\{`Filter \$\{ariaLabel\}`\}/);
+  assert.match(select, /role="option"/);
+  assert.match(request, /id="request-role"/);
+  assert.match(request, /ariaLabel="Requested role"/);
+});
+
 test("the style guide states the hierarchy rule and makes no currency claim", () => {
   const guide = read("STYLE_GUIDE.md");
   assert.match(guide, /name and meaning first, count second/);

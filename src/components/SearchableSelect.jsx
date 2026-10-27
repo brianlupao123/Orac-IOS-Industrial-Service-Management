@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 
 // One reusable searchable dropdown for the whole app. Use this instead of
 // a plain <select> anywhere the option list is more than ~8 items or comes
@@ -14,11 +14,16 @@ export default function SearchableSelect({
   onChange,
   placeholder = "Search...",
   emptyLabel = "No matches",
-  disabled = false
+  disabled = false,
+  id,
+  ariaLabel = placeholder
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const containerRef = useRef(null);
+  const generatedId = useId();
+  const controlId = id || `searchable-select-${generatedId}`;
+  const listboxId = `${controlId}-options`;
 
   const selected = options.find((o) => o.value === value);
 
@@ -44,10 +49,15 @@ export default function SearchableSelect({
   return (
     <div ref={containerRef} className="relative">
       <button
+        id={controlId}
         type="button"
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between rounded border border-gray-300 px-3 py-2 text-sm bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={open ? listboxId : undefined}
+        className="min-h-11 w-full flex items-center justify-between rounded border border-gray-300 px-3 py-2 text-sm bg-white disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span className={selected ? "text-orac-slate" : "text-gray-400"}>
           {selected ? selected.label : placeholder}
@@ -56,12 +66,13 @@ export default function SearchableSelect({
       </button>
 
       {open && (
-        <div className="absolute z-20 mt-1 w-full rounded border border-gray-200 bg-white shadow-lg">
+        <div id={listboxId} role="listbox" aria-label={`${ariaLabel} options`} className="absolute z-20 mt-1 w-full rounded border border-gray-200 bg-white shadow-lg">
           <input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type to filter..."
+            aria-label={`Filter ${ariaLabel}`}
             className="w-full border-b border-gray-100 px-3 py-2 text-sm outline-none"
           />
           <div className="max-h-56 overflow-y-auto">
@@ -72,6 +83,8 @@ export default function SearchableSelect({
               <button
                 key={o.value}
                 type="button"
+                role="option"
+                aria-selected={o.value === value}
                 onClick={() => {
                   onChange(o.value);
                   setOpen(false);

@@ -87,9 +87,11 @@ export default function RequestAccess() {
               required
             />
 
-            <label className="text-xs font-medium text-gray-600 block mb-1">Requested role</label>
+            <p id="request-role-label" className="text-xs font-medium text-gray-600 block mb-1">Requested role</p>
             <div className="mb-3">
               <SearchableSelect
+                id="request-role"
+                ariaLabel="Requested role"
                 options={ROLE_OPTIONS}
                 value={form.requested_role}
                 onChange={(v) => setForm((f) => ({ ...f, requested_role: v }))}
