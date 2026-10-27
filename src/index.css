@@ -13,6 +13,33 @@
    ========================================================================= */
 
 :root {
+  /* Shared type, spacing and component geometry. Keep the values semantic so
+     pages do not each invent their own visual rhythm. */
+  --orac-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --orac-text-caption: 0.75rem;
+  --orac-text-sm: 0.875rem;
+  --orac-text-base: 1rem;
+  --orac-text-lg: 1.125rem;
+  --orac-text-xl: 1.25rem;
+  --orac-text-2xl: 1.5rem;
+  --orac-text-stat: 2.25rem;
+  --orac-space-1: 4px;
+  --orac-space-2: 8px;
+  --orac-space-3: 12px;
+  --orac-space-4: 16px;
+  --orac-space-6: 24px;
+  --orac-space-8: 32px;
+  --orac-space-12: 48px;
+  --orac-radius-control: 8px;
+  --orac-radius-card: 12px;
+  --orac-control-h: 44px;
+  --orac-control-h-compact: 40px;
+  --orac-page-max: 1440px;
+  --orac-gutter: 28px;
+  --orac-shadow-card: 0 1px 2px rgb(11 15 25 / 0.06);
+  --orac-shadow-hover: 0 6px 16px rgb(11 15 25 / 0.10);
+  --orac-motion: 160ms ease-out;
+
   /* Surfaces */
   --orac-canvas: #ffffff;         /* page background */
   --orac-surface: #f8fafc;        /* raised panels, cards, header, table head */
@@ -106,6 +133,31 @@ body {
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 16px;
   line-height: 1.5;
+}
+
+/* Shared visual-system utilities. They complement Tailwind during the
+   migration away from page-specific colour and spacing decisions. */
+.orac-app-shell { background-color: var(--orac-canvas); color: var(--orac-text-primary); }
+.orac-primary-nav {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.orac-primary-nav::-webkit-scrollbar { display: none; }
+.orac-nav-item { min-height: 46px; font-size: var(--orac-text-base); }
+.orac-header-divider { border-left: 1px solid var(--orac-border); }
+.orac-offline-notice {
+  border-bottom: 1px solid var(--orac-warning-border);
+  background: var(--orac-warning-bg);
+  color: var(--orac-warning-text);
+}
+.orac-metric-card {
+  box-shadow: var(--orac-shadow-card);
+  transition: border-color var(--orac-motion), box-shadow var(--orac-motion), transform var(--orac-motion);
+}
+.orac-metric-card:hover { box-shadow: var(--orac-shadow-hover); }
+
+@media (max-width: 767px) {
+  :root { --orac-gutter: 16px; }
 }
 
 /* Operational screens prioritise fast, fatigue-resistant reading. Components

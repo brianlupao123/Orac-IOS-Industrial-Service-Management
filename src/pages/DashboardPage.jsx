@@ -363,6 +363,7 @@ export default function DashboardPage({ user }) {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <IconStatCard
               label={user.role === "Client Viewer" ? "My Organization" : "Total Clients"}
+              labelFirst
               value={stats?.clients}
               iconPath={ICONS.building}
               tone="neutral"
@@ -371,6 +372,7 @@ export default function DashboardPage({ user }) {
             />
             <IconStatCard
               label="Total Quotes"
+              labelFirst
               value={stats?.quotes}
               iconPath={ICONS.clipboard}
               tone="neutral"
@@ -379,6 +381,7 @@ export default function DashboardPage({ user }) {
             />
             <IconStatCard
               label="Dispatches"
+              labelFirst
               value={stats?.dispatches}
               iconPath={ICONS.truck}
               tone="neutral"
@@ -387,6 +390,7 @@ export default function DashboardPage({ user }) {
             />
             <IconStatCard
               label="Invoices"
+              labelFirst
               value={stats?.invoices}
               iconPath={ICONS.money}
               tone="neutral"

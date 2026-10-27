@@ -20,12 +20,12 @@ export default function StatCard({ label, value, tone = "slate", icon, subtitle,
       {...(Component === "button" ? { type: "button" } : {})}
       href={href}
       onClick={onClick}
-      className={`rounded-xl border p-5 shadow-sm ${interactiveClasses} ${TONES[tone] || TONES.slate}`}
+      className={`orac-metric-card rounded-xl border p-5 ${interactiveClasses} ${TONES[tone] || TONES.slate}`}
     >
       <div className="flex items-start justify-between">
         <div className="flex flex-col">
-          <div className="mb-1 text-sm font-semibold text-gray-600">{label}</div>
-          <div className="text-3xl font-semibold sm:text-4xl">
+          <div className="mb-1 text-base font-semibold text-gray-600">{label}</div>
+          <div className="text-2xl font-semibold tabular-nums sm:text-3xl">
             {value === undefined || value === null ? (
               <span className="inline-block h-8 w-16 animate-pulse rounded bg-gray-200/50" />
             ) : (

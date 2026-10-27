@@ -75,7 +75,7 @@ function WorkspaceNavMenu({ group, pathname }) {
         to={item.path}
         end={item.path === "/"}
         className={({ isActive }) =>
-          `inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
+          `orac-nav-item inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
             isActive ? "bg-orac-navy text-white shadow-xs" : "text-gray-600 hover:bg-white hover:text-orac-slate hover:shadow-xs"
           }`
         }
@@ -99,7 +99,7 @@ function WorkspaceNavMenu({ group, pathname }) {
         aria-controls={`primary-nav-${group.id}`}
         onClick={() => setIsOpen((open) => !open)}
         onKeyDown={handleTriggerKeyDown}
-        className={`inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
+        className={`orac-nav-item inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40 ${
           hasActiveItem ? "bg-orac-navy text-white shadow-xs" : "text-gray-600 hover:bg-white hover:text-orac-slate hover:shadow-xs"
         }`}
       >
@@ -191,7 +191,7 @@ export default function PortalLayout({ user, onLogout, children }) {
   }, [mobileMenuOpen]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="orac-app-shell flex min-h-screen flex-col bg-gray-50">
       {/* Keyboard/screen-reader users can jump straight past the repeated
           header and navigation into the page content. */}
       <a
@@ -203,13 +203,13 @@ export default function PortalLayout({ user, onLogout, children }) {
 
       {/* Top header bar — single 72px app bar with brand | nav | account zones */}
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-xs dark:bg-slate-900 dark:border-slate-800">
-        <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 px-4 sm:px-6" style={{ height: "72px" }}>
+        <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 px-4 sm:px-6 lg:px-7" style={{ height: "72px" }}>
           {/* Zone 1: Brand & mobile hamburger */}
           <div className="flex min-w-0 items-center gap-3">
             {/* Mobile menu trigger button */}
             <button
               type="button"
-              className="flex md:hidden items-center justify-center h-11 w-11 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-orac-slate focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40"
+              className="flex lg:hidden items-center justify-center h-11 w-11 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-orac-slate focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40"
               onClick={() => setMobileMenuOpen((open) => !open)}
               aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
               aria-expanded={mobileMenuOpen}
@@ -234,26 +234,19 @@ export default function PortalLayout({ user, onLogout, children }) {
               {/* Inner wave accent */}
               <path d="M18 26 Q21 20 24 26 Q27 32 30 26" fill="none" stroke="#2FA2E3" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
-            <div className="min-w-0 hidden sm:block">
+            <div className="orac-header-divider min-w-0 pl-3 hidden sm:block">
               <div className="truncate text-base font-bold text-orac-slate">ORAC SYSTEMS</div>
               <div className="truncate text-xs font-semibold text-orac-accent">Operational Portal</div>
             </div>
           </div>
 
           {/* Zone 2: Desktop Navigation — stays route-policy-derived */}
-          <nav aria-label="Primary" className="hidden md:flex flex-1 items-center justify-center gap-1.5 overflow-visible bg-gray-50/70 rounded-lg px-2 py-1 mx-4 dark:bg-slate-800/60">
+          <nav aria-label="Primary" className="orac-primary-nav hidden lg:flex min-w-0 flex-1 items-center justify-start gap-1 overflow-x-auto rounded-lg bg-gray-50/70 px-2 py-1 mx-4 dark:bg-slate-800/60">
             {navGroups.map((group) => <WorkspaceNavMenu key={group.id} group={group} pathname={location.pathname} />)}
           </nav>
 
           {/* Zone 3: Status + notifications + profile */}
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            {/* Offline indicator — shown ONLY when offline */}
-            {!isOnline && (
-              <div role="status" aria-live="polite" className="flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800">
-                <span className="h-2 w-2 rounded-full bg-amber-700 animate-pulse" aria-hidden="true" />
-                <span>Offline</span>
-              </div>
-            )}
             {/* Online indicator — hidden on md and below to save space, visible only on large screens */}
             {isOnline && (
               <div className="hidden items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 lg:flex">
@@ -275,9 +268,18 @@ export default function PortalLayout({ user, onLogout, children }) {
         </div>
       </header>
 
+      {!isOnline && (
+        <div role="status" aria-live="polite" className="orac-offline-notice px-4 py-2 text-sm font-medium sm:px-6">
+          <div className="mx-auto flex max-w-[1440px] items-center gap-2">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-amber-700 animate-pulse" aria-hidden="true" />
+            You’re offline. Entries are saved on this device as you work.
+          </div>
+        </div>
+      )}
+
       {/* Mobile navigation drawer — accessible, full labels, no clipping */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div className="fixed inset-0 z-40 lg:hidden">
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-slate-950/20 backdrop-blur-xs transition-opacity"

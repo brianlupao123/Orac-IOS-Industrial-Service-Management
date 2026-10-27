@@ -36,7 +36,7 @@ const TONES = {
 
 // statusFirst: for workflow categories. The status name and its meaning lead; the count is a secondary pill.
 // Leave it off for true quantities (totals, money, hours), which keep the large numeral.
-export default function IconStatCard({ label, value, iconPath, tone = "neutral", subtitle, onClick, evidenceTarget, statusFirst = false }) {
+export default function IconStatCard({ label, value, iconPath, tone = "neutral", subtitle, onClick, evidenceTarget, statusFirst = false, labelFirst = false }) {
   // Zero-value metrics render neutral — never misleadingly tinted.
   const numericValue = Number(value);
   const resolvedTone = (value === 0 || value === "0" || numericValue === 0) ? "neutral" : (tone || "neutral");
@@ -48,7 +48,7 @@ export default function IconStatCard({ label, value, iconPath, tone = "neutral",
       {...(onClick ? { type: "button", onClick } : {})}
       id={evidenceTarget || undefined}
       data-evidence-target={evidenceTarget || undefined}
-      className={`w-full rounded-lg border p-3.5 sm:p-4 text-left shadow-xs transition-colors duration-150 ${styling.card} ${onClick ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/60" : ""}`}
+      className={`orac-metric-card w-full rounded-lg border p-4 sm:p-5 text-left ${styling.card} ${onClick ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/60" : ""}`}
     >
       {statusFirst ? (
         <div className="flex items-start gap-3.5">
@@ -63,6 +63,17 @@ export default function IconStatCard({ label, value, iconPath, tone = "neutral",
             {value}
             <span className="sr-only">{numericValue === 1 ? " record" : " records"}</span>
           </span>
+        </div>
+      ) : labelFirst ? (
+        <div className="flex items-start gap-3.5">
+          <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${styling.chip}`}>
+            <Icon path={iconPath} className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className={`text-base font-semibold leading-snug ${styling.text}`}>{label}</p>
+            <p className={`mt-1 text-xl font-semibold tabular-nums ${styling.label}`}>{value}</p>
+            {subtitle && <p className={`mt-1 text-sm leading-snug ${styling.label}`}>{subtitle}</p>}
+          </div>
         </div>
       ) : (
         <div className="flex items-center gap-3.5">
