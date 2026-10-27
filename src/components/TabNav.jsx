@@ -40,7 +40,7 @@ export default function TabNav({ tabs, activeId, onChange, label = "Sections" })
     <div
       role="tablist"
       aria-label={label}
-      className="flex w-full gap-1 overflow-x-auto rounded-lg border border-orac-border-default bg-orac-surface-muted p-1"
+      className="orac-tab-nav flex w-full gap-1 overflow-x-auto rounded-lg border border-orac-border-default bg-orac-surface-muted p-1"
     >
       {tabs.map((tab, idx) => {
         const selected = tab.id === activeId;

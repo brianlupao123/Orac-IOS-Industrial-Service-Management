@@ -7,6 +7,7 @@ import path from "node:path";
 // account, reads rendered pages, and writes screenshots/evidence outside src.
 const uiBaseUrl = process.env.ORAC_VISUAL_AUDIT_UI_URL || "http://127.0.0.1:5176";
 const financeEmail = process.env.ORAC_VISUAL_AUDIT_EMAIL || "phase5-uat-finance@fixture.invalid";
+const adminEmail = process.env.ORAC_VISUAL_AUDIT_ADMIN_EMAIL || "phase5-uat-admin@fixture.invalid";
 const financePassword = process.env.ORAC_VISUAL_AUDIT_PASSWORD || "OracUAT2026!";
 const runId = new Date().toISOString().replace(/[:.]/g, "-");
 const evidenceDir = path.resolve("evidence", "ui-visual-audit", runId);
@@ -22,23 +23,23 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-async function signIn(page) {
+async function signIn(page, email) {
   await page.goto(`${uiBaseUrl}/login`, { waitUntil: "domcontentloaded" });
-  await page.getByLabel("Email address").fill(financeEmail);
+  await page.getByLabel("Email address").fill(email);
   await page.getByLabel("Password").fill(financePassword);
   await page.getByRole("button", { name: /^sign in$/i }).click();
   await page.waitForURL((url) => !url.pathname.endsWith("/login"), { timeout: 15000 });
 }
 
-async function recordPage(page, viewport, route, heading, results) {
+async function recordPage(page, viewport, route, heading, results, audience) {
   await page.setViewportSize({ width: viewport.width, height: viewport.height });
   await page.goto(`${uiBaseUrl}${route}`, { waitUntil: "domcontentloaded" });
   await page.getByRole("heading", { name: heading }).waitFor();
   // Route headings render before their data requests complete. Wait for the
-  // page-level loading message to disappear so screenshots document the
+  // shared page-loading state to disappear so screenshots document the
   // settled experience rather than an in-flight state.
   await page.waitForFunction(
-    () => !document.body.textContent.includes("Loading finance work..."),
+    () => !document.querySelector('[data-evidence="page-loading-skeleton"]'),
     undefined,
     { timeout: 15000 }
   );
@@ -57,9 +58,10 @@ async function recordPage(page, viewport, route, heading, results) {
   assert(metrics.documentWidth <= metrics.viewportWidth, `${viewport.name} ${route} has horizontal page overflow`);
   assert(metrics.bodyFontSize === "16px", `${viewport.name} ${route} no longer uses the approved 16px base type`);
 
-  const file = path.join(evidenceDir, `${viewport.name}-${route === "/" ? "dashboard" : "finance"}.png`);
+  const pageName = route === "/" ? "dashboard" : route.replace(/^\//, "");
+  const file = path.join(evidenceDir, `${audience}-${viewport.name}-${pageName}.png`);
   await page.screenshot({ path: file, fullPage: true });
-  results.checks.push({ viewport: viewport.name, route, heading, ...metrics, pass: true });
+  results.checks.push({ audience, viewport: viewport.name, route, heading, ...metrics, pass: true });
   results.screenshots.push(file);
 }
 
@@ -68,7 +70,7 @@ async function run() {
   const results = {
     started_at: new Date().toISOString(),
     ui_base_url: uiBaseUrl,
-    fictional_account: financeEmail,
+    fictional_accounts: [financeEmail, adminEmail],
     read_only: true,
     checks: [],
     screenshots: [],
@@ -76,11 +78,18 @@ async function run() {
   };
   const browser = await chromium.launch({ channel: "chrome", headless: true });
   try {
-    const page = await browser.newPage({ viewport: viewports[0] });
-    await signIn(page);
-    for (const viewport of viewports) {
-      await recordPage(page, viewport, "/", "Finance & Invoicing", results);
-      await recordPage(page, viewport, "/finance", "PO & Invoicing", results);
+    const audits = [
+      { audience: "finance", email: financeEmail, pages: [["/", "Finance & Invoicing"], ["/finance", "PO & Invoicing"]] },
+      { audience: "admin", email: adminEmail, pages: [["/admin", "Administration Console"], ["/inventory", "Inventory management"]] }
+    ];
+    for (const audit of audits) {
+      const context = await browser.newContext({ viewport: viewports[0] });
+      const page = await context.newPage();
+      await signIn(page, audit.email);
+      for (const viewport of viewports) {
+        for (const [route, heading] of audit.pages) await recordPage(page, viewport, route, heading, results, audit.audience);
+      }
+      await context.close();
     }
     results.pass = true;
     results.finished_at = new Date().toISOString();

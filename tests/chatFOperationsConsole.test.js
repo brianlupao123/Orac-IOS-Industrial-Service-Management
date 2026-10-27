@@ -12,6 +12,7 @@ test("TabNav implements the WAI-ARIA tabs pattern", () => {
   for (const re of [/role="tablist"/, /role="tab"/, /aria-selected=\{selected\}/, /aria-controls=/, /tabIndex=\{selected \? 0 : -1\}/, /"ArrowRight"/, /"ArrowLeft"/, /"Home"/, /"End"/, /focus-visible:ring/]) {
     assert.match(src, re);
   }
+  assert.match(src, /className="orac-tab-nav flex w-full gap-1 overflow-x-auto/);
 });
 
 test("Administration and Inventory tab workspaces use TabNav with a labelled tabpanel", () => {
