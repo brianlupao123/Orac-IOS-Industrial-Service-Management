@@ -186,9 +186,9 @@ export default function AdminPage({ user }) {
 
         {canManageUsers && (
           <div className="grid gap-4 sm:grid-cols-3">
-            <IconStatCard label="Total Active Users" value={users.filter(u => u.is_active).length} iconPath={ICONS.users} tone="blue" />
-            <IconStatCard label="Registered Clients" value={clients.length} iconPath={ICONS.building} tone="neutral" />
-            <IconStatCard label="System Status" value="Online" iconPath={ICONS.check} tone="green" />
+            <IconStatCard label="Total Active Users" labelFirst value={users.filter(u => u.is_active).length} iconPath={ICONS.users} tone="blue" />
+            <IconStatCard label="Registered Clients" labelFirst value={clients.length} iconPath={ICONS.building} tone="neutral" />
+            <IconStatCard label="System Status" labelFirst value="Online" iconPath={ICONS.check} tone="green" />
           </div>
         )}
       </div>

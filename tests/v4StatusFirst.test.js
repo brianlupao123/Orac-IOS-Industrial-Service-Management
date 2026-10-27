@@ -114,6 +114,19 @@ test("dashboard totals use the purpose-led card treatment", () => {
   assert.match(card, /text-2xl font-semibold tabular-nums sm:text-\[28px\]/);
 });
 
+test("shared StatCard keeps the purpose prominent and the number secondary", () => {
+  const card = read("src/components/StatCard.jsx");
+  assert.match(card, /text-lg font-bold leading-snug/);
+  assert.match(card, /text-2xl font-semibold tabular-nums opacity-75 sm:text-\[28px\]/);
+});
+
+test("administration summary cards use the purpose-led treatment", () => {
+  const page = read("src/pages/AdminPage.jsx");
+  for (const label of ["Total Active Users", "Registered Clients", "System Status"]) {
+    assert.match(page, new RegExp(`<IconStatCard label="${label}" labelFirst`));
+  }
+});
+
 test("currency display on other screens is untouched", () => {
   const client = read("src/pages/ClientPortalPage.jsx");
   assert.match(client, /\(R \{q\.total_amount\}\)/);

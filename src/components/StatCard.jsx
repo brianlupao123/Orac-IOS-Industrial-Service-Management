@@ -24,8 +24,8 @@ export default function StatCard({ label, value, tone = "slate", icon, subtitle,
     >
       <div className="flex items-start justify-between">
         <div className="flex flex-col">
-          <div className="mb-1 text-base font-semibold text-gray-600">{label}</div>
-          <div className="text-2xl font-semibold tabular-nums sm:text-3xl">
+          <div className="mb-1 text-lg font-bold leading-snug">{label}</div>
+          <div className="text-2xl font-semibold tabular-nums opacity-75 sm:text-[28px]">
             {value === undefined || value === null ? (
               <span className="inline-block h-8 w-16 animate-pulse rounded bg-gray-200/50" />
             ) : (
