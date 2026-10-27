@@ -10,6 +10,16 @@ import ClientAcknowledgementPanel from "../components/ClientAcknowledgementPanel
 import { ICONS } from "../components/icons.jsx";
 import { formatMoney, formatDate } from "../lib/format.js";
 
+// Client viewers receive quotations only after Sales has issued them. Keep this
+// explicit rather than assuming every non-Draft state is suitable for a client.
+const CLIENT_VISIBLE_QUOTE_STATUSES = new Set([
+  "Sent",
+  "Approved_Pending_PO",
+  "PO_Verified",
+  "Field_Dispatch",
+  "Invoiced"
+]);
+
 // Server already scopes these collections to the caller's client_id
 // (src/middleware/clientScope.js) — no client-side filtering needed here.
 export default function ClientPortalPage() {
@@ -28,8 +38,8 @@ export default function ClientPortalPage() {
         collections.list("quotes"),
         collections.list("invoices")
       ]);
-      // Defense-in-depth: client viewers only see Sent or later quotes
-      const visibleQuotes = (Array.isArray(q) ? q : []).filter((item) => item.status !== "Draft");
+      // Defense-in-depth: client viewers see only issued quotation states.
+      const visibleQuotes = (Array.isArray(q) ? q : []).filter((item) => CLIENT_VISIBLE_QUOTE_STATUSES.has(item.status));
       setQuotes(visibleQuotes);
       setInvoices(inv);
     } catch (err) {
