@@ -77,18 +77,20 @@ export default function ClientPortalPage() {
 
       {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <IconStatCard label="Total Quotes" value={quotes.length} tone="neutral" iconPath={ICONS.clipboard} />
+        <IconStatCard label="Total Quotes" value={quotes.length} tone="neutral" iconPath={ICONS.clipboard} labelFirst />
         <IconStatCard
           label="Pending Purchase Orders"
           value={pendingPo.length}
           tone={pendingPo.length > 0 ? "amber" : "green"}
           iconPath={ICONS.clock}
+          statusFirst
         />
         <IconStatCard
           label="Unpaid Invoices"
           value={unpaidInvoices.length}
           tone={unpaidInvoices.length > 0 ? "amber" : "green"}
           iconPath={ICONS.money}
+          statusFirst
         />
       </div>
 
@@ -100,7 +102,7 @@ export default function ClientPortalPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column: PO Form + Invoices */}
-        <div className="space-y-6 lg:col-span-1">
+        <div className="min-w-0 space-y-6 lg:col-span-1">
           {pendingPo.length > 0 && (
             <form onSubmit={submitPo} className="rounded-lg border border-amber-200 bg-amber-50 p-5 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/20">
               <h2 className="mb-4 text-sm font-semibold text-amber-900 dark:text-amber-300">Submit Purchase Order</h2>
@@ -194,7 +196,7 @@ export default function ClientPortalPage() {
         </div>
 
         {/* Right Column: Quotes List */}
-        <div className="lg:col-span-2">
+        <div className="min-w-0 lg:col-span-2">
           {loading ? (
             <PageLoadingSkeleton label="Loading your portal" />
           ) : (

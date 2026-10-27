@@ -336,7 +336,7 @@ export default function QuotationsPage({ user }) {
     }
   }
 
-  const buttonClass = "rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50";
+  const buttonClass = "inline-flex min-h-11 items-center justify-center rounded-md border px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50";
 
   return (
     <div className="space-y-6">
@@ -345,7 +345,7 @@ export default function QuotationsPage({ user }) {
         title="Quotations"
         subtitle="Create, edit and send quotations. Once a quote is sent, only Operations, Finance or a different Sales colleague can approve it."
         iconPath={ICONS.document}
-        aside={<button type="button" onClick={() => openCreate()} className="rounded-md border border-orac-blue bg-orac-blue px-3 py-2 text-sm font-semibold text-white hover:brightness-105">New quotation</button>}
+        aside={<button type="button" onClick={() => openCreate()} className="inline-flex min-h-11 items-center justify-center rounded-md border border-orac-blue bg-orac-blue px-3 py-2 text-sm font-semibold text-white hover:brightness-105">New quotation</button>}
       />
 
       {error && <ErrorBanner message={error} />}
@@ -400,7 +400,7 @@ export default function QuotationsPage({ user }) {
                       <button
                         type="button"
                         onClick={() => documents.download("quotes", quote.id)}
-                        className="rounded border border-gray-300 bg-white px-2.5 py-1 text-xs font-semibold text-orac-slate hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                        className="inline-flex min-h-11 items-center justify-center rounded border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-orac-slate hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                       >
                         Download PDF
                       </button>

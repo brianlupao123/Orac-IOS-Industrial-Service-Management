@@ -8,6 +8,8 @@ import path from "node:path";
 const uiBaseUrl = process.env.ORAC_VISUAL_AUDIT_UI_URL || "http://127.0.0.1:5176";
 const financeEmail = process.env.ORAC_VISUAL_AUDIT_EMAIL || "phase5-uat-finance@fixture.invalid";
 const adminEmail = process.env.ORAC_VISUAL_AUDIT_ADMIN_EMAIL || "phase5-uat-admin@fixture.invalid";
+const salesEmail = process.env.ORAC_VISUAL_AUDIT_SALES_EMAIL || "phase5-uat-sales@fixture.invalid";
+const clientEmail = process.env.ORAC_VISUAL_AUDIT_CLIENT_EMAIL || "phase5-uat-client-viewer@fixture.invalid";
 const financePassword = process.env.ORAC_VISUAL_AUDIT_PASSWORD || "OracUAT2026!";
 const runId = new Date().toISOString().replace(/[:.]/g, "-");
 const evidenceDir = path.resolve("evidence", "ui-visual-audit", runId);
@@ -58,6 +60,16 @@ async function recordPage(page, viewport, route, heading, results, audience) {
   assert(metrics.documentWidth <= metrics.viewportWidth, `${viewport.name} ${route} has horizontal page overflow`);
   assert(metrics.bodyFontSize === "16px", `${viewport.name} ${route} no longer uses the approved 16px base type`);
 
+  if (route === "/quotations") {
+    for (const name of ["New quotation", "Download PDF"]) {
+      const button = page.getByRole("button", { name, exact: true }).first();
+      if (await button.count()) {
+        const box = await button.boundingBox();
+        assert(box?.height >= 44, `${viewport.name} ${name} is smaller than the 44px touch target`);
+      }
+    }
+  }
+
   const pageName = route === "/" ? "dashboard" : route.replace(/^\//, "");
   const file = path.join(evidenceDir, `${audience}-${viewport.name}-${pageName}.png`);
   await page.screenshot({ path: file, fullPage: true });
@@ -70,7 +82,7 @@ async function run() {
   const results = {
     started_at: new Date().toISOString(),
     ui_base_url: uiBaseUrl,
-    fictional_accounts: [financeEmail, adminEmail],
+    fictional_accounts: [financeEmail, adminEmail, salesEmail, clientEmail],
     read_only: true,
     checks: [],
     screenshots: [],
@@ -80,7 +92,9 @@ async function run() {
   try {
     const audits = [
       { audience: "finance", email: financeEmail, pages: [["/", "Finance & Invoicing"], ["/finance", "PO & Invoicing"]] },
-      { audience: "admin", email: adminEmail, pages: [["/admin", "Administration Console"], ["/inventory", "Inventory management"]] }
+      { audience: "admin", email: adminEmail, pages: [["/admin", "Administration Console"], ["/inventory", "Inventory management"]] },
+      { audience: "sales", email: salesEmail, pages: [["/quotations", "Quotations"]] },
+      { audience: "client", email: clientEmail, pages: [["/portal", "Client Portal"]] }
     ];
     for (const audit of audits) {
       const context = await browser.newContext({ viewport: viewports[0] });
