@@ -113,7 +113,7 @@ export default function DataTable({
     .filter(({ idx }) => !hiddenColumns.has(idx));
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm" style={{ fontSize: "var(--orac-table-font-size, 14px)" }}>
+    <div className="orac-data-table overflow-hidden rounded-lg border border-gray-100 bg-white" style={{ fontSize: "var(--orac-table-font-size, 14px)" }}>
       {(title || action) && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-50 bg-gray-50/30 px-5 py-4">
           {title && (
@@ -144,13 +144,13 @@ export default function DataTable({
         </div>
       ) : (
         <div
-          className="overflow-x-auto"
+          className="orac-table-scroll overflow-x-auto"
           role="region"
           aria-label={title ? `${title} table` : "Data table"}
           tabIndex={0}
         >
           <table className="w-full text-sm">
-            <thead className="bg-gray-50/50">
+            <thead className="sticky top-0 z-10 bg-gray-50/50">
               <tr className="border-b border-gray-100 text-left text-sm font-semibold text-gray-600">
                 {visibleHeaders.map(({ col, idx, isNumeric }, i) => (
                   <th key={i} scope="col" className={`px-5 py-3.5 whitespace-nowrap ${isNumeric ? "text-right" : ""}`}>

@@ -57,7 +57,7 @@ export default function SearchableSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listboxId : undefined}
-        className="min-h-11 w-full flex items-center justify-between rounded border border-gray-300 px-3 py-2 text-sm bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+        className="orac-control min-h-11 w-full flex items-center justify-between rounded border border-gray-300 px-3 py-2 text-base font-medium bg-white disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span className={selected ? "text-orac-slate" : "text-gray-400"}>
           {selected ? selected.label : placeholder}
@@ -66,14 +66,14 @@ export default function SearchableSelect({
       </button>
 
       {open && (
-        <div id={listboxId} role="listbox" aria-label={`${ariaLabel} options`} className="absolute z-20 mt-1 w-full rounded border border-gray-200 bg-white shadow-lg">
+        <div id={listboxId} role="listbox" aria-label={`${ariaLabel} options`} className="absolute z-20 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
           <input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type to filter..."
             aria-label={`Filter ${ariaLabel}`}
-            className="w-full border-b border-gray-100 px-3 py-2 text-sm outline-none"
+            className="orac-control w-full border-b border-gray-100 px-3 py-2 text-base outline-none"
           />
           <div className="max-h-56 overflow-y-auto">
             {filtered.length === 0 && (
@@ -90,7 +90,7 @@ export default function SearchableSelect({
                   setOpen(false);
                   setQuery("");
                 }}
-                className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
+                className={`block w-full text-left px-3 py-3 text-base hover:bg-gray-50 ${
                   o.value === value ? "bg-orac-blue/10 text-orac-slate font-medium" : "text-gray-700"
                 }`}
               >

@@ -155,6 +155,11 @@ body {
   transition: border-color var(--orac-motion), box-shadow var(--orac-motion), transform var(--orac-motion);
 }
 .orac-metric-card:hover { box-shadow: var(--orac-shadow-hover); }
+.orac-control { min-height: var(--orac-control-h); border-radius: var(--orac-radius-control); }
+.orac-data-table { box-shadow: var(--orac-shadow-card); }
+.orac-data-table thead { background-color: var(--orac-surface); }
+.orac-data-table th { color: var(--orac-text-secondary); }
+.orac-table-scroll { overscroll-behavior-inline: contain; }
 
 @media (max-width: 767px) {
   :root { --orac-gutter: 16px; }

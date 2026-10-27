@@ -55,7 +55,7 @@ export default function TabNav({ tabs, activeId, onChange, label = "Sections" })
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(tab.id)}
             onKeyDown={(e) => handleKeyDown(e, idx)}
-            className={`whitespace-nowrap rounded-md px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-focus-ring ${
+            className={`orac-control whitespace-nowrap rounded-md px-4 text-base font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-focus-ring ${
               selected
                 ? "bg-orac-surface text-orac-accent shadow-sm ring-1 ring-orac-blue/40"
                 : "text-orac-text-secondary hover:bg-orac-surface/70 hover:text-orac-text-primary"
