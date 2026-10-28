@@ -54,7 +54,7 @@ async function recordPage(page, viewport, route, heading, results, audience) {
     assert(!(await page.getByRole("alert").count()), `${viewport.name} ${audience} documents returned an error`);
   }
 
-  if (viewport.name === "nav-900") {
+  if (audience !== "public" && viewport.name === "nav-900") {
     assert(await page.locator(".orac-primary-nav").isVisible(), "900px must retain the labelled top navigation");
     assert(!(await page.locator(".orac-mobile-tabs").isVisible()), "900px must not render the compact bottom tab bar");
   }
@@ -86,7 +86,7 @@ async function recordPage(page, viewport, route, heading, results, audience) {
     }
   }
 
-  const pageName = route === "/" ? "dashboard" : route.replace(/^\//, "");
+  const pageName = route === "/" ? (audience === "public" ? "landing" : "dashboard") : route.replace(/^\//, "");
   const file = path.join(evidenceDir, `${audience}-${viewport.name}-${pageName}.png`);
   await page.screenshot({ path: file, fullPage: true });
   results.checks.push({ audience, viewport: viewport.name, route, heading, ...metrics, pass: true });
@@ -119,6 +119,17 @@ async function run() {
   };
   const browser = await chromium.launch({ channel: "chrome", headless: true });
   try {
+    const publicContext = await browser.newContext({ viewport: viewports[0] });
+    const publicPage = await publicContext.newPage();
+    for (const viewport of viewports) {
+      for (const [route, heading] of [
+        ["/", "Control service work from quote to invoice."],
+        ["/login", "Sign in to your account"],
+        ["/forgot-password", "Reset your password"],
+        ["/request-access", "Request access"]
+      ]) await recordPage(publicPage, viewport, route, heading, results, "public");
+    }
+    await publicContext.close();
     const audits = [
       { audience: "finance", email: financeEmail, pages: [["/", "Finance & Invoicing"], ["/finance", "PO & Invoicing"], ["/reports", "Operational Reports"], ["/documents", "Documents"]] },
       { audience: "admin", email: adminEmail, pages: [["/admin", "Administration Console"], ["/inventory", "Inventory management"], ["/contracts", "Contracts & Maintenance"], ["/monthly-worksheets", "Worksheets"], ["/legacy-history", "Earlier records (read-only)"]] },
