@@ -7,9 +7,9 @@ import { ICONS } from "../components/icons.jsx";
 
 const access = {
   quotes: ["Admin", "Management", "Sales", "Finance", "Operations", "Client Viewer"],
-  purchase_orders: ["Admin", "Management", "Finance", "Operations", "Client Viewer"],
-  dispatch_cards: ["Admin", "Management", "Finance", "Operations", "Supervisor", "Technician"],
-  field_worksheets: ["Admin", "Management", "Operations", "Supervisor", "Technician", "Client Viewer"],
+  purchase_orders: ["Admin", "Management", "Finance", "Operations"],
+  dispatch_cards: ["Admin", "Management", "Operations", "Supervisor", "Technician"],
+  field_worksheets: ["Admin", "Management", "Operations", "Supervisor", "Technician"],
   invoices: ["Admin", "Management", "Finance", "Client Viewer"]
 };
 
@@ -51,5 +51,5 @@ export default function DocumentsPage({ user }) {
 
 function DocumentTable({ type, rows, downloading, onDownload }) {
   const titleField = type === "quotes" ? "quote_number" : type === "purchase_orders" ? "po_reference" : type === "dispatch_cards" ? "dispatch_number" : type === "invoices" ? "invoice_number" : "id";
-  return <section className="border-y border-slate-200 bg-white px-5 py-5"><DataTable title={labels[type]} columns={["Record", "Status", "Document"]} rows={rows} emptyText={`No authorised ${labels[type].toLowerCase()} found.`} renderRow={(row) => <tr key={row.id} className="hover:bg-slate-50"><td className="px-5 py-3 text-sm font-medium text-orac-slate">{row[titleField] || row.id}</td><td className="px-5 py-3 text-sm text-slate-600">{row.status || "-"}</td><td className="px-5 py-3"><button type="button" disabled={downloading === `${type}:${row.id}`} onClick={() => onDownload(type, row.id)} className="rounded-md border border-orac-blue px-3 py-1.5 text-sm font-semibold text-orac-blue hover:bg-sky-50 disabled:opacity-50">{downloading === `${type}:${row.id}` ? "Preparing..." : "Download PDF"}</button></td></tr>} /></section>;
+  return <section className="min-w-0 border-y border-slate-200 bg-white px-5 py-5"><DataTable title={labels[type]} columns={["Record", "Status", "Document"]} rows={rows} emptyText={`No authorised ${labels[type].toLowerCase()} found.`} renderRow={(row) => <tr key={row.id} className="hover:bg-slate-50"><td className="px-5 py-3 text-sm font-medium text-orac-slate">{row[titleField] || row.id}</td><td className="px-5 py-3 text-sm text-slate-600">{row.status || "-"}</td><td className="px-5 py-3"><button type="button" disabled={downloading === `${type}:${row.id}`} onClick={() => onDownload(type, row.id)} className="min-h-11 rounded-md border border-orac-blue px-3 py-2 text-sm font-semibold text-orac-blue hover:bg-sky-50 disabled:opacity-50">{downloading === `${type}:${row.id}` ? "Preparing..." : "Download PDF"}</button></td></tr>} /></section>;
 }

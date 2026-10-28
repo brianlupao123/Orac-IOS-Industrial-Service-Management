@@ -44,11 +44,15 @@ async function recordPage(page, viewport, route, heading, results, audience) {
   // shared page-loading state to disappear so screenshots document the
   // settled experience rather than an in-flight state.
   await page.waitForFunction(
-    () => !document.querySelector('[data-evidence="page-loading-skeleton"]'),
+    () => !document.querySelector('[data-evidence="page-loading-skeleton"], [data-evidence="documents-loading"]'),
     undefined,
     { timeout: 15000 }
   );
   await page.waitForTimeout(150);
+
+  if (route === "/documents") {
+    assert(!(await page.getByRole("alert").count()), `${viewport.name} ${audience} documents returned an error`);
+  }
 
   if (viewport.name === "nav-900") {
     assert(await page.locator(".orac-primary-nav").isVisible(), "900px must retain the labelled top navigation");
@@ -63,8 +67,15 @@ async function recordPage(page, viewport, route, heading, results, audience) {
   assert(metrics.documentWidth <= metrics.viewportWidth, `${viewport.name} ${route} has horizontal page overflow`);
   assert(metrics.bodyFontSize === "16px", `${viewport.name} ${route} no longer uses the approved 16px base type`);
 
-  if (route === "/quotations") {
-    for (const name of ["New quotation", "Download PDF"]) {
+  const touchTargets = {
+    "/quotations": ["New quotation", "Download PDF"],
+    "/documents": ["Download PDF"],
+    "/reports": ["Export CSV"],
+    "/internal-requests": ["My Requests", "Team Inbox", "Refresh"],
+    "/service-requests": ["Refresh"]
+  };
+  if (touchTargets[route]) {
+    for (const name of touchTargets[route]) {
       const button = page.getByRole("button", { name, exact: true }).first();
       if (await button.count()) {
         const box = await button.boundingBox();
@@ -94,10 +105,10 @@ async function run() {
   const browser = await chromium.launch({ channel: "chrome", headless: true });
   try {
     const audits = [
-      { audience: "finance", email: financeEmail, pages: [["/", "Finance & Invoicing"], ["/finance", "PO & Invoicing"]] },
+      { audience: "finance", email: financeEmail, pages: [["/", "Finance & Invoicing"], ["/finance", "PO & Invoicing"], ["/reports", "Operational Reports"], ["/documents", "Documents"]] },
       { audience: "admin", email: adminEmail, pages: [["/admin", "Administration Console"], ["/inventory", "Inventory management"]] },
-      { audience: "sales", email: salesEmail, pages: [["/quotations", "Quotations"]] },
-      { audience: "client", email: clientEmail, pages: [["/portal", "Client Portal"]] },
+      { audience: "sales", email: salesEmail, pages: [["/quotations", "Quotations"], ["/internal-requests", "Internal Requests"], ["/service-requests", "Service Requests"]] },
+      { audience: "client", email: clientEmail, pages: [["/portal", "Client Portal"], ["/documents", "Documents"]] },
       { audience: "operations", email: operationsEmail, pages: [["/worksheets", "Timesheets"], ["/operational-data", "Operational Data"]] },
       { audience: "supervisor", email: supervisorEmail, pages: [["/worksheets", "Timesheets"]] },
       { audience: "technician", email: technicianEmail, pages: [["/worksheets", "Timesheets"]] }

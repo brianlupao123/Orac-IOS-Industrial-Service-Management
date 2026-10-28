@@ -118,7 +118,7 @@ export default function ReportsPage({ user }) {
   }
 
   function evidenceAction(type, id, label = "Download PDF") {
-    return <button type="button" onClick={() => handleEvidenceDownload(type, id)} disabled={!id || Boolean(downloadingId)} className="min-h-9 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-orac-navy hover:bg-gray-50 disabled:opacity-50" aria-label={`${label}: ${id || "record"}`}>
+    return <button type="button" onClick={() => handleEvidenceDownload(type, id)} disabled={!id || Boolean(downloadingId)} className="min-h-11 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-orac-navy hover:bg-gray-50 disabled:opacity-50" aria-label={`${label}: ${id || "record"}`}>
       {downloadingId === id ? "Preparing..." : label}
     </button>;
   }

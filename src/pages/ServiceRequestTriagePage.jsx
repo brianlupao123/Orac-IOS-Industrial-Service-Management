@@ -83,7 +83,7 @@ export default function ServiceRequestTriagePage() {
     }
   }
 
-  const buttonClass = "rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50";
+  const buttonClass = "min-h-11 rounded-md border px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50";
   // Presentation-only accent so an urgent queue can be scanned at a glance; the
   // server's urgency value drives it, nothing here changes behaviour or order.
   const URGENCY_ACCENT = { urgent_downtime: "border-l-4 border-l-red-400", planned_shutdown: "border-l-4 border-l-amber-300", standard: "border-l-4 border-l-transparent" };
@@ -96,11 +96,11 @@ export default function ServiceRequestTriagePage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <label htmlFor="sr-filter" className="text-sm font-medium text-gray-600">Status</label>
-        <select id="sr-filter" value={filter} onChange={(event) => { setFilter(event.target.value); setConfirmId(""); }} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
+        <select id="sr-filter" value={filter} onChange={(event) => { setFilter(event.target.value); setConfirmId(""); }} className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
           <option value="">All requests</option>
           {SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
         </select>
-        <button type="button" onClick={load} disabled={loading} className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-orac-slate hover:bg-gray-50 disabled:opacity-50">Refresh</button>
+        <button type="button" onClick={load} disabled={loading} className="min-h-11 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-orac-slate hover:bg-gray-50 disabled:opacity-50">Refresh</button>
       </div>
 
       {error && <ErrorBanner message={error} />}

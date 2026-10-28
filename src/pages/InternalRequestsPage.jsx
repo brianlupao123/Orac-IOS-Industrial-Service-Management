@@ -112,7 +112,7 @@ export default function InternalRequestsPage({ user }) {
     loadDetail(id);
   }
 
-  const tabClass = (active) => `rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors ${active ? "bg-orac-navy text-white shadow-sm" : "text-gray-600 hover:bg-white hover:text-orac-navy"}`;
+  const tabClass = (active) => `min-h-11 rounded-md px-3.5 py-2 text-sm font-medium transition-colors ${active ? "bg-orac-navy text-white shadow-sm" : "text-gray-600 hover:bg-white hover:text-orac-navy"}`;
 
   return (
     <div className="space-y-6" data-evidence="internal-requests-page">
@@ -130,7 +130,7 @@ export default function InternalRequestsPage({ user }) {
           ) : optionsState.error ? (
             <div className="space-y-3">
               <ErrorBanner message={optionsState.error} />
-              <button type="button" onClick={loadOptions} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-orac-slate hover:bg-gray-50">Try again</button>
+              <button type="button" onClick={loadOptions} className="min-h-11 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-orac-slate hover:bg-gray-50">Try again</button>
             </div>
           ) : (
             <InternalRequestForm options={options} requesterRole={user?.role} onCreate={create} />
@@ -144,11 +144,11 @@ export default function InternalRequestsPage({ user }) {
               {showInbox && <button type="button" aria-pressed={activeTab === "inbox"} onClick={() => setTab("inbox")} className={tabClass(activeTab === "inbox")}>Team Inbox</button>}
             </div>
             <label htmlFor="iwr-filter" className="text-sm font-medium text-gray-600">Status</label>
-            <select id="iwr-filter" value={filter} onChange={(event) => setFilter(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
+            <select id="iwr-filter" value={filter} onChange={(event) => setFilter(event.target.value)} className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
               <option value="">All statuses</option>
               {INTERNAL_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
             </select>
-            <button type="button" onClick={refreshAll} disabled={list.loading} className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-orac-slate hover:bg-gray-50 disabled:opacity-50">Refresh</button>
+            <button type="button" onClick={refreshAll} disabled={list.loading} className="min-h-11 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-orac-slate hover:bg-gray-50 disabled:opacity-50">Refresh</button>
           </div>
 
           {actionError && <ErrorBanner message={actionError} />}
@@ -160,7 +160,7 @@ export default function InternalRequestsPage({ user }) {
             <div className="space-y-3">
               <div data-evidence={list.forbidden ? "forbidden-state" : undefined}><ErrorBanner message={list.error} /></div>
               {!list.forbidden && (
-                <button type="button" onClick={refreshAll} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-orac-slate hover:bg-gray-50">Try again</button>
+                <button type="button" onClick={refreshAll} className="min-h-11 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-orac-slate hover:bg-gray-50">Try again</button>
               )}
             </div>
           ) : list.items.length === 0 ? (
