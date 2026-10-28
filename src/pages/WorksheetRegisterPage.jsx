@@ -103,27 +103,31 @@ export default function WorksheetRegisterPage({ user }) {
   const nameOf = (k) => detail?.roster?.find((r) => r.key === k)?.display_name || k;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:p-6">
+      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-xl font-bold text-orac-slate">Worksheets</h1>
           <p className="max-w-3xl text-sm text-gray-500">
             The monthly register: employees down the rows, dates across, Normal / 1.5 / 2.0 hours. It is <strong>generated automatically from approved Timesheets</strong>, so hours are never typed in again.
             Record the work on a <Link to="/worksheets" className="font-semibold text-orac-cyan underline">Timesheet</Link>.
           </p>
         </div>
-        {canManage && <button onClick={openCreate} className="rounded-md bg-orac-cyan px-4 py-2 text-sm font-semibold text-white hover:opacity-90">Generate Worksheet</button>}
+        {canManage && <button onClick={openCreate} className="min-h-11 self-start rounded-md bg-orac-cyan px-4 py-2 text-sm font-semibold text-white hover:opacity-90 sm:shrink-0">Generate Worksheet</button>}
       </div>
       {error && <div role="alert" className="mb-3 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div>}
       {notice && <div role="status" className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>}
-      {loading && <div className="text-sm text-gray-500">Loading...</div>}
+      {loading && <div data-evidence="worksheet-register-loading" className="text-sm text-gray-500">Loading...</div>}
 
-      {!loading && (
+      {!loading && (items.length === 0 ? (
+        <div className="mb-6 rounded-lg border border-gray-200 bg-white px-5 py-8 text-center">
+          <p className="text-base font-semibold text-orac-slate">No Worksheets yet</p>
+          <p className="mt-1 text-sm text-gray-500">Generated monthly registers will appear here after approved Timesheets are available.</p>
+        </div>
+      ) : (
         <div className="mb-6 overflow-x-auto rounded-lg border border-gray-200 bg-white">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 text-left text-gray-600"><tr><th className="px-4 py-2">Reference</th><th className="px-4 py-2">Period</th><th className="px-4 py-2">Client / project</th><th className="px-4 py-2">Employees</th><th className="px-4 py-2">Total hours</th><th className="px-4 py-2">Exceptions</th><th className="px-4 py-2">Status</th><th className="px-4 py-2"></th></tr></thead>
             <tbody className="divide-y divide-gray-100">
-              {items.length === 0 && <tr><td colSpan={8} className="px-4 py-6 text-center text-gray-400">No Worksheets yet.</td></tr>}
               {items.map((m) => (
                 <tr key={m.id}>
                   <td className="px-4 py-2 font-medium text-gray-800">{m.reference}</td>
@@ -133,13 +137,13 @@ export default function WorksheetRegisterPage({ user }) {
                   <td className="px-4 py-2 text-gray-600">{formatTotal(m.totals.total_hours)}</td>
                   <td className="px-4 py-2 text-xs text-gray-600">{exceptionCountsText(m.exception_counts)}</td>
                   <td className="px-4 py-2"><StatusBadge status={m.status} /></td>
-                  <td className="px-4 py-2"><button onClick={() => openDetail(m.id)} className="text-sm font-semibold text-orac-cyan hover:underline">Open</button></td>
+                  <td className="px-4 py-2"><button onClick={() => openDetail(m.id)} className="min-h-11 rounded-md px-3 text-sm font-semibold text-orac-cyan hover:bg-sky-50 hover:underline">Open</button></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      )}
+      ))}
 
       {detail && (
         <section aria-label="Worksheet detail" className="space-y-5 rounded-lg border border-gray-200 bg-white p-4">
@@ -151,8 +155,8 @@ export default function WorksheetRegisterPage({ user }) {
             </div>
             <div className="flex items-center gap-2">
               <StatusBadge status={detail.status} />
-              <button onClick={() => window.open(`/monthly-worksheets/${detail.id}/print`, "_blank", "noopener")} className="rounded border border-gray-300 px-3 py-1 text-sm font-semibold text-gray-700 hover:bg-gray-50">Print</button>
-              <button onClick={() => setDetail(null)} className="rounded border border-gray-300 px-3 py-1 text-sm text-gray-600 hover:bg-gray-50">Close</button>
+              <button onClick={() => window.open(`/monthly-worksheets/${detail.id}/print`, "_blank", "noopener")} className="min-h-11 rounded border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Print</button>
+              <button onClick={() => setDetail(null)} className="min-h-11 rounded border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">Close</button>
             </div>
           </div>
           <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">{billingNotice(detail)}</p>
@@ -302,16 +306,16 @@ export default function WorksheetRegisterPage({ user }) {
       <Modal title="Generate Worksheet" isOpen={createOpen} onClose={() => setCreateOpen(false)} size="xl">
         <div className="space-y-3 text-sm">
           {formError && <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{formError}</div>}
-          <div className="grid grid-cols-2 gap-3">
-            <label className="col-span-2 font-semibold text-gray-700">Title<input value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} className="mt-1 w-full rounded border border-gray-300 px-2 py-1" /></label>
-            <label className="font-semibold text-gray-700">Period start<input type="date" value={form.period_start} onChange={(e) => setForm((p) => ({ ...p, period_start: e.target.value }))} className="mt-1 w-full rounded border border-gray-300 px-2 py-1" /></label>
-            <label className="font-semibold text-gray-700">Period end<input type="date" value={form.period_end} onChange={(e) => setForm((p) => ({ ...p, period_end: e.target.value }))} className="mt-1 w-full rounded border border-gray-300 px-2 py-1" /></label>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="font-semibold text-gray-700 sm:col-span-2">Title<input value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} className="mt-1 min-h-11 w-full rounded border border-gray-300 px-3 py-2" /></label>
+            <label className="font-semibold text-gray-700">Period start<input type="date" value={form.period_start} onChange={(e) => setForm((p) => ({ ...p, period_start: e.target.value }))} className="mt-1 min-h-11 w-full rounded border border-gray-300 px-3 py-2" /></label>
+            <label className="font-semibold text-gray-700">Period end<input type="date" value={form.period_end} onChange={(e) => setForm((p) => ({ ...p, period_end: e.target.value }))} className="mt-1 min-h-11 w-full rounded border border-gray-300 px-3 py-2" /></label>
             <label className="font-semibold text-gray-700">Client
-              <select value={form.client_id} onChange={(e) => setForm((p) => ({ ...p, client_id: e.target.value }))} className="mt-1 w-full rounded border border-gray-300 px-2 py-1"><option value="">Select a client</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+              <select value={form.client_id} onChange={(e) => setForm((p) => ({ ...p, client_id: e.target.value }))} className="mt-1 min-h-11 w-full rounded border border-gray-300 px-3 py-2"><option value="">Select a client</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
               {clientsNote && <span className="block text-xs font-normal text-amber-800">{clientsNote}</span>}
             </label>
-            <label className="font-semibold text-gray-700">Project / job title<input value={form.project_title} onChange={(e) => setForm((p) => ({ ...p, project_title: e.target.value }))} className="mt-1 w-full rounded border border-gray-300 px-2 py-1" /></label>
-            <label className="col-span-2 font-semibold text-gray-700">Department / section (optional, applies to earlier records only)<input value={form.department_section} onChange={(e) => setForm((p) => ({ ...p, department_section: e.target.value }))} className="mt-1 w-full rounded border border-gray-300 px-2 py-1" /></label>
+            <label className="font-semibold text-gray-700">Project / job title<input value={form.project_title} onChange={(e) => setForm((p) => ({ ...p, project_title: e.target.value }))} className="mt-1 min-h-11 w-full rounded border border-gray-300 px-3 py-2" /></label>
+            <label className="font-semibold text-gray-700 sm:col-span-2">Department / section (optional, applies to earlier records only)<input value={form.department_section} onChange={(e) => setForm((p) => ({ ...p, department_section: e.target.value }))} className="mt-1 min-h-11 w-full rounded border border-gray-300 px-3 py-2" /></label>
           </div>
           <p className="text-xs text-gray-500">Only Timesheets for this client's jobs are included. {HOLIDAY_NOTICE}</p>
           <div>
@@ -326,13 +330,13 @@ export default function WorksheetRegisterPage({ user }) {
                 </label>
               ))}
             </div>
-            <div className="mt-2 flex gap-2"><input value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="Add employee by name (no linked account)" className="flex-1 rounded border border-gray-300 px-2 py-1" /><button onClick={addManual} className="rounded border border-gray-300 px-3 py-1 font-semibold text-gray-700">Add</button></div>
+            <div className="mt-2 flex gap-2"><input value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="Add employee by name (no linked account)" className="min-h-11 min-w-0 flex-1 rounded border border-gray-300 px-3 py-2" /><button onClick={addManual} className="min-h-11 rounded border border-gray-300 px-3 py-2 font-semibold text-gray-700">Add</button></div>
             <div className="mt-2 text-xs text-gray-600">On roster: {form.roster.length ? form.roster.map((r) => r.display_name).join(", ") : "none yet"}</div>
           </div>
           <p className="text-xs text-gray-500">There is no field to type hours or a rate: the Worksheet is generated from approved Timesheets.</p>
           <div className="flex justify-end gap-2 pt-1">
-            <button onClick={() => setCreateOpen(false)} className="rounded border border-gray-300 px-4 py-2 font-semibold text-gray-700">Cancel</button>
-            <button disabled={busy} onClick={handleCreate} className="rounded bg-orac-cyan px-4 py-2 font-semibold text-white disabled:opacity-50">Generate</button>
+            <button onClick={() => setCreateOpen(false)} className="min-h-11 rounded border border-gray-300 px-4 py-2 font-semibold text-gray-700">Cancel</button>
+            <button disabled={busy} onClick={handleCreate} className="min-h-11 rounded bg-orac-cyan px-4 py-2 font-semibold text-white disabled:opacity-50">Generate</button>
           </div>
         </div>
       </Modal>

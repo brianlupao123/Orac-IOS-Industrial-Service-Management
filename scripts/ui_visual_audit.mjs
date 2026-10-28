@@ -39,12 +39,12 @@ async function signIn(page, email) {
 async function recordPage(page, viewport, route, heading, results, audience) {
   await page.setViewportSize({ width: viewport.width, height: viewport.height });
   await page.goto(`${uiBaseUrl}${route}`, { waitUntil: "domcontentloaded" });
-  await page.getByRole("heading", { name: heading }).waitFor();
+  await page.getByRole("heading", { name: heading, exact: true }).waitFor();
   // Route headings render before their data requests complete. Wait for the
   // shared page-loading state to disappear so screenshots document the
   // settled experience rather than an in-flight state.
   await page.waitForFunction(
-    () => !document.querySelector('[data-evidence="page-loading-skeleton"], [data-evidence="documents-loading"]'),
+    () => !document.querySelector('[data-evidence="page-loading-skeleton"], [data-evidence="documents-loading"], [data-evidence="worksheet-register-loading"], [data-evidence="contracts-loading"]'),
     undefined,
     { timeout: 15000 }
   );
@@ -72,7 +72,9 @@ async function recordPage(page, viewport, route, heading, results, audience) {
     "/documents": ["Download PDF"],
     "/reports": ["Export CSV"],
     "/internal-requests": ["My Requests", "Team Inbox", "Refresh"],
-    "/service-requests": ["Refresh"]
+    "/service-requests": ["Refresh"],
+    "/contracts": ["New contract"],
+    "/monthly-worksheets": ["Generate Worksheet"]
   };
   if (touchTargets[route]) {
     for (const name of touchTargets[route]) {
@@ -89,6 +91,19 @@ async function recordPage(page, viewport, route, heading, results, audience) {
   await page.screenshot({ path: file, fullPage: true });
   results.checks.push({ audience, viewport: viewport.name, route, heading, ...metrics, pass: true });
   results.screenshots.push(file);
+
+  if (route === "/monthly-worksheets" && viewport.name === "mobile") {
+    await page.getByRole("button", { name: "Generate Worksheet", exact: true }).click();
+    await page.getByRole("heading", { name: "Generate Worksheet", exact: true }).waitFor();
+    const modal = page.getByRole("heading", { name: "Generate Worksheet", exact: true }).locator("xpath=../..");
+    const bounds = await modal.boundingBox();
+    assert(bounds && bounds.x >= 0 && bounds.x + bounds.width <= viewport.width, "Worksheet form exceeds mobile viewport");
+    const modalFile = path.join(evidenceDir, `${audience}-${viewport.name}-worksheet-form.png`);
+    await page.screenshot({ path: modalFile });
+    results.checks.push({ audience, viewport: viewport.name, route: "/monthly-worksheets/new", heading: "Generate Worksheet", pass: true });
+    results.screenshots.push(modalFile);
+    await page.getByRole("button", { name: "Close dialog" }).click();
+  }
 }
 
 async function run() {
@@ -106,7 +121,7 @@ async function run() {
   try {
     const audits = [
       { audience: "finance", email: financeEmail, pages: [["/", "Finance & Invoicing"], ["/finance", "PO & Invoicing"], ["/reports", "Operational Reports"], ["/documents", "Documents"]] },
-      { audience: "admin", email: adminEmail, pages: [["/admin", "Administration Console"], ["/inventory", "Inventory management"]] },
+      { audience: "admin", email: adminEmail, pages: [["/admin", "Administration Console"], ["/inventory", "Inventory management"], ["/contracts", "Contracts & Maintenance"], ["/monthly-worksheets", "Worksheets"], ["/legacy-history", "Earlier records (read-only)"]] },
       { audience: "sales", email: salesEmail, pages: [["/quotations", "Quotations"], ["/internal-requests", "Internal Requests"], ["/service-requests", "Service Requests"]] },
       { audience: "client", email: clientEmail, pages: [["/portal", "Client Portal"], ["/documents", "Documents"]] },
       { audience: "operations", email: operationsEmail, pages: [["/worksheets", "Timesheets"], ["/operational-data", "Operational Data"]] },

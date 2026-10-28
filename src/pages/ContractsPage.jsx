@@ -18,9 +18,9 @@ import {
   validateScheduleForm
 } from "../contractsModel.js";
 
-const inputClass = "w-full rounded-lg border bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-orac-blue/30 disabled:bg-gray-100";
-const primaryButton = "rounded-lg bg-orac-blue px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orac-blue/90 focus:outline-none focus:ring-2 focus:ring-orac-blue/40 disabled:cursor-not-allowed disabled:opacity-60";
-const secondaryButton = "rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-orac-slate hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orac-blue/30 disabled:cursor-not-allowed disabled:opacity-60";
+const inputClass = "min-h-11 w-full rounded-lg border bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-orac-blue/30 disabled:bg-gray-100";
+const primaryButton = "min-h-11 rounded-lg bg-orac-blue px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orac-blue/90 focus:outline-none focus:ring-2 focus:ring-orac-blue/40 disabled:cursor-not-allowed disabled:opacity-60";
+const secondaryButton = "min-h-11 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-orac-slate hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orac-blue/30 disabled:cursor-not-allowed disabled:opacity-60";
 
 const STATUS_STYLES = {
   Draft: "bg-gray-100 text-gray-700",
