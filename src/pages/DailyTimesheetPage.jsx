@@ -152,7 +152,13 @@ export default function DailyTimesheetPage({ user }) {
       {error && <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700">{error}</div>}
       {loading && <div className="text-sm text-gray-500">Loading...</div>}
 
-      {!loading && (
+      {!loading && items.length === 0 && (
+        <div className="rounded-lg border border-gray-200 bg-white px-6 py-8 text-center text-sm text-orac-secondary dark:bg-transparent">
+          No daily time sheets yet.
+        </div>
+      )}
+
+      {!loading && items.length > 0 && (
         <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 text-left text-sm text-gray-600">
@@ -165,9 +171,6 @@ export default function DailyTimesheetPage({ user }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {items.length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-6 text-center text-gray-400">No daily time sheets yet.</td></tr>
-              )}
               {items.map((item) => (
                 <tr key={item.id}>
                   <td className="px-4 py-2 font-medium text-gray-800">{item.name_on_form}</td>
@@ -176,9 +179,9 @@ export default function DailyTimesheetPage({ user }) {
                   <td className="px-4 py-2"><StatusBadge status={item.status} /></td>
                   <td className="px-4 py-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <button onClick={() => openPrintView(item.id)} className="text-sm font-semibold text-orac-cyan hover:underline">Print</button>
+                      <button onClick={() => openPrintView(item.id)} className="min-h-11 px-2 text-sm font-semibold text-orac-cyan hover:underline">Print</button>
                       {canSubmit && ["Draft", "Returned_For_Correction"].includes(item.status) && (
-                        <button onClick={() => handleSubmitExisting(item.id)} className="text-sm font-semibold text-emerald-700 hover:underline">Submit</button>
+                        <button onClick={() => handleSubmitExisting(item.id)} className="min-h-11 px-2 text-sm font-semibold text-emerald-700 hover:underline">Submit</button>
                       )}
                       {canReview && item.status === "Submitted" && (
                         <>
@@ -186,13 +189,13 @@ export default function DailyTimesheetPage({ user }) {
                             value={comment[item.id] || ""}
                             onChange={(e) => setComment((prev) => ({ ...prev, [item.id]: e.target.value }))}
                             placeholder="Comment (required to return)"
-                            className="w-40 rounded border border-gray-200 px-2 py-1 text-xs"
+                            className="min-h-11 w-40 rounded border border-gray-200 px-2 py-1 text-sm"
                           />
                           <button
                             type="button"
                             disabled={Boolean(reviewingId)}
                             onClick={() => handleReview(item.id, "approve")}
-                            className={`text-sm font-semibold text-emerald-700 hover:underline ${reviewingId ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={`min-h-11 px-2 text-sm font-semibold text-emerald-700 hover:underline ${reviewingId ? "opacity-50 cursor-not-allowed" : ""}`}
                           >
                             Approve
                           </button>
@@ -200,7 +203,7 @@ export default function DailyTimesheetPage({ user }) {
                             type="button"
                             disabled={Boolean(reviewingId)}
                             onClick={() => handleReview(item.id, "return")}
-                            className={`text-sm font-semibold text-red-700 hover:underline ${reviewingId ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={`min-h-11 px-2 text-sm font-semibold text-red-700 hover:underline ${reviewingId ? "opacity-50 cursor-not-allowed" : ""}`}
                           >
                             Return
                           </button>

@@ -126,16 +126,17 @@ async function run() {
         ["/", "Control service work from quote to invoice."],
         ["/login", "Sign in to your account"],
         ["/forgot-password", "Reset your password"],
+        ["/reset-password", "Set a new password"],
         ["/request-access", "Request access"]
       ]) await recordPage(publicPage, viewport, route, heading, results, "public");
     }
     await publicContext.close();
     const audits = [
       { audience: "finance", email: financeEmail, pages: [["/", "Finance & Invoicing"], ["/finance", "PO & Invoicing"], ["/reports", "Operational Reports"], ["/documents", "Documents"]] },
-      { audience: "admin", email: adminEmail, pages: [["/admin", "Administration Console"], ["/inventory", "Inventory management"], ["/contracts", "Contracts & Maintenance"], ["/monthly-worksheets", "Worksheets"], ["/legacy-history", "Earlier records (read-only)"]] },
+      { audience: "admin", email: adminEmail, pages: [["/admin", "Administration Console"], ["/inventory", "Inventory management"], ["/contracts", "Contracts & Maintenance"], ["/monthly-worksheets", "Worksheets"], ["/legacy-history", "Earlier records (read-only)"], ["/daily-timesheets", "Daily Time Sheets (legacy)"], ["/contractor-logs", "Contractor Logs"]] },
       { audience: "sales", email: salesEmail, pages: [["/quotations", "Quotations"], ["/internal-requests", "Internal Requests"], ["/service-requests", "Service Requests"]] },
       { audience: "client", email: clientEmail, pages: [["/portal", "Client Portal"], ["/documents", "Documents"]] },
-      { audience: "operations", email: operationsEmail, pages: [["/worksheets", "Timesheets"], ["/operational-data", "Operational Data"]] },
+      { audience: "operations", email: operationsEmail, pages: [["/worksheets", "Timesheets"], ["/operational-data", "Operational Data"], ["/kiosk", "Kiosk Mode: Crew Time Entry"]] },
       { audience: "supervisor", email: supervisorEmail, pages: [["/worksheets", "Timesheets"]] },
       { audience: "technician", email: technicianEmail, pages: [["/worksheets", "Timesheets"]] }
     ];
