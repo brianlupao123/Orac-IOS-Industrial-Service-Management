@@ -23,7 +23,7 @@ function SearchField({ label, value, onChange, placeholder }) {
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20"
+        className="w-full rounded-lg border border-orac-border-strong bg-orac-surface px-3 py-2 text-sm text-orac-text-primary focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20"
       />
     </label>
   );
@@ -299,7 +299,7 @@ export default function AdminPage({ user }) {
 
         {activeTab === "profile" && canManageProfile && profile && (
           <div className="max-w-2xl mx-auto">
-            <form onSubmit={saveProfile} className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+            <form onSubmit={saveProfile} className="rounded-xl border border-orac-border-default bg-orac-surface p-8 shadow-sm">
               <div className="mb-6">
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold text-orac-blue">Company Identity</h2>
@@ -307,7 +307,7 @@ export default function AdminPage({ user }) {
                     ORAC-owned internal configuration
                   </span>
                 </div>
-                <p className="text-sm text-gray-500">Update your trading name, legal entity, and contact details used on generated documents. This is ORAC's own record, not a client's — it is not part of the Client → Mine Site → Plant → Plant Section → Equipment Tag hierarchy.</p>
+                <p className="text-sm text-orac-text-muted">Update your trading name, legal entity, and contact details used on generated documents. This is ORAC's own record, not a client's — it is not part of the Client → Mine Site → Plant → Plant Section → Equipment Tag hierarchy.</p>
               </div>
               <div className="space-y-5">
                 {[
@@ -318,17 +318,17 @@ export default function AdminPage({ user }) {
                   { key: "email", label: "Contact Email", type: "email" },
                 ].map((field) => (
                   <div key={field.key}>
-                    <label className="mb-1 block text-sm font-semibold text-gray-700">{field.label}</label>
+                    <label className="mb-1 block text-sm font-semibold text-orac-text-primary">{field.label}</label>
                     <input
                       type={field.type || "text"}
                       value={profile[field.key] || ""}
                       onChange={(e) => setProfile({ ...profile, [field.key]: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20 transition-all"
+                      className="w-full rounded-lg border border-orac-border-strong bg-orac-surface px-4 py-2.5 text-sm text-orac-text-primary focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20 transition-all"
                     />
-                    {field.help && <p className="mt-1 text-xs text-gray-500">{field.help}</p>}
+                    {field.help && <p className="mt-1 text-xs text-orac-text-muted">{field.help}</p>}
                   </div>
                 ))}
-                <div className="pt-4 border-t border-gray-100 mt-6">
+                <div className="pt-4 border-t border-orac-border-default mt-6">
                   <button type="submit" disabled={saveBusy} className="w-full rounded-lg bg-gray-900 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-gray-800 disabled:opacity-50">
                     {saveBusy ? "Saving Changes..." : "Save Profile Settings"}
                   </button>

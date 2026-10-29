@@ -127,9 +127,10 @@ test("administration summary cards use the purpose-led treatment", () => {
   }
 });
 
-test("currency display on other screens is untouched", () => {
+test("client PO controls retain the approved USD-only display contract", () => {
   const client = read("src/pages/ClientPortalPage.jsx");
-  assert.match(client, /\(R \{q\.total_amount\}\)/);
-  assert.match(client, /PO Amount \(R\)/);
+  assert.match(client, /\{q\.quote_number \|\| q\.id\} \(\{formatMoney\(q\.total_amount\)\}\)/);
+  assert.match(client, /PO Amount \(USD\)/);
+  assert.doesNotMatch(client, /\(R \{q\.total_amount\}\)|PO Amount \(R\)/);
   assert.match(read("src/pages/ContractsPage.jsx"), /Total value \(USD, optional\)/);
 });

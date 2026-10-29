@@ -126,7 +126,7 @@ export default function ClientPortalPage() {
                   >
                     <option value="">Select quote awaiting PO...</option>
                     {pendingPo.map((q) => (
-                      <option key={q.id} value={q.id}>{q.quote_number || q.id} (USD ${formatMoney(q.total_amount)})</option>
+                      <option key={q.id} value={q.id}>{q.quote_number || q.id} ({formatMoney(q.total_amount)})</option>
                     ))}
                   </select>
                 </div>
@@ -143,7 +143,6 @@ export default function ClientPortalPage() {
                   />
                 </div>
                 <div>
-                  {/* Legacy test contract compatibility: (R {q.total_amount}) PO Amount (R) */}
                   <label htmlFor="client-po-amount" className="mb-1 block text-sm font-medium text-amber-800 dark:text-amber-400">PO Amount (USD)</label>
                   <input
                     id="client-po-amount"

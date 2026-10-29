@@ -45,13 +45,13 @@ const emptyForm = () => ({
 function QuoteEvidenceSummary({ quote, clientName }) {
   const acceptance = quote.amended_po_evidence;
   return (
-    <dl className="mt-4 grid gap-x-4 gap-y-2 border-t border-gray-100 pt-3 text-xs text-gray-600 sm:grid-cols-2" data-evidence="quote-summary">
-      <div><dt className="font-medium text-gray-700">Quote record</dt><dd>{quote.id}</dd></div>
-      <div><dt className="font-medium text-gray-700">Client record</dt><dd>{clientName(quote.client_id)}</dd></div>
-      {quote.revision_of_quote_id && <div><dt className="font-medium text-gray-700">Revision of</dt><dd>{quote.revision_of_quote_id}</dd></div>}
-      {acceptance && <div><dt className="font-medium text-gray-700">Client acceptance evidence</dt><dd>{acceptance.evidence_reference || "Reference not recorded"}{acceptance.accepted_on ? ` on ${acceptance.accepted_on}` : ""}</dd></div>}
-      {quote.commercial_acceptance_status && <div><dt className="font-medium text-gray-700">Commercial state</dt><dd>{quote.commercial_acceptance_status.replaceAll("_", " ")}</dd></div>}
-      {!quote.revision_of_quote_id && !acceptance && !quote.commercial_acceptance_status && <div><dt className="font-medium text-gray-700">Evidence position</dt><dd>No revision or client-acceptance evidence recorded on this quote.</dd></div>}
+    <dl className="mt-4 grid gap-x-4 gap-y-2 border-t border-orac-border-default pt-3 text-xs text-orac-text-secondary sm:grid-cols-2" data-evidence="quote-summary">
+      <div><dt className="font-medium text-orac-text-primary">Quote record</dt><dd>{quote.id}</dd></div>
+      <div><dt className="font-medium text-orac-text-primary">Client record</dt><dd>{clientName(quote.client_id)}</dd></div>
+      {quote.revision_of_quote_id && <div><dt className="font-medium text-orac-text-primary">Revision of</dt><dd>{quote.revision_of_quote_id}</dd></div>}
+      {acceptance && <div><dt className="font-medium text-orac-text-primary">Client acceptance evidence</dt><dd>{acceptance.evidence_reference || "Reference not recorded"}{acceptance.accepted_on ? ` on ${acceptance.accepted_on}` : ""}</dd></div>}
+      {quote.commercial_acceptance_status && <div><dt className="font-medium text-orac-text-primary">Commercial state</dt><dd>{quote.commercial_acceptance_status.replaceAll("_", " ")}</dd></div>}
+      {!quote.revision_of_quote_id && !acceptance && !quote.commercial_acceptance_status && <div><dt className="font-medium text-orac-text-primary">Evidence position</dt><dd>No revision or client-acceptance evidence recorded on this quote.</dd></div>}
     </dl>
   );
 }
@@ -353,14 +353,14 @@ export default function QuotationsPage({ user }) {
       {notice && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</p>}
 
       {openLeads.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-base font-semibold text-gray-700">Leads ready to quote</h2>
+        <div className="rounded-lg border border-orac-border-default bg-orac-surface p-5 shadow-sm">
+          <h2 className="text-base font-semibold text-orac-text-primary">Leads ready to quote</h2>
           <ul className="mt-3 space-y-2">
             {openLeads.map((lead) => (
-              <li key={lead.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-gray-100 px-3 py-2">
+              <li key={lead.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-orac-border-default bg-orac-surface-muted px-3 py-2">
                 <div>
                   <p className="text-sm font-medium text-orac-slate">{lead.company_name || clientName(lead.client_id)}</p>
-                  <p className="text-sm text-gray-600">{lead.service_need}</p>
+                  <p className="text-sm text-orac-text-secondary">{lead.service_need}</p>
                 </div>
                 <button type="button" onClick={() => openCreate(lead)} className={`${buttonClass} border-orac-blue text-orac-blue hover:bg-sky-50`}>Draft a quote</button>
               </li>
@@ -373,7 +373,7 @@ export default function QuotationsPage({ user }) {
         <PageLoadingSkeleton label="Loading quotations" />
       ) : quoteList.length === 0 ? (
         !error && (
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="rounded-lg border border-orac-border-default bg-orac-surface shadow-sm">
             <PageEmptyState iconPath={ICONS.document} title="No quotations yet" subtitle="Create a quotation to start the client-to-invoice flow, or draft one from a lead above." />
           </div>
         )
@@ -390,11 +390,11 @@ export default function QuotationsPage({ user }) {
               const showApprove = canApproveQuote(quote, user);
               const showDispatch = canDispatchQuote(quote, user);
               return (
-                <li key={quote.id} className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+                <li key={quote.id} className="rounded-lg border border-orac-border-default bg-orac-surface p-5 shadow-sm">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h2 className="text-base font-semibold text-orac-slate">{quote.quote_number || quote.id}</h2>
-                      <p className="text-sm text-gray-600">{clientName(quote.client_id)} · {lines.length} line{lines.length === 1 ? "" : "s"} · USD {formatAmount(quote.total_amount ?? total)}</p>
+                      <p className="text-sm text-orac-text-secondary">{clientName(quote.client_id)} · {lines.length} line{lines.length === 1 ? "" : "s"} · USD {formatAmount(quote.total_amount ?? total)}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -410,7 +410,7 @@ export default function QuotationsPage({ user }) {
                   <QuoteEvidenceSummary quote={quote} clientName={clientName} />
 
                   {(actions.canEdit || actions.canSend || actions.canCancel || showApprove || showDispatch) && (
-                    <div className="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-4">
+                    <div className="mt-4 flex flex-wrap gap-2 border-t border-orac-border-default pt-4">
                       {actions.canEdit && (
                         <button type="button" disabled={busy} onClick={() => openEdit(quote)} className={`${buttonClass} border-gray-300 text-orac-slate hover:bg-gray-50`}>Edit</button>
                       )}

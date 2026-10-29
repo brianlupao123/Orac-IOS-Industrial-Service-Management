@@ -186,8 +186,8 @@ export default function WorksheetsPage({ user }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl mb-2">Timesheets</h1>
-          <p className="text-sm text-gray-500 max-w-3xl leading-relaxed">
+          <h1 className="text-2xl font-semibold text-orac-text-primary sm:text-3xl mb-2">Timesheets</h1>
+          <p className="text-sm text-orac-text-secondary max-w-3xl leading-relaxed">
             <strong>Timesheets</strong> record skilled labour, hours, field activity and outcomes against a dispatch card.
             The technical system record remains a field worksheet. The client representative acknowledges a submitted timesheet first, then an ORAC Supervisor reviews and approves it.
             This is separate from an <strong>Internal Request</strong>, which only coordinates between teams and never logs field hours.
@@ -215,7 +215,7 @@ export default function WorksheetsPage({ user }) {
       <TimesheetOutboxPanel user={user} refreshKey={outboxKey} onSynced={load} />
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2 pb-2 border-b border-gray-100">
+      <div className="flex flex-wrap gap-2 pb-2 border-b border-orac-border-default">
         {[["all", "All Timesheets"], ["Draft", "Draft"], ["Submitted", "Awaiting client"], ["Client_Acknowledged", "Awaiting Supervisor"], ["Supervisor_Approved", "Approved"], ["Returned_For_Correction", "Returned"]].map(([key, label]) => (
           <button
             key={key}
@@ -223,7 +223,7 @@ export default function WorksheetsPage({ user }) {
             className={`min-h-[44px] rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
               filter === key 
                 ? "bg-gray-900 text-white shadow-md" 
-                : "bg-gray-100/50 text-gray-600 hover:bg-gray-200/80"
+                : "bg-orac-surface-muted text-orac-text-secondary hover:bg-orac-surface"
             }`}
           >
             {label}
@@ -234,7 +234,7 @@ export default function WorksheetsPage({ user }) {
             aria-label="Filter timesheets by trade"
             value={tradeFilter}
             onChange={(event) => setTradeFilter(event.target.value)}
-            className="ml-auto min-h-11 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-600"
+            className="ml-auto min-h-11 rounded-full border border-orac-border-default bg-orac-surface px-3 py-1.5 text-sm font-semibold text-orac-text-secondary"
           >
             <option value="all">All trades</option>
             {tradeOptions.map((trade) => <option key={trade} value={trade}>{trade}</option>)}
@@ -256,12 +256,12 @@ export default function WorksheetsPage({ user }) {
       {loading ? (
         <PageLoadingSkeleton label="Loading timesheets" />
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-gray-100 bg-white px-4 py-16 flex flex-col items-center justify-center shadow-sm">
-          <div className="h-12 w-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-4">
+        <div className="rounded-xl border border-orac-border-default bg-orac-surface px-4 py-16 flex flex-col items-center justify-center shadow-sm">
+          <div className="h-12 w-12 rounded-full bg-orac-surface-muted flex items-center justify-center text-orac-text-muted mb-4">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           </div>
-          <p className="text-sm font-medium text-gray-500">No timesheets found.</p>
-          <p className="mt-1 text-xs text-gray-400">Adjust your filters or create a new timesheet from a dispatch card.</p>
+          <p className="text-sm font-medium text-orac-text-muted">No timesheets found.</p>
+          <p className="mt-1 text-xs text-orac-text-muted">Adjust your filters or create a new timesheet from a dispatch card.</p>
           {canSubmit && (
             <button
               onClick={openCreate}
@@ -274,14 +274,14 @@ export default function WorksheetsPage({ user }) {
       ) : (
         <div className="space-y-4">
           {filtered.map((ws) => (
-            <div key={ws.id} className="group rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:shadow-md hover:border-gray-200">
+            <div key={ws.id} className="group rounded-xl border border-orac-border-default bg-orac-surface p-5 shadow-sm transition-all hover:shadow-md hover:border-orac-accent">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="font-semibold text-gray-900 text-lg">{ws.activity || "Timesheet"}</span>
+                    <span className="font-semibold text-orac-text-primary text-lg">{ws.activity || "Timesheet"}</span>
                     <StatusPill status={ws.status} />
                   </div>
-                  <div data-evidence="timesheet-record-context" className="flex items-center gap-3 text-xs text-gray-500 mb-2">
+                  <div data-evidence="timesheet-record-context" className="flex items-center gap-3 text-xs text-orac-text-muted mb-2">
                     <span>Timesheet {ws.id}</span>
                     {canAccessRoute(user.role, "/job-cards") ? (
                       <Link to={`/job-cards/${encodeURIComponent(ws.dispatch_card_id)}`} className="text-orac-blue hover:underline">
