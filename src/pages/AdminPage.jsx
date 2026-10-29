@@ -328,6 +328,62 @@ export default function AdminPage({ user }) {
                     {field.help && <p className="mt-1 text-xs text-orac-text-muted">{field.help}</p>}
                   </div>
                 ))}
+                <section className="space-y-4 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/20" aria-labelledby="quotation-tax-heading">
+                  <div>
+                    <h3 id="quotation-tax-heading" className="text-sm font-semibold text-orac-text-primary">Controlled quotation tax</h3>
+                    <p className="mt-1 text-xs text-orac-text-muted">Only an approved configuration is used when production tax controls are enabled. Sales-entered tax values are ignored by the server. Record the accountant approval reference before marking this configuration approved.</p>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="quotation-tax-status" className="mb-1 block text-sm font-semibold text-orac-text-primary">Tax treatment</label>
+                      <select
+                        id="quotation-tax-status"
+                        value={profile.quotation_tax_configuration?.tax_status || "taxable"}
+                        onChange={(e) => setProfile({ ...profile, quotation_tax_configuration: { ...(profile.quotation_tax_configuration || {}), tax_status: e.target.value } })}
+                        className="w-full rounded-lg border border-orac-border-strong bg-orac-surface px-4 py-2.5 text-sm text-orac-text-primary focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20"
+                      >
+                        <option value="taxable">Taxable</option>
+                        <option value="zero-rated">Zero-rated</option>
+                        <option value="exempt">Exempt</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="quotation-tax-rate" className="mb-1 block text-sm font-semibold text-orac-text-primary">Applied tax rate (%)</label>
+                      <input
+                        id="quotation-tax-rate"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.001"
+                        value={profile.quotation_tax_configuration?.applied_tax_rate == null ? "" : Number(profile.quotation_tax_configuration.applied_tax_rate) * 100}
+                        onChange={(e) => {
+                          const rawRate = e.target.value;
+                          setProfile({ ...profile, quotation_tax_configuration: { ...(profile.quotation_tax_configuration || {}), applied_tax_rate: rawRate === "" ? null : Number(rawRate) / 100 } });
+                        }}
+                        className="w-full rounded-lg border border-orac-border-strong bg-orac-surface px-4 py-2.5 text-sm text-orac-text-primary focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="quotation-tax-approval-reference" className="mb-1 block text-sm font-semibold text-orac-text-primary">Accountant approval reference</label>
+                    <input
+                      id="quotation-tax-approval-reference"
+                      value={profile.quotation_tax_configuration?.approval_reference || ""}
+                      onChange={(e) => setProfile({ ...profile, quotation_tax_configuration: { ...(profile.quotation_tax_configuration || {}), approval_reference: e.target.value } })}
+                      className="w-full rounded-lg border border-orac-border-strong bg-orac-surface px-4 py-2.5 text-sm text-orac-text-primary focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20"
+                      placeholder="Accountant sign-off or policy reference"
+                    />
+                  </div>
+                  <label className="flex items-start gap-3 text-sm text-orac-text-primary">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(profile.quotation_tax_configuration?.approved)}
+                      onChange={(e) => setProfile({ ...profile, quotation_tax_configuration: { ...(profile.quotation_tax_configuration || {}), approved: e.target.checked } })}
+                      className="mt-0.5 h-4 w-4 rounded border-orac-border-strong text-orac-blue focus:ring-orac-blue"
+                    />
+                    <span>I confirm this is an accountant-approved production quotation tax configuration.</span>
+                  </label>
+                </section>
                 <div className="pt-4 border-t border-orac-border-default mt-6">
                   <button type="submit" disabled={saveBusy} className="w-full rounded-lg bg-gray-900 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-gray-800 disabled:opacity-50">
                     {saveBusy ? "Saving Changes..." : "Save Profile Settings"}

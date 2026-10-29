@@ -532,8 +532,8 @@ export default function QuotationsPage({ user }) {
                 onChange={(e) => setForm((cur) => ({ ...cur, tax_status: e.target.value }))}
                 className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs"
               >
-                <option value="provisional">Provisional (15%)</option>
-                <option value="taxable">Taxable (15%)</option>
+                <option value="provisional">Provisional development fixture (15%)</option>
+                <option value="taxable" disabled>Taxable (rate set by approved company configuration)</option>
                 <option value="zero-rated">Zero-Rated (0%)</option>
                 <option value="exempt">Exempt (0%)</option>
                 <option value="unconfigured">Unconfigured</option>
@@ -699,7 +699,12 @@ export default function QuotationsPage({ user }) {
                     )}
                     <div className="flex justify-between text-gray-600">
                       <span>
-                        VAT {form.tax_status === "provisional" ? "(15% Provisional)" : form.tax_status === "taxable" ? "(15%)" : form.tax_status === "zero-rated" ? "(Zero-Rated)" : form.tax_status === "exempt" ? "(Exempt)" : "(Unconfigured)"}:
+                        VAT {form.tax_status === "provisional"
+                          ? "(15% provisional development fixture)"
+                          : form.tax_status === "taxable"
+                            ? "(approved company configuration)"
+                            : form.tax_status === "zero-rated" ? "(Zero-Rated)"
+                              : form.tax_status === "exempt" ? "(Exempt)" : "(Unconfigured)"}:
                       </span>
                       <span className="font-medium text-gray-800">{formatUSD(breakdown.tax)}</span>
                     </div>
