@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { assistant, collections, documents, quotes as quotesApi } from "../api/client.js";
+import { admin, assistant, collections, documents, quotes as quotesApi } from "../api/client.js";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import Modal from "../components/Modal.jsx";
 import RecordAnalysisModal from "../components/RecordAnalysisModal.jsx";
@@ -61,6 +61,7 @@ export default function QuotationsPage({ user }) {
   const [lineItems, setLineItems] = useState([]);
   const [leads, setLeads] = useState([]);
   const [clients, setClients] = useState([]);
+  const [companyProfile, setCompanyProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -80,6 +81,9 @@ export default function QuotationsPage({ user }) {
   const [analysis, setAnalysis] = useState(null);
   const [analysisError, setAnalysisError] = useState("");
   const [analysisBusyId, setAnalysisBusyId] = useState("");
+  const [approvalExceptionQuote, setApprovalExceptionQuote] = useState(null);
+  const [approvalExceptionReason, setApprovalExceptionReason] = useState("");
+  const [approvalExceptionError, setApprovalExceptionError] = useState("");
   const v5Visible = v5CommercialEnabled() && ["Sales", "Admin"].includes(user.role);
   const analysisVisible = recordAnalysisVisible();
 
@@ -87,16 +91,18 @@ export default function QuotationsPage({ user }) {
     setLoading(true);
     setError("");
     try {
-      const [quotesData, linesData, leadsData, clientsData] = await Promise.all([
+      const [quotesData, linesData, leadsData, clientsData, profileData] = await Promise.all([
         collections.list("quotes"),
         collections.list("quote_lines"),
         collections.list("leads").catch(() => []),
-        collections.list("clients")
+        collections.list("clients"),
+        admin.getCompanyProfile().catch(() => null)
       ]);
       setQuoteList(Array.isArray(quotesData) ? quotesData : []);
       setLineItems(Array.isArray(linesData) ? linesData : []);
       setLeads(Array.isArray(leadsData) ? leadsData : []);
       setClients(Array.isArray(clientsData) ? clientsData : []);
+      setCompanyProfile(profileData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -108,6 +114,21 @@ export default function QuotationsPage({ user }) {
 
   const clientName = useCallback((clientId) => clients.find((c) => c.id === clientId)?.name || clientId || "\u2014", [clients]);
   const linesFor = useCallback((quoteId) => lineItems.filter((line) => line.quotation_id === quoteId), [lineItems]);
+  const quoteTaxPreview = useMemo(() => {
+    const configuration = companyProfile?.quotation_tax_configuration;
+    if (configuration?.approved) {
+      return {
+        status: configuration.tax_status,
+        rate: configuration.applied_tax_rate,
+        approved: true
+      };
+    }
+    return {
+      status: form.tax_status || "provisional",
+      rate: form.applied_tax_rate,
+      approved: false
+    };
+  }, [companyProfile, form.applied_tax_rate, form.tax_status]);
 
   // A lead is a starting point for a new quote only while nothing here can
   // tell it has already been quoted (the backend has no lead_id on a quote -
@@ -293,12 +314,16 @@ export default function QuotationsPage({ user }) {
     }
   }
 
-  async function approveQuote(quote) {
+  async function approveQuote(quote, approvalExceptionReason = "") {
     setBusyId(quote.id);
     setError("");
     setNotice("");
     try {
-      await quotesApi.transition(quote.id, "Approved_Pending_PO");
+      if (approvalExceptionReason) {
+        await quotesApi.transition(quote.id, "Approved_Pending_PO", { approval_exception_reason: approvalExceptionReason });
+      } else {
+        await quotesApi.transition(quote.id, "Approved_Pending_PO");
+      }
       setNotice(`${quote.quote_number || quote.id} was approved.`);
       await load();
     } catch (err) {
@@ -306,6 +331,28 @@ export default function QuotationsPage({ user }) {
     } finally {
       setBusyId("");
     }
+  }
+
+  function requestApproval(quote) {
+    if (user.role === "Admin" && quote.sent_by === user.id) {
+      setApprovalExceptionQuote(quote);
+      setApprovalExceptionReason("");
+      setApprovalExceptionError("");
+      return;
+    }
+    approveQuote(quote);
+  }
+
+  async function submitApprovalException(event) {
+    event.preventDefault();
+    const reason = approvalExceptionReason.trim();
+    if (reason.length < 10) {
+      setApprovalExceptionError("Record why Sales could not complete this approval (at least 10 characters).");
+      return;
+    }
+    const quote = approvalExceptionQuote;
+    setApprovalExceptionQuote(null);
+    await approveQuote(quote, reason);
   }
 
   
@@ -424,7 +471,7 @@ export default function QuotationsPage({ user }) {
                         <button type="button" disabled={busy} onClick={() => dispatchQuote(quote)} className={`${buttonClass} border-orac-blue bg-orac-blue text-white hover:brightness-105`}>{busy ? "Working..." : "Dispatch to field"}</button>
                       )}
                       {showApprove && (
-                        <button type="button" disabled={busy} onClick={() => approveQuote(quote)} className={`${buttonClass} border-emerald-300 text-emerald-800 hover:bg-emerald-50`}>{busy ? "Working..." : "Approve"}</button>
+                        <button type="button" disabled={busy} onClick={() => requestApproval(quote)} className={`${buttonClass} border-emerald-300 text-emerald-800 hover:bg-emerald-50`}>{busy ? "Working..." : "Approve"}</button>
                       )}
                       {v5Visible && quote.status !== "Cancelled" && (
                         <button type="button" disabled={busy} onClick={() => openRevision(quote)} className={`${buttonClass} border-orac-blue text-orac-blue hover:bg-sky-50`}>Revise quotation</button>
@@ -528,8 +575,9 @@ export default function QuotationsPage({ user }) {
               <label htmlFor="quote-tax" className="mb-1 block text-xs font-medium text-gray-600">Tax treatment</label>
               <select
                 id="quote-tax"
-                value={form.tax_status || "provisional"}
+                value={quoteTaxPreview.status}
                 onChange={(e) => setForm((cur) => ({ ...cur, tax_status: e.target.value }))}
+                disabled={quoteTaxPreview.approved}
                 className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs"
               >
                 <option value="provisional">Provisional development fixture (15%)</option>
@@ -541,9 +589,13 @@ export default function QuotationsPage({ user }) {
             </div>
           </div>
 
-          {form.tax_status === "provisional" && (
+          {quoteTaxPreview.approved ? (
+            <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs text-sky-900">
+              <span className="font-semibold">Controlled tax preview:</span> using the current approved company configuration. The server recalculates it immediately before issue.
+            </div>
+          ) : (
             <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
-              <span className="font-semibold">Notice:</span> {PROVISIONAL_VAT_NOTICE}
+              <span className="font-semibold">Indicative preview only:</span> {PROVISIONAL_VAT_NOTICE} The server determines the controlled tax treatment before issue.
             </div>
           )}
 
@@ -676,7 +728,7 @@ export default function QuotationsPage({ user }) {
 
             {/* Commercial Breakdown Summary */}
             {(() => {
-              const breakdown = calculateQuoteBreakdown(form.lines, form.discount_percent, form.tax_status, form.applied_tax_rate);
+              const breakdown = calculateQuoteBreakdown(form.lines, form.discount_percent, quoteTaxPreview.status, quoteTaxPreview.rate);
               const requiresMgmt = breakdown.grandTotal > 5000 || Number(form.discount_percent) > 0;
               return (
                 <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
@@ -699,12 +751,12 @@ export default function QuotationsPage({ user }) {
                     )}
                     <div className="flex justify-between text-gray-600">
                       <span>
-                        VAT {form.tax_status === "provisional"
+                        VAT {quoteTaxPreview.status === "provisional"
                           ? "(15% provisional development fixture)"
-                          : form.tax_status === "taxable"
+                          : quoteTaxPreview.status === "taxable"
                             ? "(approved company configuration)"
-                            : form.tax_status === "zero-rated" ? "(Zero-Rated)"
-                              : form.tax_status === "exempt" ? "(Exempt)" : "(Unconfigured)"}:
+                            : quoteTaxPreview.status === "zero-rated" ? "(Zero-Rated)"
+                              : quoteTaxPreview.status === "exempt" ? "(Exempt)" : "(Unconfigured)"}:
                       </span>
                       <span className="font-medium text-gray-800">{formatUSD(breakdown.tax)}</span>
                     </div>
@@ -726,6 +778,21 @@ export default function QuotationsPage({ user }) {
           <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
             <button type="button" onClick={closeModal} className={`${buttonClass} border-gray-300 text-orac-slate hover:bg-gray-50`}>Cancel</button>
             <button type="submit" disabled={saving} className={`${buttonClass} border-orac-blue bg-orac-blue text-white hover:brightness-105`}>{saving ? "Saving..." : modalMode === "create" ? "Create draft" : "Save changes"}</button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal title="Record Admin fallback approval" isOpen={Boolean(approvalExceptionQuote)} onClose={() => setApprovalExceptionQuote(null)}>
+        <form onSubmit={submitApprovalException} className="space-y-4">
+          <p className="text-sm text-orac-text-secondary">Use this exception only when Sales cannot complete the approval. Your reason is retained in the quotation audit trail.</p>
+          {approvalExceptionError && <ErrorBanner message={approvalExceptionError} />}
+          <div>
+            <label htmlFor="approval-exception-reason" className="mb-1 block text-sm font-medium text-orac-text-primary">Fallback reason</label>
+            <textarea id="approval-exception-reason" required minLength="10" rows="4" value={approvalExceptionReason} onChange={(event) => setApprovalExceptionReason(event.target.value)} className="w-full rounded-md border border-orac-border-strong bg-orac-surface px-3 py-2 text-sm text-orac-text-primary" placeholder="Why cannot Sales complete the approval?" />
+          </div>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setApprovalExceptionQuote(null)} className={`${buttonClass} border-gray-300 text-orac-slate hover:bg-gray-50`}>Cancel</button>
+            <button type="submit" className={`${buttonClass} border-emerald-300 bg-emerald-500 text-white hover:brightness-105`}>Approve with recorded fallback</button>
           </div>
         </form>
       </Modal>
