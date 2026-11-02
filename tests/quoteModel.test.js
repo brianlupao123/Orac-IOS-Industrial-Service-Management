@@ -60,7 +60,7 @@ test("a Sales actor cannot approve the quote they personally sent, mirroring the
   assert.equal(canApproveQuote(sentQuote, { id: "u_sales_1", role: "Sales" }), false, "same Sales sender is blocked");
   assert.equal(canApproveQuote(sentQuote, { id: "u_sales_2", role: "Sales" }), true, "a different Sales colleague can approve");
   assert.equal(canApproveQuote(sentQuote, { id: "u_sales_1", role: "Admin" }), true, "Admin approving is never blocked by this rule");
-  assert.equal(canApproveQuote(sentQuote, { id: "u_sales_1", role: "Operations" }), true, "Operations approving is never blocked by this rule");
+  assert.equal(canApproveQuote(sentQuote, { id: "u_sales_1", role: "Operations" }), false, "Operations has no quotation approval authority");
   assert.equal(canApproveQuote({ status: "Sent" }, { id: "u_sales_1", role: "Sales" }), true, "a legacy quote with no recorded sent_by is not blocked");
   assert.equal(canApproveQuote({ status: "Draft", sent_by: "u_sales_1" }, { id: "u_sales_1", role: "Sales" }), false, "only a Sent quote can be approved at all");
   assert.equal(canApproveQuote(sentQuote, null), false, "no actor means no approval");

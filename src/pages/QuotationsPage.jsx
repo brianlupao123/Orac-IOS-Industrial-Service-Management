@@ -84,6 +84,8 @@ export default function QuotationsPage({ user }) {
   const [approvalExceptionQuote, setApprovalExceptionQuote] = useState(null);
   const [approvalExceptionReason, setApprovalExceptionReason] = useState("");
   const [approvalExceptionError, setApprovalExceptionError] = useState("");
+  const [filterMode, setFilterMode] = useState("all");
+  const isManagement = user?.role === "Management";
   const v5Visible = v5CommercialEnabled() && ["Sales", "Admin"].includes(user.role);
   const analysisVisible = recordAnalysisVisible();
 
@@ -383,6 +385,19 @@ export default function QuotationsPage({ user }) {
     }
   }
 
+  const requiresManagementApproval = (q) => {
+    const totalCents = Number.isInteger(q.grand_total_cents) ? q.grand_total_cents : Math.round(Number(q.total_amount || 0) * 100);
+    const hasDiscount = Number(q.discount_percent || 0) > 0;
+    return totalCents > 500000 || hasDiscount;
+  };
+
+  const displayedQuotes = quoteList.filter((q) => {
+    if (isManagement && filterMode === "pending_management") {
+      return q.status === "Sent" && requiresManagementApproval(q);
+    }
+    return true;
+  });
+
   const buttonClass = "inline-flex min-h-11 items-center justify-center rounded-md border px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50";
 
   return (
@@ -390,7 +405,7 @@ export default function QuotationsPage({ user }) {
       <PageHeaderBanner
         eyebrow="Sales"
         title="Quotations"
-        subtitle="Create, edit and send quotations. Once a quote is sent, only Operations, Finance or a different Sales colleague can approve it."
+        subtitle="Create, edit and send quotations. Once a quote is sent, only Management, an independent Sales colleague, or Admin fallback can approve it."
         iconPath={ICONS.document}
         aside={<button type="button" onClick={() => openCreate()} className="inline-flex min-h-11 items-center justify-center rounded-md border border-orac-blue bg-orac-blue px-3 py-2 text-sm font-semibold text-white hover:brightness-105">New quotation</button>}
       />
@@ -398,6 +413,25 @@ export default function QuotationsPage({ user }) {
       {error && <ErrorBanner message={error} />}
       {analysisError && <ErrorBanner message={analysisError} />}
       {notice && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</p>}
+
+      {isManagement && (
+        <div className="flex gap-2 border-b border-orac-border-default pb-3" data-testid="management-quote-filter">
+          <button
+            type="button"
+            onClick={() => setFilterMode("all")}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold ${filterMode === "all" ? "bg-orac-blue text-white" : "border border-gray-300 bg-white text-orac-slate hover:bg-gray-50 dark:bg-slate-800 dark:text-slate-200"}`}
+          >
+            All quotations
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterMode("pending_management")}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold ${filterMode === "pending_management" ? "bg-orac-blue text-white" : "border border-gray-300 bg-white text-orac-slate hover:bg-gray-50 dark:bg-slate-800 dark:text-slate-200"}`}
+          >
+            Pending Management Approval (&gt; $5,000 / Discounted)
+          </button>
+        </div>
+      )}
 
       {openLeads.length > 0 && (
         <div className="rounded-lg border border-orac-border-default bg-orac-surface p-5 shadow-sm">
@@ -485,7 +519,7 @@ export default function QuotationsPage({ user }) {
                       {quote.status === "Sent" && !showApprove && (
                         <p className="self-center text-xs text-gray-500">
                           {quote.sent_by && quote.sent_by === user.id
-                            ? "You sent this quote - a different Sales colleague, Operations, or Admin must approve it."
+                            ? "You sent this quote - a different Sales colleague, Management, or Admin fallback must approve it."
                             : "Quotations exceeding USD $5,000 or containing commercial discounts require Management approval."}
                         </p>
                       )}

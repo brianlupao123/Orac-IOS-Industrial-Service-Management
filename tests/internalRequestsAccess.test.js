@@ -45,15 +45,15 @@ test("adding the route did not widen or narrow any pre-existing route", () => {
   // Admin and Sales only. Checked explicitly, same as ROUTE above, rather
   // than folded into `expected`, to keep this snapshot's original routes
   // untouched.
-  assert.deepEqual([...ROUTE_ACCESS["/quotations"]].sort(), ["Admin", "Sales"].sort());
+  assert.deepEqual([...ROUTE_ACCESS["/quotations"]].sort(), ["Admin", "Management", "Sales"].sort());
   // /finance mirrors the backend's invoice/approveAmendment permission set.
   assert.deepEqual([...ROUTE_ACCESS["/finance"]].sort(), ["Admin", "Finance"].sort());
   assert.equal(canAccessRoute(ROLES.SALES, "/finance"), false, "Sales must not reach Finance PO/invoice actions");
   assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, "/finance"), false);
   assert.equal(canAccessRoute(ROLES.FINANCE, "/quotations"), false, "Finance must not draft/send quotes");
   assert.deepEqual(Object.keys(ROUTE_ACCESS).sort(), [...Object.keys(expected), "/reports", "/job-cards", "/invoice-readiness", "/operational-data", "/documents", "/quotations", "/finance", "/daily-timesheets", "/contractor-logs", "/monthly-worksheets", "/legacy-history", ROUTE].sort());
-  assert.deepEqual([...ROUTE_ACCESS["/job-cards"]].sort(), ["Admin", "Management", "Operations", "Supervisor", "Technician"].sort());
-  assert.deepEqual([...ROUTE_ACCESS["/invoice-readiness"]].sort(), ["Admin", "Management", "Finance"].sort());
+  assert.deepEqual([...ROUTE_ACCESS["/job-cards"]].sort(), ["Admin", "Management", "Operations", "Supervisor", "Technician", "Sales"].sort());
+  assert.deepEqual([...ROUTE_ACCESS["/invoice-readiness"]].sort(), ["Admin", "Management", "Finance", "Sales"].sort());
   assert.equal(canAccessRoute(ROLES.SALES, "/inventory"), false);
   assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, "/reports"), false);
   assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, "/quotations"), false, "Client Viewer must never see internal quote drafting");

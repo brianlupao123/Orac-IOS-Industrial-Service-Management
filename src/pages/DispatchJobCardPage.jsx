@@ -8,6 +8,7 @@ import { ErrorBanner, PageEmptyState } from "../components/PageStates.jsx";
 import RecordAnalysisModal from "../components/RecordAnalysisModal.jsx";
 import { ICONS } from "../components/icons.jsx";
 import { recordAnalysisVisible } from "../recordAnalysisFlags.js";
+import LegacyInvoiceDraftPanel from "../components/LegacyInvoiceDraftPanel.jsx";
 
 const timesheetLabels = [
   ["draft", "Draft"],
