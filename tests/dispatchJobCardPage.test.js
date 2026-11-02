@@ -18,7 +18,7 @@ test("Dispatch Job Card is a read-only evidence summary backed by the scoped ser
 test("Dispatch Job Card keeps role-scoped evidence and legacy PO exceptions visible without authorising work", () => {
   const page = read("src/pages/DispatchJobCardPage.jsx");
   const policy = read("src/accessPolicy.js");
-  assert.match(policy, /"\/job-cards": \[\.\.\.operationalRoles, ROLES\.TECHNICIAN\]/);
+  assert.match(policy, /"\/job-cards": \[\.\.\.operationalRoles, ROLES\.TECHNICIAN, ROLES\.SALES\]/);
   assert.match(page, /evidence_summary: evidence/);
   assert.match(page, /evidence\.audit\?\.available/);
   assert.match(page, /job-card-started-before-po/);
@@ -48,7 +48,7 @@ test("Invoice readiness is a commercial read model, not an invoice writer or V5 
   const policy = read("src/accessPolicy.js");
   assert.match(client, /invoiceReadiness\(dispatchId\) \{\s*return request\(`\/dispatch_cards\/\$\{encodeURIComponent\(dispatchId\)\}\/invoice-readiness`\);/);
   assert.match(page, /dispatch\.invoiceReadiness\(id\)/);
-  assert.match(policy, /"\/invoice-readiness": \[ROLES\.ADMIN, ROLES\.MANAGEMENT, ROLES\.FINANCE\]/);
+  assert.match(policy, /"\/invoice-readiness": \[ROLES\.ADMIN, ROLES\.MANAGEMENT, ROLES\.FINANCE, ROLES\.SALES\]/);
   assert.match(page, /This page never creates an invoice\./);
   assert.match(page, /v5-invoice-calculation-blocked/);
   assert.doesNotMatch(page, /method:\s*"POST"/);
