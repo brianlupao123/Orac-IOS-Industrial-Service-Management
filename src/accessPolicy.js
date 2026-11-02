@@ -27,7 +27,7 @@ export const ROUTE_ACCESS = Object.freeze({
   // (permissions.js) exactly: Admin and Sales only. Operations/Management can
   // approve a sent quote but do not create, edit, send or cancel one, so they
   // are deliberately not granted this route.
-  "/quotations": [ROLES.ADMIN, ROLES.SALES],
+  "/quotations": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.SALES],
   // Mirrors the backend's invoice / approveAmendment permission set (Admin,
   // Finance). verifyPo also allows Operations server-side, but Operations'
   // own workspace is outside this route; no API access is widened or narrowed.
@@ -50,10 +50,10 @@ export const ROUTE_ACCESS = Object.freeze({
   "/reports": [...operationalRoles, ROLES.SALES, ROLES.FINANCE],
   // Read-only operational record. The server further scopes Supervisor and
   // Technician access to dispatches they are assigned to.
-  "/job-cards": [...operationalRoles, ROLES.TECHNICIAN],
+  "/job-cards": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES],
   // A commercial, read-only explanation of the server's invoice gate. It is
   // intentionally not navigation: it opens from Invoice Ready records.
-  "/invoice-readiness": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.FINANCE],
+  "/invoice-readiness": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.FINANCE, ROLES.SALES],
   "/operational-data": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE],
   "/documents": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE, ROLES.CLIENT_VIEWER],
   "/admin": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],

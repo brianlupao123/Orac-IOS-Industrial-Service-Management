@@ -328,6 +328,14 @@ export const invoices = {
   }
 };
 
+export const salesPortfolio = {
+  dispatches() { return request(`/sales-portfolio/dispatches`); },
+  dispatchProgress(dispatchId) { return request(`/sales-portfolio/dispatches/${encodeURIComponent(dispatchId)}/progress`); },
+  approvedWork(dispatchId) { return request(`/sales-portfolio/dispatches/${encodeURIComponent(dispatchId)}/approved-work`); },
+  materials(dispatchId) { return request(`/sales-portfolio/dispatches/${encodeURIComponent(dispatchId)}/materials`); },
+  invoices() { return request(`/sales-portfolio/invoices`); }
+};
+
 export const dispatch = {
   // Read-only, role-scoped operational summary. The server removes financial
   // values and assignment details that the current role is not allowed to see.

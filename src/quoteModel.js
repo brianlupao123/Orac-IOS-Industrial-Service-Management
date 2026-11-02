@@ -76,6 +76,7 @@ export function quoteActionsFor(quote) {
 export function canApproveQuote(quote, actor) {
   if (quote?.status !== "Sent") return false;
   if (!actor) return false;
+  if (!["Admin", "Management", "Sales"].includes(actor.role)) return false;
   if (actor.role === "Sales" && quote.sent_by && quote.sent_by === actor.id) return false;
   const totalCents = Number.isInteger(quote.grand_total_cents)
     ? quote.grand_total_cents
