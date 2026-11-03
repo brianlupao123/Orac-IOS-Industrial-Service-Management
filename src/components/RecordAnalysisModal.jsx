@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import Modal from "./Modal.jsx";
 
 // Renders only the bounded, server-authored evidence contract. This component
