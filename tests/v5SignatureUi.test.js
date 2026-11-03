@@ -170,12 +170,12 @@ test("route access: V5 flag off leaves /worksheets exactly as before; on adds on
   const load = async (on, tag) => { if (on) process.env[FLAG] = "enabled"; else delete process.env[FLAG]; return import(`../src/accessPolicy.js?${tag}`); };
   try {
     const off = await load(false, "v5-off");
-    assert.equal(off.canAccessRoute(off.ROLES.SALES, "/worksheets"), false);
+    assert.equal(off.canAccessRoute(off.ROLES.SALES, "/worksheets"), true, "Sales always sees Timesheets");
     assert.equal(off.canAccessRoute(off.ROLES.FINANCE, "/worksheets"), false);
     const on = await load(true, "v5-on");
     for (const r of [on.ROLES.SALES, on.ROLES.FINANCE, on.ROLES.MANAGEMENT, on.ROLES.ADMIN, on.ROLES.SUPERVISOR]) assert.ok(on.canAccessRoute(r, "/worksheets"), r);
     assert.equal(on.canAccessRoute(on.ROLES.CLIENT_VIEWER, "/worksheets"), false);
-    assert.equal(on.canAccessRoute(on.ROLES.SALES, "/monthly-worksheets"), false, "other routes do not widen");
+    assert.equal(on.canAccessRoute(on.ROLES.SALES, "/monthly-worksheets"), true, "Sales always sees Worksheets");
     assert.equal(on.canAccessRoute(on.ROLES.SALES, "/finance"), false);
   } finally { if (saved === undefined) delete process.env[FLAG]; else process.env[FLAG] = saved; }
 });

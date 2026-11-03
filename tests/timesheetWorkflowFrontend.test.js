@@ -14,8 +14,8 @@ async function load(flags, tag) {
 
 test("all flags off: routes and navigation are exactly the pre-packet policy", async () => {
   const p = await load([], "off");
-  assert.equal(p.canAccessRoute(p.ROLES.SALES, "/worksheets"), false);
-  assert.equal(p.canAccessRoute(p.ROLES.SALES, "/monthly-worksheets"), false);
+  assert.equal(p.canAccessRoute(p.ROLES.SALES, "/worksheets"), true);
+  assert.equal(p.canAccessRoute(p.ROLES.SALES, "/monthly-worksheets"), true);
   assert.equal(p.canAccessRoute(p.ROLES.OPERATIONS, "/monthly-worksheets"), true);
   assert.equal(p.canAccessRoute(p.ROLES.OPERATIONS, "/kiosk"), true);
   assert.equal(p.ROUTE_ACCESS["/timesheet-workflow"], undefined);

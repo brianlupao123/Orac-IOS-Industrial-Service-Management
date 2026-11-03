@@ -44,6 +44,6 @@ test("navigation is still derived from route policy for /contracts", () => {
 test("other routes keep their existing policy", () => {
   assert.equal(canAccessRoute(ROLES.SUPERVISOR, "/kiosk"), true);
   assert.equal(canAccessRoute(ROLES.OPERATIONS, "/inventory"), true);
-  assert.equal(canAccessRoute(ROLES.SALES, "/inventory"), false);
+  assert.equal(canAccessRoute(ROLES.SALES, "/inventory"), true);
   assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, "/reports"), false);
 });

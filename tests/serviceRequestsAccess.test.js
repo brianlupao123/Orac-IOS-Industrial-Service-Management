@@ -38,12 +38,12 @@ test("Admin, Management, Finance, Supervisor and Technician are denied the triag
 test("the new route did not widen or narrow unrelated pre-existing routes", () => {
   const expected = {
     "/portal": ["Client Viewer"],
-    "/worksheets": ["Admin", "Management", "Operations", "Supervisor", "Technician"],
-    "/inventory": ["Admin", "Management", "Operations"],
+    "/worksheets": ["Admin", "Management", "Operations", "Sales", "Supervisor", "Technician"],
+    "/inventory": ["Admin", "Management", "Operations", "Sales"],
     "/admin": ["Admin", "Management", "Operations"],
     "/kiosk": ["Admin", "Management", "Operations", "Supervisor"]
   };
   for (const [path, roles] of Object.entries(expected)) assert.deepEqual([...ROUTE_ACCESS[path]].sort(), [...roles].sort(), path);
-  assert.equal(canAccessRoute(ROLES.SALES, "/inventory"), false);
+  assert.equal(canAccessRoute(ROLES.SALES, "/inventory"), true);
   assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, "/reports"), false);
 });

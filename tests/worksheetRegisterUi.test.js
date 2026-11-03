@@ -76,7 +76,7 @@ test("two concepts in the app: Timesheets (/worksheets, existing URL) and Worksh
   assert.deepEqual(NAV_ITEMS.find((n) => n.path === "/worksheets"), { path: "/worksheets", label: "Timesheets" });
   assert.deepEqual(NAV_ITEMS.find((n) => n.path === "/monthly-worksheets"), { path: "/monthly-worksheets", label: "Worksheets" });
   for (const role of [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR]) { assert.equal(canAccessRoute(role, "/monthly-worksheets"), true, role); assert.equal(canAccessRoute(role, "/legacy-history"), true, role); }
-  for (const role of [ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE, ROLES.CLIENT_VIEWER]) { assert.equal(canAccessRoute(role, "/monthly-worksheets"), false, role); assert.ok(!visibleNavigation(role).some((n) => n.path === "/monthly-worksheets")); }
+  for (const role of [ROLES.TECHNICIAN, ROLES.FINANCE, ROLES.CLIENT_VIEWER]) { assert.equal(canAccessRoute(role, "/monthly-worksheets"), false, role); assert.ok(!visibleNavigation(role).some((n) => n.path === "/monthly-worksheets")); }
   for (const legacy of ["/worksheets", "/daily-timesheets", "/contractor-logs"]) assert.ok(ROUTE_ACCESS[legacy], `${legacy} still routable`);
   const app = read("src/App.jsx");
   assert.match(app, /path="\/timesheets" element=\{<Navigate to="\/worksheets" replace \/>\}/);

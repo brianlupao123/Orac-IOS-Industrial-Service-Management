@@ -36,17 +36,17 @@ export const ROUTE_ACCESS = Object.freeze({
   // Client Viewer has no internal-request access. The server still decides
   // every action, including request creation and lifecycle transitions.
   "/internal-requests": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.SALES, ROLES.FINANCE, ROLES.OPERATIONS, ROLES.SUPERVISOR, ROLES.TECHNICIAN],
-  "/worksheets": withV5SalesFinance(withSalesFinance([...operationalRoles, ROLES.TECHNICIAN])),
+  "/worksheets": [...new Set([...withV5SalesFinance(withSalesFinance([...operationalRoles, ROLES.TECHNICIAN])), ROLES.SALES])],
   "/daily-timesheets": [...operationalRoles, ROLES.TECHNICIAN],
   "/contractor-logs": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR],
   // Worksheet = the automatically generated monthly register. It shows colleagues' hours, so
   // Technician and Client Viewer are excluded; the server enforces every action.
-  "/monthly-worksheets": withoutOpsSupervisor(withSalesFinance([ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR])),
+  "/monthly-worksheets": [...new Set([...withoutOpsSupervisor(withSalesFinance([ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR])), ROLES.SALES])],
   // Timesheet workflow packet: Sales paper capture, Finance variance control, Admin authority/policy.
   ...(F.workflowUi ? { "/timesheet-workflow": [ROLES.ADMIN, ROLES.SALES, ROLES.FINANCE] } : {}),
   // Read-only history of the older forms, in the one Timesheet shape.
   "/legacy-history": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SUPERVISOR],
-  "/inventory": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],
+  "/inventory": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS, ROLES.SALES],
   "/reports": [...operationalRoles, ROLES.SALES, ROLES.FINANCE],
   // Read-only operational record. The server further scopes Supervisor and
   // Technician access to dispatches they are assigned to.
@@ -75,6 +75,8 @@ export const NAV_ITEMS = Object.freeze([
   { path: "/monthly-worksheets", label: "Worksheets" },
   ...(F.workflowUi ? [{ path: "/timesheet-workflow", label: "Timesheet Workflow" }] : []),
   { path: "/inventory", label: "Inventory" },
+  { path: "/job-cards", label: "Job Cards" },
+  { path: "/invoice-readiness", label: "Invoice Readiness" },
   { path: "/reports", label: "Reports" },
   { path: "/operational-data", label: "Operational Data" },
   { path: "/documents", label: "Documents" },
@@ -88,7 +90,7 @@ export const NAV_GROUPS = Object.freeze([
   {
     id: "workspace",
     label: "Workspace",
-    paths: ["/", "/operational-data", "/documents", "/admin"]
+    paths: ["/", "/operational-data", "/documents", "/admin", "/job-cards", "/invoice-readiness"]
   },
   {
     id: "commercial",

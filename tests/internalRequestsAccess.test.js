@@ -33,8 +33,8 @@ test("adding the route did not widen or narrow any pre-existing route", () => {
   const expected = {
     "/portal": ["Client Viewer"],
     "/service-requests": ["Operations", "Sales"],
-    "/worksheets": ["Admin", "Management", "Operations", "Supervisor", "Technician"],
-    "/inventory": ["Admin", "Management", "Operations"],
+    "/worksheets": ["Admin", "Management", "Operations", "Sales", "Supervisor", "Technician"],
+    "/inventory": ["Admin", "Management", "Operations", "Sales"],
     "/admin": ["Admin", "Management", "Operations"],
     "/kiosk": ["Admin", "Management", "Operations", "Supervisor"],
     "/contracts": ["Admin", "Management", "Operations", "Client Viewer"]
@@ -54,7 +54,7 @@ test("adding the route did not widen or narrow any pre-existing route", () => {
   assert.deepEqual(Object.keys(ROUTE_ACCESS).sort(), [...Object.keys(expected), "/reports", "/job-cards", "/invoice-readiness", "/operational-data", "/documents", "/quotations", "/finance", "/daily-timesheets", "/contractor-logs", "/monthly-worksheets", "/legacy-history", ROUTE].sort());
   assert.deepEqual([...ROUTE_ACCESS["/job-cards"]].sort(), ["Admin", "Management", "Operations", "Supervisor", "Technician", "Sales"].sort());
   assert.deepEqual([...ROUTE_ACCESS["/invoice-readiness"]].sort(), ["Admin", "Management", "Finance", "Sales"].sort());
-  assert.equal(canAccessRoute(ROLES.SALES, "/inventory"), false);
+  assert.equal(canAccessRoute(ROLES.SALES, "/inventory"), true);
   assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, "/reports"), false);
   assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, "/quotations"), false, "Client Viewer must never see internal quote drafting");
   assert.equal(canAccessRoute(ROLES.OPERATIONS, "/quotations"), false, "Operations approves a sent quote but does not draft/send/cancel one");

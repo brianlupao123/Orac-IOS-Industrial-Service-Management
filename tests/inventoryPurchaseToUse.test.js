@@ -70,7 +70,7 @@ test("generated keys satisfy the server's key pattern (8-128 of letters, digits 
 
 // ── Links and client isolation ───────────────────────────────────────────────
 test("history links go only to roles the Worksheets route admits, and only for dispatch-related references", () => {
-  const worksheetRoles = ["Admin", "Management", "Operations", "Supervisor", "Technician"];
+  const worksheetRoles = ["Admin", "Management", "Operations", "Supervisor", "Technician", "Sales"];
   for (const role of ["Admin", "Management", "Operations", "Supervisor", "Technician", "Sales", "Finance", "Client Viewer"]) {
     assert.equal(canAccessRoute(role, "/worksheets"), worksheetRoles.includes(role), role);
     const target = referenceLinkTarget({ reference_type: "material_usage", reference_id: "mu-1" }, canAccessRoute(role, "/worksheets"));
@@ -81,7 +81,8 @@ test("history links go only to roles the Worksheets route admits, and only for d
 });
 
 test("the inventory route stays closed to Client Viewer and every role without inventory permission", () => {
-  for (const role of ["Sales", "Finance", "Technician", "Supervisor", "Client Viewer"]) assert.equal(canAccessRoute(role, "/inventory"), false, role);
+  for (const role of ["Finance", "Technician", "Supervisor", "Client Viewer"]) assert.equal(canAccessRoute(role, "/inventory"), false, role);
+  assert.equal(canAccessRoute("Sales", "/inventory"), true, "Sales has read-only inventory access");
   for (const role of ["Admin", "Management", "Operations"]) assert.equal(canAccessRoute(role, "/inventory"), true, role);
 });
 
