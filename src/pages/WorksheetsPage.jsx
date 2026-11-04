@@ -15,6 +15,7 @@ import { recordAnalysisVisible } from "../recordAnalysisFlags.js";
 import { displayTrade } from "../constants/trades.js";
 import { canEditWorksheet, canReviewWorksheet, canReviseWorksheet, worksheetStatusLabel } from "../fieldStatusModel.js";
 import TimesheetFormModal from "../components/TimesheetFormModal.jsx";
+import { PaperEvidenceBadge, PaperEvidenceModal } from "../components/PaperEvidence.jsx";
 import PaperEntryModal from "../components/PaperEntryModal.jsx";
 import EntrySourceBadge from "../components/EntrySourceBadge.jsx";
 import TimesheetOutboxPanel from "../components/TimesheetOutboxPanel.jsx";
@@ -61,6 +62,7 @@ export default function WorksheetsPage({ user }) {
   const [editingWs, setEditingWs] = useState(null);
   const [outboxKey, setOutboxKey] = useState(0);
   const [paperOpen, setPaperOpen] = useState(false);
+  const [paperView, setPaperView] = useState(null); // the Timesheet whose signed paper copy is open
   const [searchParams, setSearchParams] = useSearchParams();
   const [notice, setNotice] = useState("");
 
@@ -306,7 +308,7 @@ export default function WorksheetsPage({ user }) {
                     <StatusPill status={ws.status} />
                     <EntrySourceBadge worksheet={ws} />
                   </div>
-                  <div data-evidence="timesheet-record-context" className="flex items-center gap-3 text-xs text-orac-text-muted mb-2">
+                  <div data-evidence="timesheet-record-context" className="flex flex-wrap items-center gap-3 text-xs text-orac-text-muted mb-2">
                     <span>Timesheet {ws.id}</span>
                     {canAccessRoute(user.role, "/job-cards") ? (
                       <Link to={`/job-cards/${encodeURIComponent(ws.dispatch_card_id)}`} className="text-orac-blue hover:underline">
@@ -315,6 +317,7 @@ export default function WorksheetsPage({ user }) {
                     ) : (
                       <span>Dispatch {dispatchLabel(ws.dispatch_card_id)}</span>
                     )}
+                    <PaperEvidenceBadge worksheet={ws} onOpen={setPaperView} />
                   </div>
                   
                   <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500 mb-3">
@@ -447,6 +450,9 @@ export default function WorksheetsPage({ user }) {
           </div>
         </form>
       </Modal>
+
+      {/* Audit view of the photo of the signed physical sheet */}
+      <PaperEvidenceModal worksheet={paperView} onClose={() => setPaperView(null)} />
 
       {/* The one Timesheet form (create or edit) */}
       <TimesheetFormModal isOpen={formOpen} onClose={() => { setFormOpen(false); setEditingWs(null); }} user={user} dispatches={dispatches} editing={editingWs} onSaved={handleSaved} />

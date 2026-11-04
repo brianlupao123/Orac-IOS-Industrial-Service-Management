@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "./Modal.jsx";
 import SearchableSelect from "./SearchableSelect.jsx";
+import PaperPhotoField from "./PaperPhotoField.jsx";
+import { hasPaperEvidence } from "../lib/paperPhoto.js";
 import { dispatch, worksheets, technicianProfiles } from "../api/client.js";
 import { saveDraft, loadDraft, clearDraft } from "../offlineDraftModel.js";
 import { enqueueTimesheet, isNetworkError, loadDispatchOptions, cacheTechnicianOptions, loadTechnicianOptions } from "../offlineTimesheetOutbox.js";
@@ -19,7 +21,6 @@ import {
 
 export const OFFLINE_SAVED_MESSAGE = "No network detected. Timesheet saved securely to device outbox.";
 const STAFF_ROLES = ["Admin", "Operations", "Supervisor"];
-const MAX_PHOTO_BYTES = 1_000_000;
 function storage() { try { return window.localStorage; } catch { return null; } }
 const inputCls = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20";
 const labelCls = "mb-1 block text-sm font-semibold text-gray-600";
@@ -91,15 +92,6 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
   const hints = reviewHints(form);
 
   function setMaterial(i, patch) { setForm((p) => ({ ...p, materials: p.materials.map((m, k) => (k === i ? { ...m, ...patch } : m)) })); }
-
-  function onPhoto(e) {
-    const file = e.target.files?.[0];
-    if (!file) return set({ signed_copy_image: "" });
-    if (file.size > MAX_PHOTO_BYTES) { setError("The signed copy photo is too large (over 1 MB). Take a smaller photo."); e.target.value = ""; return; }
-    const reader = new FileReader();
-    reader.onload = () => set({ signed_copy_image: String(reader.result || "") });
-    reader.readAsDataURL(file);
-  }
 
   async function save(submit) {
     const errors = validateTimesheetForm(form, { submit, role: user.role, requireTechnician: showPicker });
@@ -283,9 +275,16 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
           <p className="text-xs text-gray-500">Stock is issued and checked through the job's materials panel; this list records what the worker says was used.</p>
         </fieldset>
 
+        <fieldset className="space-y-3">
+          <legend className="text-sm font-semibold text-gray-500">Signed paper copy (optional)</legend>
+          <PaperPhotoField value={form.signed_copy_image} onChange={(v) => set({ signed_copy_image: v })} onError={setError} hasExisting={Boolean(editing) && hasPaperEvidence(editing)} disabled={busy} />
+          <p className="text-xs text-gray-500">A clear photo or scan of the paper Timesheet the worker signed. {editing ? "" : "It counts as the worker's sign-off if the declaration below is not ticked. "}Auditors can open it from the Timesheet.</p>
+        </fieldset>
+
         {!editing && (
           <fieldset className="space-y-3">
             <legend className="text-sm font-semibold text-gray-500">Worker sign-off (needed to submit)</legend>
+            <p className="text-xs text-gray-500">Tick the declaration below, or attach the signed paper copy in the section underneath.</p>
             <div>
               <label htmlFor="ts-employee" className={labelCls}>Worker's full name</label>
               <input id="ts-employee" value={form.employee_name} onChange={(e) => set({ employee_name: e.target.value })} className={inputCls} />
@@ -294,10 +293,6 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
               <input type="checkbox" checked={form.employee_attest} onChange={(e) => set({ employee_attest: e.target.checked })} className="mt-1" />
               <span>I confirm these hours and this work are correct and were done by the person named above.</span>
             </label>
-            <div>
-              <label htmlFor="ts-photo" className={labelCls}>Or attach a photo of the signed paper copy (under 1 MB)</label>
-              <input id="ts-photo" type="file" accept="image/*" onChange={onPhoto} className="text-sm" />
-            </div>
             <p className="text-xs text-gray-500">After you submit, the customer's representative acknowledges it, then a Supervisor approves it. Those two sign-offs are recorded by their own accounts.</p>
           </fieldset>
         )}
