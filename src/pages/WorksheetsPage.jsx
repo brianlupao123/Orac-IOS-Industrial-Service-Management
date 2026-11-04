@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { assistant, collections, worksheets, dispatch, documents } from "../api/client.js";
-import { canAccessRoute } from "../accessPolicy.js";
+import { canAccessRoute, canEnterPaperTimesheet } from "../accessPolicy.js";
 import StatCard from "../components/StatCard.jsx";
 import { ICONS } from "../components/icons.jsx";
 import Modal from "../components/Modal.jsx";
@@ -15,6 +15,8 @@ import { recordAnalysisVisible } from "../recordAnalysisFlags.js";
 import { displayTrade } from "../constants/trades.js";
 import { canEditWorksheet, canReviewWorksheet, canReviseWorksheet, worksheetStatusLabel } from "../fieldStatusModel.js";
 import TimesheetFormModal from "../components/TimesheetFormModal.jsx";
+import PaperEntryModal from "../components/PaperEntryModal.jsx";
+import EntrySourceBadge from "../components/EntrySourceBadge.jsx";
 import TimesheetOutboxPanel from "../components/TimesheetOutboxPanel.jsx";
 import { cacheDispatchOptions } from "../offlineTimesheetOutbox.js";
 import { hoursSummary, signoffProgress, isTimesheetV2 } from "../lib/timesheetFormLogic.js";
@@ -58,6 +60,8 @@ export default function WorksheetsPage({ user }) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingWs, setEditingWs] = useState(null);
   const [outboxKey, setOutboxKey] = useState(0);
+  const [paperOpen, setPaperOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [notice, setNotice] = useState("");
 
   // Revision (a new linked draft after acknowledgement or approval)
@@ -86,6 +90,15 @@ export default function WorksheetsPage({ user }) {
   }
 
   const canSubmit = SUBMIT_ROLES.includes(user.role);
+  const canPaperEntry = canEnterPaperTimesheet(user.role);
+
+  // Deep link from the Daily Time Sheets page: /worksheets?paperEntry=1 opens the paper form once.
+  useEffect(() => {
+    if (searchParams.get("paperEntry") !== "1") return;
+    if (canPaperEntry) setPaperOpen(true);
+    const next = new URLSearchParams(searchParams); next.delete("paperEntry");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, canPaperEntry]);
 
   function openCreate() { setEditingWs(null); setFormOpen(true); }
   function openEdit(ws) { setEditingWs(ws); setFormOpen(true); }
@@ -193,14 +206,25 @@ export default function WorksheetsPage({ user }) {
             This is separate from an <strong>Internal Request</strong>, which only coordinates between teams and never logs field hours.
           </p>
         </div>
-        {canSubmit && (
-          <button
-            onClick={openCreate}
-            className="min-h-11 shrink-0 self-start sm:self-auto rounded-lg bg-orac-blue px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-105"
-          >
-            + New Timesheet
-          </button>
-        )}
+        <div className="flex shrink-0 flex-col gap-2 self-start sm:flex-row sm:self-auto">
+          {canPaperEntry && (
+            <button
+              type="button"
+              onClick={() => setPaperOpen(true)}
+              className="min-h-11 rounded-lg bg-orac-blue px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-105"
+            >
+              Add Timesheet (Paper Entry)
+            </button>
+          )}
+          {canSubmit && (
+            <button
+              onClick={openCreate}
+              className={`min-h-11 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-sm transition-all hover:brightness-105 ${canPaperEntry ? "border border-gray-300 bg-white text-gray-700 dark:bg-transparent dark:text-slate-200" : "bg-orac-blue text-white"}`}
+            >
+              + New Timesheet
+            </button>
+          )}
+        </div>
       </div>
 
       {/* KPI cards */}
@@ -277,9 +301,10 @@ export default function WorksheetsPage({ user }) {
             <div key={ws.id} className="group rounded-xl border border-orac-border-default bg-orac-surface p-5 shadow-sm transition-all hover:shadow-md hover:border-orac-accent">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex flex-wrap items-center gap-3 mb-2">
                     <span className="font-semibold text-orac-text-primary text-lg">{ws.activity || "Timesheet"}</span>
                     <StatusPill status={ws.status} />
+                    <EntrySourceBadge worksheet={ws} />
                   </div>
                   <div data-evidence="timesheet-record-context" className="flex items-center gap-3 text-xs text-orac-text-muted mb-2">
                     <span>Timesheet {ws.id}</span>
@@ -425,6 +450,9 @@ export default function WorksheetsPage({ user }) {
 
       {/* The one Timesheet form (create or edit) */}
       <TimesheetFormModal isOpen={formOpen} onClose={() => { setFormOpen(false); setEditingWs(null); }} user={user} dispatches={dispatches} editing={editingWs} onSaved={handleSaved} />
+      {canPaperEntry && (
+        <PaperEntryModal isOpen={paperOpen} onClose={() => setPaperOpen(false)} user={user} dispatches={dispatches} worksheets={items} onSaved={handleSaved} />
+      )}
       {showSignatureModal && (
         <Modal title="Client Representative Sign-Off" isOpen={showSignatureModal} onClose={() => setShowSignatureModal(false)}>
           <div className="p-4">

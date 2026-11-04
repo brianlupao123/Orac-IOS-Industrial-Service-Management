@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import React, { useEffect, useMemo, useState } from "react";
 import { collections, dailyTimesheets } from "../api/client.js";
+import { canEnterPaperTimesheet } from "../accessPolicy.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import Modal from "../components/Modal.jsx";
 import {
@@ -38,6 +39,7 @@ export default function DailyTimesheetPage({ user }) {
 
   const canReview = REVIEW_ROLES.includes(user.role);
   const canSubmit = SUBMIT_ROLES.includes(user.role);
+  const canPaperEntry = canEnterPaperTimesheet(user.role);
 
   async function load() {
     setLoading(true);
@@ -147,6 +149,11 @@ export default function DailyTimesheetPage({ user }) {
             Records still in progress can be finished here; nothing new can be started.
           </p>
         </div>
+        {canPaperEntry && (
+          <Link to="/worksheets?paperEntry=1" className="min-h-11 inline-flex shrink-0 items-center rounded-lg bg-orac-blue px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:brightness-105">
+            Add Timesheet (Paper Entry)
+          </Link>
+        )}
       </div>
 
       {error && <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700">{error}</div>}

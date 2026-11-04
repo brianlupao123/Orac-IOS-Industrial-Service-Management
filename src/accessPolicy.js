@@ -114,6 +114,14 @@ export const NAV_GROUPS = Object.freeze([
   }
 ]);
 
+// Who may start a signed-paper Timesheet entry. This is a button-visibility list only: it does
+// not touch ROUTE_ACCESS (so no route is widened or narrowed) and the server decides the action.
+export const PAPER_ENTRY_ROLES = Object.freeze([ROLES.SALES, ROLES.SUPERVISOR, ROLES.ADMIN]);
+
+export function canEnterPaperTimesheet(role) {
+  return PAPER_ENTRY_ROLES.includes(role) && canAccessRoute(role, "/worksheets");
+}
+
 export function canAccessRoute(role, path) {
   const allowedRoles = ROUTE_ACCESS[path];
   return path === "/" || Boolean(allowedRoles?.includes(role));
