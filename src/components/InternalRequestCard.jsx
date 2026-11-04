@@ -1,7 +1,8 @@
 import React from "react";
 import { ErrorBanner } from "./PageStates.jsx";
 import {
-  actionButtonsFor, describeHistoryEntry, describeRelated, formatWhen, priorityTone, statusTone
+  APPROVE_REGISTRATION_ACTION, REGISTRATION_APPROVAL_NOTICE, actionButtonsFor, describeHistoryEntry, describeRegistration,
+  describeRelated, formatWhen, priorityTone, statusTone
 } from "../internalWorkRequestModel.js";
 
 const buttonClass = "rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50";
@@ -16,6 +17,8 @@ export default function InternalRequestCard({ item, mode, open, detail, note, no
   const view = detail?.data || item;
   const buttons = actionButtonsFor(view.allowed_actions);
   const related = describeRelated(view.related_entity);
+  const registration = describeRegistration(view.payload);
+  const canApprove = buttons.some((button) => button.action === APPROVE_REGISTRATION_ACTION);
   const from = view.created_by_name ? `${view.created_by_name} (${view.created_by_role})` : view.created_by_role;
   const noteId = `iwr-note-${item.id}`;
 
@@ -36,6 +39,13 @@ export default function InternalRequestCard({ item, mode, open, detail, note, no
       </div>
 
       <p className="mt-3 whitespace-pre-wrap text-sm text-gray-800">{view.description}</p>
+
+      {registration.length > 0 && (
+        <dl data-evidence="technician-registration-details" className="mt-3 grid gap-x-6 gap-y-1 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800 sm:grid-cols-2">
+          {registration.map((row) => <div key={row.label}><dt className="inline font-medium">{row.label}: </dt><dd className="inline">{row.value}</dd></div>)}
+        </dl>
+      )}
+      {view.registered_user_id && <p data-evidence="technician-registered" className="mt-2 text-sm font-medium text-emerald-800">This person is now in the technician registry.</p>}
 
       <dl className="mt-3 grid gap-x-6 gap-y-1 text-sm text-gray-600 sm:grid-cols-2">
         {related && <div><dt className="inline font-medium">Related record: </dt><dd className="inline">{related}</dd></div>}
@@ -75,6 +85,7 @@ export default function InternalRequestCard({ item, mode, open, detail, note, no
             <textarea id={noteId} rows={2} value={note} maxLength={noteLimit} onChange={(event) => onNoteChange(event.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20" />
             <p className="mt-1 text-xs text-gray-500">Sent with Start work, Complete, Reject or Cancel. The server tells you if a note is required.</p>
           </div>
+          {canApprove && <p data-evidence="technician-approval-notice" className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">{REGISTRATION_APPROVAL_NOTICE}</p>}
           <div className="flex flex-wrap gap-2">
             {buttons.map((button) => (
               <button key={button.action} type="button" disabled={busy} onClick={() => onAction(item, button.action)}

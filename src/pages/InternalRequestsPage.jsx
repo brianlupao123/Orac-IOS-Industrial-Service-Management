@@ -6,7 +6,8 @@ import InternalRequestForm from "../components/InternalRequestForm.jsx";
 import { ICONS } from "../components/icons.jsx";
 import { ErrorBanner, PageEmptyState } from "../components/PageStates.jsx";
 import {
-  COORDINATION_ONLY_NOTICE, INTERNAL_REQUEST_STATUSES, asRequestList, isForbidden, isStaleState, normaliseOptions
+  APPROVE_REGISTRATION_ACTION, COORDINATION_ONLY_NOTICE, INTERNAL_REQUEST_STATUSES, asRequestList, describeApproval,
+  isForbidden, isStaleState, normaliseOptions
 } from "../internalWorkRequestModel.js";
 
 const EMPTY_LIST = { items: [], loading: true, loaded: false, error: "", forbidden: false };
@@ -83,11 +84,15 @@ export default function InternalRequestsPage({ user }) {
     setActionError("");
     setNotice("");
     try {
-      const updated = action === "acknowledge"
-        ? await internalWorkRequests.acknowledge(item.id)
-        : await internalWorkRequests.transition(item.id, action, notes[item.id]);
+      const approving = action === APPROVE_REGISTRATION_ACTION;
+      const updated = approving
+        ? await internalWorkRequests.approveTechnician(item.id)
+        : action === "acknowledge"
+          ? await internalWorkRequests.acknowledge(item.id)
+          : await internalWorkRequests.transition(item.id, action, notes[item.id]);
       setNotes((current) => ({ ...current, [item.id]: "" }));
-      setNotice(`"${item.subject}" is now ${updated?.status || "updated"}. Nothing else in ORAC was changed by this.`);
+      // An approval is the one action that adds a record (the technician), so it says so.
+      setNotice(approving ? describeApproval(updated) : `"${item.subject}" is now ${updated?.status || "updated"}. Nothing else in ORAC was changed by this.`);
       await refreshAll();
       if (openId === item.id) await loadDetail(item.id);
     } catch (err) {

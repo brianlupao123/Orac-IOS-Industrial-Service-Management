@@ -773,8 +773,9 @@ export const internalWorkRequests = {
   detail(id) {
     return request(`${internalRequestBase}/${encodeURIComponent(id)}`);
   },
-  create({ request_type, subject, description, priority, recipient_role, related_entity_type, related_entity_id } = {}) {
+  create({ request_type, subject, description, priority, recipient_role, related_entity_type, related_entity_id, payload } = {}) {
     const body = { request_type, subject, description };
+    if (payload) body.payload = payload;
     if (priority) body.priority = priority;
     if (recipient_role) body.recipient_role = recipient_role;
     if (related_entity_type && related_entity_id) {
@@ -785,6 +786,9 @@ export const internalWorkRequests = {
   },
   acknowledge(id) {
     return request(`${internalRequestBase}/${encodeURIComponent(id)}/acknowledge`, { method: "POST", body: JSON.stringify({}) });
+  },
+  approveTechnician(id) {
+    return request(`${internalRequestBase}/${encodeURIComponent(id)}/approve-technician`, { method: "POST", body: JSON.stringify({}) });
   },
   transition(id, action, note) {
     const body = { action };

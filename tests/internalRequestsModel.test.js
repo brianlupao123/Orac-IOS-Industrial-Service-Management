@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  APPROVE_REGISTRATION_ACTION, EMPTY_TECHNICIAN_DETAILS, REGISTRATION_APPROVAL_NOTICE, describeApproval, describeRegistration,
   COORDINATION_ONLY_NOTICE, EMPTY_INTERNAL_REQUEST_FORM, INTERNAL_REQUEST_STATUSES, PRESENTATION_RELATED_TYPE_NARROWING,
   actionButtonsFor, actionLabel, asRequestList, buildInternalRequestPayload, describeHistoryEntry, describeRelated,
   findOption, formatWhen, isForbidden, isStaleState, normaliseOptions, priorityTone, recipientFor, relatedTypeChoices,
@@ -210,4 +211,80 @@ test("prototype-style keys never match a tone, label or narrowing entry", () => 
 
 test("the coordination-only notice states what a request never does", () => {
   for (const phrase of [/coordination only/i, /stock/i, /purchase order/i, /invoice/i, /access/i]) assert.match(COORDINATION_ONLY_NOTICE, phrase);
+});
+
+// --- Technician registration ---------------------------------------------------
+const registrationOptions = () => {
+  const data = rawOptions();
+  data.types.push({
+    request_type: "NEW_TECHNICIAN_REGISTRATION", label: "New technician registration", related_required: false, recipients: ["Admin"], related_entity_types: [],
+    technician_registration: { trades: ["Boilermaker", "Welder"], worker_types: ["permanent", "contractor"], limits: { name: 50, nationalId: 20, phone: 20 } }
+  });
+  return data;
+};
+const regOption = () => findOption(normaliseOptions(registrationOptions()), "NEW_TECHNICIAN_REGISTRATION");
+const details = (overrides = {}) => ({ first_name: "Tendai", last_name: "Moyo", national_id: "63-123456 A 42", trade: "Welder", worker_type: "contractor", phone_number: "0771234567", ...overrides });
+const regForm = (overrides = {}) => ({ ...EMPTY_INTERNAL_REQUEST_FORM, technician: details(overrides) });
+
+test("normaliseOptions carries the technician block only when the server sent it, and rejects a malformed one", () => {
+  const result = normaliseOptions(registrationOptions());
+  assert.deepEqual(result.types.at(-1).technician_registration, { trades: ["Boilermaker", "Welder"], worker_types: ["permanent", "contractor"], limits: { name: 50, nationalId: 20, phone: 20 } });
+  assert.equal(result.types.slice(0, -1).some((type) => "technician_registration" in type), false);
+  for (const bad of [null, "x", {}, { trades: [], worker_types: [], limits: { name: 0, nationalId: 20, phone: 20 } }, { trades: "Welder", worker_types: [], limits: { name: 5, nationalId: 5, phone: 5 } }]) {
+    const data = registrationOptions();
+    data.types.at(-1).technician_registration = bad;
+    assert.throws(() => normaliseOptions(data), /unexpected options/);
+  }
+});
+
+test("a technician payload carries only the six trimmed details, the server recipient and priority, and no free text", () => {
+  const payload = buildInternalRequestPayload({ ...regForm({ first_name: "  Tendai ", phone_number: " 077 123  4567 " }), priority: "High", subject: "ignored", description: "ignored", related_entity_type: "quote", related_entity_id: "q_1", created_by_user_id: "u_1" }, regOption());
+  assert.deepEqual(payload, {
+    request_type: "NEW_TECHNICIAN_REGISTRATION", recipient_role: "Admin", priority: "High",
+    payload: { first_name: "Tendai", last_name: "Moyo", national_id: "63-123456 A 42", trade: "Welder", worker_type: "contractor", phone_number: "077 123 4567" }
+  });
+  assert.equal(Object.keys(buildInternalRequestPayload({ ...EMPTY_INTERNAL_REQUEST_FORM }, regOption()).payload).length, 6, "all six keys even when empty");
+});
+
+test("technician form validation names the first problem and passes a complete form", () => {
+  const check = (overrides) => validateInternalRequestForm(regForm(overrides), regOption(), limits, "Supervisor");
+  assert.equal(check({}), "");
+  assert.match(check({ first_name: "  " }), /first name/);
+  assert.match(check({ last_name: "" }), /last name/);
+  assert.match(check({ first_name: "x".repeat(51) }), /cannot be longer than 50/);
+  assert.match(check({ national_id: "" }), /national ID/);
+  assert.match(check({ national_id: "1".repeat(21) }), /cannot be longer than 20/);
+  assert.match(check({ trade: "" }), /trade/);
+  assert.match(check({ trade: "Astronaut" }), /trade/);
+  assert.match(check({ worker_type: "temp" }), /permanent worker or a contractor/);
+  assert.match(check({ phone_number: "" }), /phone/);
+  assert.match(validateInternalRequestForm({ ...EMPTY_INTERNAL_REQUEST_FORM, technician: details() }, { ...regOption(), recipients: ["Admin", "Management"] }, limits, "Supervisor"), /who this request is for/);
+});
+
+test("the plain form is unchanged for types without a technician block", () => {
+  assert.equal(validateInternalRequestForm(form({ subject: "S", description: "D", recipient_role: "Admin" }), option("ADMINISTRATIVE_SUPPORT"), limits, "Supervisor"), "");
+  assert.equal("payload" in buildInternalRequestPayload(form({ subject: "S", description: "D", recipient_role: "Admin" }), option("ADMINISTRATIVE_SUPPORT")), false);
+});
+
+test("the approve action is a primary button with the owner's wording, and only when the server lists it", () => {
+  assert.equal(APPROVE_REGISTRATION_ACTION, "approve_registration");
+  assert.equal(actionLabel("approve_registration"), "Approve & Add to Technician Registry");
+  const buttons = actionButtonsFor(["approve_registration", "acknowledge", "reject"]);
+  assert.deepEqual(buttons.map((button) => [button.action, button.tone]), [["approve_registration", "primary"], ["acknowledge", "primary"], ["reject", "danger"]]);
+  assert.deepEqual(actionButtonsFor(["acknowledge"]).map((button) => button.action), ["acknowledge"]);
+});
+
+test("registration details read as labelled rows, skip blanks, and tolerate anything else", () => {
+  assert.deepEqual(describeRegistration({ first_name: "Tendai", last_name: "Moyo", national_id: "63-123456 A 42", trade: "Welder", worker_type: "contractor", phone_number: "0771234567" }),
+    [{ label: "Name", value: "Tendai Moyo" }, { label: "National ID", value: "63-123456 A 42" }, { label: "Trade", value: "Welder" }, { label: "Worker type", value: "Contractor" }, { label: "Phone", value: "0771234567" }]);
+  assert.deepEqual(describeRegistration({ first_name: "Tendai", trade: null }), [{ label: "Name", value: "Tendai" }]);
+  for (const bad of [null, undefined, "x", [], 7]) assert.deepEqual(describeRegistration(bad), []);
+});
+
+test("the approval notice and result line say that a technician record was added", () => {
+  assert.match(REGISTRATION_APPROVAL_NOTICE, /adds this person to the technician registry/);
+  assert.equal(describeApproval({ technician: { name: "Tendai Moyo", trade: "Welder" } }), "Tendai Moyo was added to the technician registry as Welder.");
+  assert.match(describeApproval({}), /added to the registry/);
+  assert.match(describeApproval(null), /added to the registry/);
+  assert.equal(Object.isFrozen(EMPTY_TECHNICIAN_DETAILS), true);
 });

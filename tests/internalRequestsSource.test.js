@@ -19,6 +19,8 @@ const ui = { "InternalRequestForm.jsx": form, "InternalRequestCard.jsx": card, "
 
 // Code without comments, so a comment naming a rule cannot satisfy or trip a check.
 const stripComments = (code) => code.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/[^\n]*/g, "$1");
+// "Technician Registry" is the name of the registry the approval button adds to, not a role check.
+const withoutProductPhrases = (code) => code.replace(/Technician Registry/g, "");
 const ROLE_WORDS = /\b(Admin|Management|Sales|Finance|Operations|Supervisor|Technician|Client Viewer)\b/;
 const TYPE_CODES = /STOCK_AVAILABILITY|STOCK_FULFILMENT|PO_AMENDMENT_CONFIRMATION|MATERIAL_RECONCILIATION|FIELD_CLARIFICATION|COMMERCIAL_CLARIFICATION|ADMINISTRATIVE_SUPPORT/;
 
@@ -229,12 +231,12 @@ test("new UI never calls fetch, reads tokens or storage, alerts, reloads or swal
 
 test("the browser holds no role matrix: no request-type codes or role names outside the one owner presentation rule", () => {
   for (const [name, code] of Object.entries(ui)) {
-    const body = stripComments(code);
+    const body = withoutProductPhrases(stripComments(code));
     assert.doesNotMatch(body, TYPE_CODES, `${name}: request-type code`);
     assert.doesNotMatch(body, ROLE_WORDS, `${name}: role name`);
     assert.doesNotMatch(body, /\.role\s*[!=]==?|role\s*[!=]==?\s*["']/, `${name}: role comparison`);
   }
-  const modelBody = stripComments(model);
+  const modelBody = withoutProductPhrases(stripComments(model));
   const narrowing = modelBody.match(/export const PRESENTATION_RELATED_TYPE_NARROWING[\s\S]*?\}\);\s*\n/);
   assert.ok(narrowing, "narrowing constant present");
   const rest = modelBody.replace(narrowing[0], "");
@@ -410,14 +412,15 @@ test("the API object uses the shared request helper, is contained, and sits befo
     detail: { verb: "GET", path: "`${internalRequestBase}/${encodeURIComponent(id)}`" },
     create: { verb: "POST", path: "internalRequestBase" },
     acknowledge: { verb: "POST", path: "`${internalRequestBase}/${encodeURIComponent(id)}/acknowledge`" },
+    approveTechnician: { verb: "POST", path: "`${internalRequestBase}/${encodeURIComponent(id)}/approve-technician`" },
     transition: { verb: "POST", path: "`${internalRequestBase}/${encodeURIComponent(id)}/transition`" }
   });
-  assert.equal((structure.match(/(?<![\w$.])request\s*\(/g) || []).length, 7, "one shared request() call per operation, none elsewhere in the section");
+  assert.equal((structure.match(/(?<![\w$.])request\s*\(/g) || []).length, 8, "one shared request() call per operation, none elsewhere in the section");
 
   // Nothing else is called or reached: no raw fetch, storage, token, destructive verb or other API object.
   assert.doesNotMatch(section, /\bfetch\b|XMLHttpRequest|sendBeacon|localStorage|sessionStorage|getToken|orac_token|Authorization|\bwindow\b|\bdocument\b/);
   assert.doesNotMatch(section, /["'`](?:DELETE|PATCH|PUT|HEAD|OPTIONS)["'`]/i, "no destructive or unexpected verb");
-  assert.deepEqual([...section.matchAll(/\bmethod\s*:\s*(["'`])(\w+)\1/g)].map((match) => match[2]), ["POST", "POST", "POST"], "only the three POST operations name a method");
+  assert.deepEqual([...section.matchAll(/\bmethod\s*:\s*(["'`])(\w+)\1/g)].map((match) => match[2]), ["POST", "POST", "POST", "POST"], "only the four POST operations name a method");
   const callees = new Set([...structure.matchAll(/([A-Za-z_$][\w$]*)\s*\(/g)].map((match) => match[1]));
   for (const method of methods) callees.delete(method.name);
   assert.deepEqual([...callees].sort(), ["encodeURIComponent", "if", "internalRequestListPath", "request", "stringify", "trim"], "the only calls are the shared helper, URL encoding, JSON and trimming");
@@ -442,4 +445,20 @@ test("request() attaches the HTTP status to errors without changing its existing
   assert.match(client, /const contentType = res\.headers\?\.get\?\.\("content-type"\) \|\| "";/);
   assert.match(client, /returned \$\{responseKind\} instead of API data/);
   assert.match(client, /error\.sessionExpired = true;/);
+});
+
+test("the technician registration UI is driven by server data and the one approval call", () => {
+  // The form switches layout on the server's technician_registration block, never on a type code.
+  assert.match(form, /option\?\.technician_registration/);
+  assert.match(form, /registration\.trades\.map/);
+  assert.match(form, /registration\.worker_types\.map/);
+  assert.match(form, /registration\.limits\.(name|nationalId|phone)/);
+  assert.match(form, /onCreate\(buildInternalRequestPayload\(form, option\)\)/);
+  // The approve button comes from allowed_actions; its call is the dedicated endpoint.
+  assert.match(card, /actionButtonsFor\(view\.allowed_actions\)/);
+  assert.match(page, /internalWorkRequests\.approveTechnician\(item\.id\)/);
+  assert.match(page, /APPROVE_REGISTRATION_ACTION/);
+  assert.match(model, /Approve & Add to Technician Registry/);
+  // An approval adds a record, so it must not claim "nothing was changed".
+  assert.match(page, /approving \? describeApproval\(updated\)/);
 });

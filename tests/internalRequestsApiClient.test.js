@@ -23,8 +23,8 @@ const { internalWorkRequests: api } = client;
 const reset = () => { calls.length = 0; nextResponse = { status: 200, body: { success: true, data: { ok: true } } }; };
 const FORGED = ["created_by_user_id", "created_by_role", "client_id", "status", "assigned_to_user_id", "history", "id", "created_at", "updated_at", "resolved_at", "resolution_note", "resolved_by_user_id"];
 
-test("internalWorkRequests exposes exactly the seven approved operations", () => {
-  assert.deepEqual(Object.keys(api).sort(), ["acknowledge", "create", "detail", "inbox", "options", "outbox", "transition"]);
+test("internalWorkRequests exposes exactly the eight approved operations", () => {
+  assert.deepEqual(Object.keys(api).sort(), ["acknowledge", "approveTechnician", "create", "detail", "inbox", "options", "outbox", "transition"]);
 });
 
 test("options, outbox, inbox and detail are GET requests to the dedicated endpoints", async () => {
@@ -139,4 +139,23 @@ test("the status added to errors did not change existing request handling", asyn
   await assert.rejects(() => client.collections.list("quotes"), (error) => /Request failed \(500\)/.test(error.message) && error.status === 500);
   nextResponse = { status: 200, body: { success: true, data: [1] } };
   assert.deepEqual(await client.collections.list("quotes"), [1]);
+});
+
+test("create sends a technician registration payload and no subject or description", async () => {
+  reset();
+  const payload = { first_name: "Tendai", last_name: "Moyo", national_id: "63-123456 A 42", trade: "Welder", worker_type: "contractor", phone_number: "0771234567" };
+  await api.create({ request_type: "NEW_TECHNICIAN_REGISTRATION", recipient_role: "Admin", payload, created_by_user_id: "forged", status: "Completed" });
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0].body, { request_type: "NEW_TECHNICIAN_REGISTRATION", recipient_role: "Admin", payload });
+  assert.equal(calls[0].url, "http://api.test/internal-work-requests");
+});
+
+test("approveTechnician is one POST to the dedicated endpoint with an empty body and an encoded id", async () => {
+  reset();
+  await api.approveTechnician("iwr_1");
+  await api.approveTechnician("a/b?c");
+  assert.deepEqual(calls.map((call) => [call.method, call.url, call.body]), [
+    ["POST", "http://api.test/internal-work-requests/iwr_1/approve-technician", {}],
+    ["POST", "http://api.test/internal-work-requests/a%2Fb%3Fc/approve-technician", {}]
+  ]);
 });

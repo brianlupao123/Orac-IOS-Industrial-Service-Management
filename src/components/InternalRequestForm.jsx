@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ErrorBanner, PageEmptyState } from "./PageStates.jsx";
 import { ICONS } from "./icons.jsx";
 import {
-  COORDINATION_ONLY_NOTICE, EMPTY_INTERNAL_REQUEST_FORM, buildInternalRequestPayload,
+  COORDINATION_ONLY_NOTICE, EMPTY_INTERNAL_REQUEST_FORM, EMPTY_TECHNICIAN_DETAILS, buildInternalRequestPayload,
   findOption, relatedTypeChoices, validateInternalRequestForm
 } from "../internalWorkRequestModel.js";
 
@@ -13,16 +13,18 @@ const labelClass = "mb-1 block text-xs font-medium uppercase tracking-wider text
 // kinds, length limits) comes from GET /internal-work-requests/options. The
 // server re-validates the pairing, the related record and the limits.
 export default function InternalRequestForm({ options, requesterRole, onCreate }) {
-  const [form, setForm] = useState({ ...EMPTY_INTERNAL_REQUEST_FORM });
+  const [form, setForm] = useState({ ...EMPTY_INTERNAL_REQUEST_FORM, technician: { ...EMPTY_TECHNICIAN_DETAILS } });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   const [notice, setNotice] = useState("");
 
   const option = findOption(options, form.request_type);
   const choices = relatedTypeChoices(option, requesterRole);
+  const registration = option?.technician_registration || null;
   const { limits } = options;
 
   const update = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
+  const updateDetail = (key) => (event) => setForm((current) => ({ ...current, technician: { ...current.technician, [key]: event.target.value } }));
 
   function chooseType(event) {
     const next = findOption(options, event.target.value);
@@ -31,6 +33,7 @@ export default function InternalRequestForm({ options, requesterRole, onCreate }
       ...current,
       request_type: event.target.value,
       recipient_role: "",
+      technician: { ...EMPTY_TECHNICIAN_DETAILS },
       related_entity_type: next?.related_required && nextChoices.length === 1 ? nextChoices[0].type : "",
       related_entity_id: ""
     }));
@@ -50,7 +53,7 @@ export default function InternalRequestForm({ options, requesterRole, onCreate }
     setSubmitting(true);
     try {
       await onCreate(buildInternalRequestPayload(form, option));
-      setForm({ ...EMPTY_INTERNAL_REQUEST_FORM });
+      setForm({ ...EMPTY_INTERNAL_REQUEST_FORM, technician: { ...EMPTY_TECHNICIAN_DETAILS } });
       setNotice("Your request was sent. Follow its progress under My Requests.");
     } catch (err) {
       setFormError(err.message);
@@ -106,6 +109,47 @@ export default function InternalRequestForm({ options, requesterRole, onCreate }
               </select>
             </div>
 
+            {registration ? (
+              <fieldset className="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-3" data-evidence="technician-details">
+                <legend className="px-1 text-xs font-medium uppercase tracking-wider text-gray-600">New technician details</legend>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="iwr-first-name" className={labelClass}>First name</label>
+                    <input id="iwr-first-name" type="text" autoComplete="off" value={form.technician.first_name} onChange={updateDetail("first_name")} maxLength={registration.limits.name} className={fieldClass} required />
+                  </div>
+                  <div>
+                    <label htmlFor="iwr-last-name" className={labelClass}>Last name</label>
+                    <input id="iwr-last-name" type="text" autoComplete="off" value={form.technician.last_name} onChange={updateDetail("last_name")} maxLength={registration.limits.name} className={fieldClass} required />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="iwr-national-id" className={labelClass}>National ID</label>
+                  <input id="iwr-national-id" type="text" autoComplete="off" value={form.technician.national_id} onChange={updateDetail("national_id")} maxLength={registration.limits.nationalId} className={fieldClass} required />
+                  <p className="mt-1 text-xs text-gray-500">Used to make sure the same person is not registered twice. It is shown only to you and the person who approves the request.</p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="iwr-trade" className={labelClass}>Trade</label>
+                    <select id="iwr-trade" value={form.technician.trade} onChange={updateDetail("trade")} className={fieldClass} required>
+                      <option value="">Choose a trade</option>
+                      {registration.trades.map((trade) => <option key={trade} value={trade}>{trade}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="iwr-worker-type" className={labelClass}>Worker type</label>
+                    <select id="iwr-worker-type" value={form.technician.worker_type} onChange={updateDetail("worker_type")} className={fieldClass} required>
+                      <option value="">Choose a type</option>
+                      {registration.worker_types.map((kind) => <option key={kind} value={kind}>{kind.charAt(0).toUpperCase() + kind.slice(1)}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="iwr-phone" className={labelClass}>Phone number</label>
+                  <input id="iwr-phone" type="tel" autoComplete="off" value={form.technician.phone_number} onChange={updateDetail("phone_number")} maxLength={registration.limits.phone} className={fieldClass} required />
+                </div>
+              </fieldset>
+            ) : (
+            <>
             <div>
               <label htmlFor="iwr-subject" className={labelClass}>Subject</label>
               <input id="iwr-subject" type="text" value={form.subject} onChange={update("subject")} maxLength={limits.subject} className={fieldClass} required />
@@ -137,6 +181,8 @@ export default function InternalRequestForm({ options, requesterRole, onCreate }
             )}
             {option.related_required && choices.length === 0 && (
               <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">This request type needs a related record, but no record type is available to you.</p>
+            )}
+            </>
             )}
           </>
         )}
