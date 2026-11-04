@@ -1,13 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "./Modal.jsx";
-import { dispatch, worksheets } from "../api/client.js";
+import SearchableSelect from "./SearchableSelect.jsx";
+import { dispatch, worksheets, technicianProfiles } from "../api/client.js";
 import { saveDraft, loadDraft, clearDraft } from "../offlineDraftModel.js";
-import { enqueueTimesheet, isNetworkError, loadDispatchOptions } from "../offlineTimesheetOutbox.js";
+import { enqueueTimesheet, isNetworkError, loadDispatchOptions, cacheTechnicianOptions, loadTechnicianOptions } from "../offlineTimesheetOutbox.js";
+import { canPickTechnician, normalizeTechnicianProfiles, technicianOptions, identityFromTechnician, EMPTY_TECHNICIAN_IDENTITY } from "../lib/technicianPickerLogic.js";
 import {
   EMPTY_TIMESHEET_FORM, newRequestId, totalHours, reviewHints, validateTimesheetForm, buildTimesheetPayload, formFromTimesheet, isTimesheetV2
 } from "../lib/timesheetFormLogic.js";
 
-// The ONE Timesheet form: job/dispatch, client (from the job), worker and category, work description,
+// The ONE Timesheet form: job/dispatch, client (from the job), worker (picked from the Technician list; name,
+// trade and national ID fill in read-only), work description,
 // materials, Normal / 1.5 / 2.0 hours, the worker's sign-off, then the existing customer acknowledgement
 // and Supervisor review. Works without a connection: an unsent Timesheet is kept on this device and sent
 // automatically, once, when the connection returns (see offlineTimesheetOutbox.js).
@@ -18,6 +21,7 @@ const MAX_PHOTO_BYTES = 1_000_000;
 function storage() { try { return window.localStorage; } catch { return null; } }
 const inputCls = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20";
 const labelCls = "mb-1 block text-sm font-semibold text-gray-600";
+const readOnlyCls = "w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 cursor-default focus:outline-none";
 
 export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, editing, onSaved }) {
   const [form, setForm] = useState(EMPTY_TIMESHEET_FORM());
@@ -26,6 +30,9 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
   const [busy, setBusy] = useState(false);
   const isStaff = STAFF_ROLES.includes(user.role);
   const online = typeof navigator === "undefined" ? true : navigator.onLine !== false;
+  const canPick = canPickTechnician(user.role);
+  const [technicians, setTechnicians] = useState([]);
+  const [techStatus, setTechStatus] = useState("idle"); // idle | loading | live | cached | error
 
   const dispatchOptions = useMemo(() => {
     const live = (dispatches || []).map((d) => ({ id: d.id, label: d.dispatch_number || d.title || d.id }));
@@ -41,16 +48,43 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
     if (saved) setNote("Restored an unsent draft saved on this device. The worker's declaration must be given again.");
   }, [isOpen, editing, user.id]);
 
+  // Technician list for the picker: the device copy shows at once (so it works offline), then the live
+  // list replaces it when online. A failed refresh keeps the device copy rather than an empty picker.
+  useEffect(() => {
+    if (!isOpen || editing || !canPick) return undefined;
+    let cancelled = false;
+    const cached = normalizeTechnicianProfiles(loadTechnicianOptions(storage(), user.id));
+    setTechnicians(cached);
+    setTechStatus(cached.length ? "cached" : "loading");
+    if (online) {
+      setTechStatus((s) => (s === "cached" ? s : "loading"));
+      technicianProfiles.list()
+        .then((data) => {
+          if (cancelled) return;
+          const live = normalizeTechnicianProfiles(data);
+          setTechnicians(live); setTechStatus("live");
+          cacheTechnicianOptions(storage(), user.id, live);
+        })
+        .catch(() => { if (!cancelled) setTechStatus(cached.length ? "cached" : "error"); });
+    } else if (!cached.length) setTechStatus("error");
+    return () => { cancelled = true; };
+  }, [isOpen, editing, canPick, user.id, online]);
+
   // Unsent text is kept on this device. The declaration and photo are never stored in the draft.
   useEffect(() => {
     if (!isOpen || editing) return;
-    if (form.activity || form.normal || form.ot_15 || form.ot_20) {
+    if (form.activity || form.normal || form.ot_15 || form.ot_20 || form.technician_id) {
       const { signed_copy_image, employee_attest, ...text } = form;
       saveDraft(storage(), user.id, "timesheet", "new", { form: text });
     }
   }, [form, isOpen, editing]);
 
   const set = (patch) => setForm((p) => ({ ...p, ...patch }));
+  const pickTechnician = (id) => set(identityFromTechnician(technicians, id));
+  const setWorkerType = (worker_type) => set({ worker_type, ...EMPTY_TECHNICIAN_IDENTITY(), ...(worker_type === "technician" ? { worker_category: "" } : {}) });
+  const techOptions = useMemo(() => technicianOptions(technicians), [technicians]);
+  const showPicker = canPick && !editing && form.worker_type !== "contractor";
+  const showIdentity = form.technician_id || (editing && (form.worker_name || form.technician_trade || form.national_id));
   const total = totalHours(form);
   const hints = reviewHints(form);
 
@@ -66,12 +100,13 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
   }
 
   async function save(submit) {
-    const errors = validateTimesheetForm(form, { submit, role: user.role });
+    const errors = validateTimesheetForm(form, { submit, role: user.role, requireTechnician: showPicker });
     if (errors.length) { setError(errors[0]); return; }
     setBusy(true); setError("");
     try {
       if (editing) {
-        const { client_request_id, submit: _s, captured_offline_at, ...update } = buildTimesheetPayload(form, { submit: false, role: user.role });
+        // The technician is fixed once the Timesheet exists: identity fields are not resent on edit.
+        const { client_request_id, submit: _s, captured_offline_at, technician_id: _t, technician_trade: _tt, national_id: _n, ...update } = buildTimesheetPayload(form, { submit: false, role: user.role });
         await worksheets.update(editing.id, update);
         onSaved("Timesheet updated.");
         onClose();
@@ -143,10 +178,30 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
           {isStaff && !editing && (
             <div>
               <label htmlFor="ts-worker-type" className={labelCls}>Who did the work</label>
-              <select id="ts-worker-type" value={form.worker_type} onChange={(e) => set({ worker_type: e.target.value })} className={inputCls}>
-                <option value="technician">A Technician (their own account)</option>
+              <select id="ts-worker-type" value={form.worker_type} onChange={(e) => setWorkerType(e.target.value)} className={inputCls}>
+                <option value="technician">A Technician (pick from the list)</option>
                 <option value="contractor">A contractor without an account (enter by name)</option>
               </select>
+            </div>
+          )}
+          {showPicker && (
+            <div>
+              <label htmlFor="ts-technician" className={labelCls}>Technician</label>
+              <SearchableSelect
+                id="ts-technician"
+                ariaLabel="Technician"
+                placeholder={techStatus === "loading" ? "Loading technicians..." : "Select a technician"}
+                emptyLabel="No technician matches"
+                options={techOptions}
+                value={form.technician_id}
+                onChange={pickTechnician}
+                disabled={techStatus === "loading" && !techOptions.length}
+              />
+              <p className="mt-1 text-xs text-gray-500" aria-live="polite">
+                {techStatus === "cached" && "Showing the technician list saved on this device. It refreshes when you are online. "}
+                {techStatus === "error" && "The technician list could not be loaded and none is saved on this device. Connect and reopen this form. "}
+                Type a name, trade or ID number to search. Name, trade and ID fill in below.
+              </p>
             </div>
           )}
           {isStaff && !editing && form.worker_type === "contractor" && (
@@ -155,10 +210,34 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
               <input id="ts-worker-name" value={form.worker_name} onChange={(e) => set({ worker_name: e.target.value })} className={inputCls} />
             </div>
           )}
-          <div>
-            <label htmlFor="ts-category" className={labelCls}>Category / trade (optional)</label>
-            <input id="ts-category" value={form.worker_category} onChange={(e) => set({ worker_category: e.target.value })} className={inputCls} />
-          </div>
+          {showIdentity && form.worker_type !== "contractor" && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label htmlFor="ts-worker-fullname" className={labelCls}>Full name</label>
+                <input id="ts-worker-fullname" readOnly aria-readonly="true" value={form.worker_name} className={readOnlyCls} />
+              </div>
+              <div>
+                <label htmlFor="ts-worker-trade" className={labelCls}>Trade</label>
+                <input id="ts-worker-trade" readOnly aria-readonly="true" value={form.technician_trade || "Unclassified"} className={readOnlyCls} />
+              </div>
+              <div>
+                <label htmlFor="ts-worker-nid" className={labelCls}>National ID</label>
+                <input id="ts-worker-nid" readOnly aria-readonly="true" value={form.national_id || "Not on file"} className={readOnlyCls} />
+              </div>
+            </div>
+          )}
+          {!showPicker && form.worker_type !== "contractor" && !showIdentity && (
+            <div>
+              <label htmlFor="ts-category" className={labelCls}>Category / trade (optional)</label>
+              <input id="ts-category" value={form.worker_category} onChange={(e) => set({ worker_category: e.target.value })} className={inputCls} />
+            </div>
+          )}
+          {form.worker_type === "contractor" && (
+            <div>
+              <label htmlFor="ts-category" className={labelCls}>Category / trade (optional)</label>
+              <input id="ts-category" value={form.worker_category} onChange={(e) => set({ worker_category: e.target.value })} className={inputCls} />
+            </div>
+          )}
         </fieldset>
 
         <fieldset className="space-y-4">

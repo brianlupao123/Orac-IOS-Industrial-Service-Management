@@ -446,6 +446,12 @@ export const worksheets = {
   }
 };
 
+// Active Technician profiles (name, trade, national ID) for the Timesheet technician picker.
+// Read-only. The server decides which roles may read it and returns only active Technicians.
+export const technicianProfiles = {
+  list() { return request("/technician-profiles"); }
+};
+
 export const dailyTimesheets = {
   list() { return request("/daily_timesheets"); },
   create(payload) { return request("/daily_timesheets", { method: "POST", body: JSON.stringify(payload) }); },

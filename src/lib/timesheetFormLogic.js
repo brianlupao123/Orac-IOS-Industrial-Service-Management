@@ -3,6 +3,8 @@
 // nothing here is trusted, it only shapes input and gives early feedback.
 // There is deliberately no rate, amount or cost field anywhere in this module.
 
+import { canPickTechnician, EMPTY_TECHNICIAN_IDENTITY } from "./technicianPickerLogic.js";
+
 export const WEEKDAY_OT15_REVIEW_THRESHOLD_HOURS = 3;
 
 export const EMPTY_TIMESHEET_FORM = () => ({
@@ -11,6 +13,7 @@ export const EMPTY_TIMESHEET_FORM = () => ({
   worker_type: "technician",
   worker_name: "",
   worker_category: "",
+  ...EMPTY_TECHNICIAN_IDENTITY(),
   activity: "",
   outcomes: "",
   start_time: "",
@@ -52,7 +55,7 @@ export function reviewHints(form) {
   return hints;
 }
 
-export function validateTimesheetForm(form, { submit = false, role = "Technician" } = {}) {
+export function validateTimesheetForm(form, { submit = false, role = "Technician", requireTechnician = false } = {}) {
   const errors = [];
   if (!form.dispatch_card_id) errors.push("Choose the job (dispatch card).");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(form.work_date || "")) errors.push("Work date is required.");
@@ -64,6 +67,7 @@ export function validateTimesheetForm(form, { submit = false, role = "Technician
   else if (total > 24) errors.push("A Timesheet cannot record more than 24 hours.");
   if ((form.start_time && !form.end_time) || (!form.start_time && form.end_time)) errors.push("Enter both start and end time, or neither.");
   if (form.start_time && form.end_time && form.end_time <= form.start_time) errors.push("End time must be after start time.");
+  if (requireTechnician && form.worker_type !== "contractor" && !form.technician_id) errors.push("Choose the technician.");
   if (form.worker_type === "contractor" && ["Admin", "Operations", "Supervisor"].includes(role) && !String(form.worker_name || "").trim()) errors.push("Enter the contractor's name.");
   for (const [i, m] of (form.materials || []).entries()) {
     if (!String(m.description || "").trim()) errors.push(`Material ${i + 1}: description is required.`);
@@ -90,6 +94,13 @@ export function buildTimesheetPayload(form, { submit = false, capturedOfflineAt 
   if (String(form.worker_category || "").trim()) body.worker_category = String(form.worker_category).trim();
   if (form.worker_type === "contractor" && ["Admin", "Operations", "Supervisor"].includes(role)) {
     body.worker_type = "contractor"; body.worker_name = String(form.worker_name).trim();
+  } else if (form.technician_id && canPickTechnician(role)) {
+    // Identity of the picked Technician. A snapshot of what was on file when captured; the server
+    // re-checks the technician_id and is the source of truth.
+    body.technician_id = form.technician_id;
+    body.worker_name = String(form.worker_name || "").trim();
+    if (String(form.technician_trade || "").trim()) { body.technician_trade = String(form.technician_trade).trim(); if (!body.worker_category) body.worker_category = body.technician_trade; }
+    if (String(form.national_id || "").trim()) body.national_id = String(form.national_id).trim();
   }
   const materials = (form.materials || []).filter((m) => String(m.description || "").trim()).map((m) => ({
     description: String(m.description).trim(), quantity: Number(m.quantity), ...(String(m.unit || "").trim() ? { unit: String(m.unit).trim() } : {})
@@ -112,7 +123,8 @@ export function formFromTimesheet(ws) {
   return {
     ...EMPTY_TIMESHEET_FORM(),
     dispatch_card_id: ws.dispatch_card_id || "", work_date: ws.work_date || EMPTY_TIMESHEET_FORM().work_date,
-    worker_type: ws.worker_type || "technician", worker_name: ws.worker_name || "", worker_category: ws.worker_category || "",
+    worker_type: ws.worker_type || "technician", worker_name: ws.worker_name || ws.technician_name || "", worker_category: ws.worker_category || "",
+    technician_id: ws.technician_id || "", technician_trade: ws.technician_trade || "", national_id: ws.national_id || "",
     activity: ws.activity || "", outcomes: ws.outcomes || "", start_time: ws.start_time || "", end_time: ws.end_time || "",
     normal: b.normal ? String(b.normal) : "", ot_15: b.ot_15 ? String(b.ot_15) : "", ot_20: b.ot_20 ? String(b.ot_20) : "",
     materials: (ws.materials_used || []).map((m) => ({ description: m.description || "", quantity: String(m.quantity ?? ""), unit: m.unit || "" })),

@@ -14,6 +14,7 @@
 
 const PREFIX = "orac.timesheet.outbox.v1";
 const DISPATCH_PREFIX = "orac.timesheet.dispatches.v1";
+const TECH_PREFIX = "orac.timesheet.technicians.v1";
 const MAX_ITEM_BYTES = 1_500_000;
 const MAX_ITEMS = 100;
 const SECRET_KEY = /(^|_)(password|token|authorization|secret|hourly_rate|rate|amount|cost|price)(_|$)/i;
@@ -105,8 +106,21 @@ export function cacheDispatchOptions(storage, userId, dispatches) {
 export function loadDispatchOptions(storage, userId) {
   try { return JSON.parse(storage?.getItem(`${DISPATCH_PREFIX}.${userId}`) || "null")?.items || []; } catch { return []; }
 }
+// Technician choices (already normalised: id, name, trade, national_id) cached while online so a
+// Timesheet can be captured offline. The national ID is personal data: it is kept per user on this
+// device only and is removed on logout (see clearOutboxOnLogout), unlike unsent Timesheets.
+export function cacheTechnicianOptions(storage, userId, technicians) {
+  try {
+    const slim = (technicians || []).map((t) => ({ id: t.id, name: t.name, trade: t.trade || "", national_id: t.national_id || "" }));
+    storage?.setItem(`${TECH_PREFIX}.${userId}`, JSON.stringify({ at: new Date().toISOString(), items: slim }));
+  } catch { /* cache is best effort */ }
+}
+export function loadTechnicianOptions(storage, userId) {
+  try { const items = JSON.parse(storage?.getItem(`${TECH_PREFIX}.${userId}`) || "null")?.items; return Array.isArray(items) ? items : []; } catch { return []; }
+}
 export function clearOutboxOnLogout(storage, userId) {
   try { storage?.removeItem(`${DISPATCH_PREFIX}.${userId}`); } catch { /* ignore */ }
+  try { storage?.removeItem(`${TECH_PREFIX}.${userId}`); } catch { /* ignore */ }
   // The outbox itself is NOT cleared on logout: unsent signed work must survive it. The user
   // sees it again after signing back in, and it is removed only when the server confirms it.
 }
