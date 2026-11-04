@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import UserProfileDropdown from "../components/UserProfileDropdown.jsx";
 import NotificationBell from "../components/NotificationBell.jsx";
 import ThemeToggle, { applyStoredTheme } from "../components/ThemeToggle.jsx";
+import OfflineOutboxBar from "../components/OfflineOutboxBar.jsx";
 import { visibleNavigationGroups } from "../accessPolicy.js";
 
 /**
@@ -276,6 +277,9 @@ export default function PortalLayout({ user, onLogout, children }) {
           </div>
         </div>
       )}
+
+      {/* Timesheets saved on this device: status line + the background sender (stays mounted on every page). */}
+      <OfflineOutboxBar user={user} />
 
       {/* Mobile navigation drawer — accessible, full labels, no clipping */}
       {mobileMenuOpen && (

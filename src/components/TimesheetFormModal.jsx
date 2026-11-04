@@ -4,6 +4,7 @@ import SearchableSelect from "./SearchableSelect.jsx";
 import { dispatch, worksheets, technicianProfiles } from "../api/client.js";
 import { saveDraft, loadDraft, clearDraft } from "../offlineDraftModel.js";
 import { enqueueTimesheet, isNetworkError, loadDispatchOptions, cacheTechnicianOptions, loadTechnicianOptions } from "../offlineTimesheetOutbox.js";
+import { notifyOutboxChanged } from "../offlineOutboxSync.js";
 import { canPickTechnician, normalizeTechnicianProfiles, technicianOptions, identityFromTechnician, EMPTY_TECHNICIAN_IDENTITY } from "../lib/technicianPickerLogic.js";
 import {
   EMPTY_TIMESHEET_FORM, newRequestId, totalHours, reviewHints, validateTimesheetForm, buildTimesheetPayload, formFromTimesheet, isTimesheetV2
@@ -16,6 +17,7 @@ import {
 // automatically, once, when the connection returns (see offlineTimesheetOutbox.js).
 // There is no rate, amount or cost field anywhere on this form.
 
+export const OFFLINE_SAVED_MESSAGE = "No network detected. Timesheet saved securely to device outbox.";
 const STAFF_ROLES = ["Admin", "Operations", "Supervisor"];
 const MAX_PHOTO_BYTES = 1_000_000;
 function storage() { try { return window.localStorage; } catch { return null; } }
@@ -133,7 +135,8 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
     const r = enqueueTimesheet(storage(), user.id, { dispatchId, body });
     if (!r.ok) { setError(r.error); return; }
     clearDraft(storage(), user.id, "timesheet", "new");
-    onSaved(`Saved on this device. It will be sent automatically when you are back online${submit ? "" : " (as a Draft)"}. You can see it under "Waiting to send".`, { queued: true });
+    notifyOutboxChanged();
+    onSaved(OFFLINE_SAVED_MESSAGE, { queued: true, asDraft: !submit });
     onClose();
   }
 

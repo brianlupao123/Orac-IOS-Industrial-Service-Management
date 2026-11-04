@@ -157,6 +157,8 @@ test("source wiring: the form posts through the existing create endpoint, falls 
   assert.match(page, /<TimesheetOutboxPanel/); assert.match(page, /<TimesheetFormModal/);
   assert.match(page, /collections\.list\("field_worksheets"\)/);
   const panel = read("src/components/TimesheetOutboxPanel.jsx");
-  assert.match(panel, /addEventListener\("online"/);
+  // Background sending on reconnect lives in the portal-wide OfflineOutboxBar; the panel joins the same single run.
+  assert.match(read("src/components/OfflineOutboxBar.jsx"), /addEventListener\("online"/);
+  assert.match(panel, /runOutboxSync\(/);
   for (const f of ["src/components/TimesheetFormModal.jsx", "src/components/TimesheetOutboxPanel.jsx", "src/lib/timesheetFormLogic.js", "src/offlineTimesheetOutbox.js"]) assert.doesNotMatch(read(f), /hourly_rate\s*[:=]|name="rate"|Total Amount|unit_price/, f);
 });

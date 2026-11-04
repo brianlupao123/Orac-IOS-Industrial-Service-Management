@@ -383,8 +383,13 @@ export const dispatch = {
   },
   createWorksheet(dispatchId, payload) {
     // Worksheets: hours (not hours_logged), activity, outcomes, etc.
+    // client_request_id is generated once on the device and reused on every retry (including from the
+    // offline outbox). It is sent in the body and as Idempotency-Key so the server can recognise a
+    // repeated submission and return the original Timesheet instead of creating a second one.
+    const headers = payload?.client_request_id ? { "Idempotency-Key": payload.client_request_id } : undefined;
     return request(`/dispatch_cards/${dispatchId}/worksheets`, {
       method: "POST",
+      headers,
       body: JSON.stringify(payload)
     });
   }
