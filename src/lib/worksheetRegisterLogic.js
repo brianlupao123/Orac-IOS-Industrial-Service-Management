@@ -125,3 +125,27 @@ export function billingNotice(record) {
   return "This Worksheet is generated from approved Timesheets; nobody types hours into it. Approving it does not bill anything: rates come from a controlled rate source that is not part of this release.";
 }
 export const HOLIDAY_NOTICE = "Public holidays are not classified yet (company policy pending). Every date is treated as a weekday, Saturday or Sunday.";
+
+// ---- Monthly roll-up: preview, then Consolidate ----
+export const STALE_PREVIEW_CODE = "STALE_PREVIEW";
+
+// The ONLY place a consolidate body is assembled: the create body plus the hash of the figures the person saw.
+export function buildConsolidatePayload(form, previewHash) {
+  return { ...buildCreatePayload(form), preview_hash: previewHash };
+}
+
+// Identifies the inputs a preview was computed from, so editing the form after previewing invalidates it.
+export const previewSignature = (form) => JSON.stringify(buildCreatePayload(form));
+
+const bucketsOf = (t) => ({ normal: Number(t?.normal) || 0, ot_15: Number(t?.ot_15) || 0, ot_20: Number(t?.ot_20) || 0, total_hours: Number(t?.total_hours) || 0 });
+
+// Worker rows for the preview table, exactly as the server totalled them (nothing is re-added in the browser).
+export const previewWorkerRows = (preview) => (preview?.grid?.rows || []).map((r) => ({ key: r.roster_key, name: r.display_name, group: r.group || "", ...bucketsOf(r.totals) }));
+
+// Certified days that carry hours, in date order.
+export const previewDayRows = (preview) => Object.entries(preview?.grid?.totals?.by_date || {}).sort(([a], [b]) => a.localeCompare(b)).map(([date, t]) => ({ date, ...bucketsOf(t) }));
+
+export function previewHeadline(preview) {
+  const s = preview?.summary; if (!s) return "";
+  return `${s.worker_days} certified worker-day${s.worker_days === 1 ? "" : "s"} across ${s.dates_covered} date${s.dates_covered === 1 ? "" : "s"}, ${s.workers_with_hours} of ${s.workers_total} employees with hours, from ${s.source_records} approved record${s.source_records === 1 ? "" : "s"}.`;
+}

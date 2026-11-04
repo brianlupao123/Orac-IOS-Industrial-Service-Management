@@ -74,7 +74,7 @@ async function recordPage(page, viewport, route, heading, results, audience) {
     "/internal-requests": ["My Requests", "Team Inbox", "Refresh"],
     "/service-requests": ["Refresh"],
     "/contracts": ["New contract"],
-    "/monthly-worksheets": ["Generate Worksheet"]
+    "/monthly-worksheets": ["Generate Monthly Worksheet from Daily Timesheets"]
   };
   if (touchTargets[route]) {
     for (const name of touchTargets[route]) {
@@ -93,14 +93,14 @@ async function recordPage(page, viewport, route, heading, results, audience) {
   results.screenshots.push(file);
 
   if (route === "/monthly-worksheets" && viewport.name === "mobile") {
-    await page.getByRole("button", { name: "Generate Worksheet", exact: true }).click();
-    await page.getByRole("heading", { name: "Generate Worksheet", exact: true }).waitFor();
-    const modal = page.getByRole("heading", { name: "Generate Worksheet", exact: true }).locator("xpath=../..");
+    await page.getByRole("button", { name: "Generate Monthly Worksheet from Daily Timesheets", exact: true }).click();
+    await page.getByRole("heading", { name: "Generate Monthly Worksheet from Daily Timesheets", exact: true }).waitFor();
+    const modal = page.getByRole("heading", { name: "Generate Monthly Worksheet from Daily Timesheets", exact: true }).locator("xpath=../..");
     const bounds = await modal.boundingBox();
     assert(bounds && bounds.x >= 0 && bounds.x + bounds.width <= viewport.width, "Worksheet form exceeds mobile viewport");
     const modalFile = path.join(evidenceDir, `${audience}-${viewport.name}-worksheet-form.png`);
     await page.screenshot({ path: modalFile });
-    results.checks.push({ audience, viewport: viewport.name, route: "/monthly-worksheets/new", heading: "Generate Worksheet", pass: true });
+    results.checks.push({ audience, viewport: viewport.name, route: "/monthly-worksheets/new", heading: "Generate Monthly Worksheet from Daily Timesheets", pass: true });
     results.screenshots.push(modalFile);
     await page.getByRole("button", { name: "Close dialog" }).click();
   }

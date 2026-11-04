@@ -396,6 +396,8 @@ export const dispatch = {
 export const worksheetRegisters = {
   list() { return request("/worksheet_registers"); },
   get(id) { return request(`/worksheet_registers/${encodeURIComponent(id)}`); },
+  // Read-only roll-up preview: computes exactly what Consolidate will save and writes nothing.
+  preview(payload) { return request("/worksheet_registers/preview", { method: "POST", body: JSON.stringify(payload) }); },
   create(payload) { return request("/worksheet_registers", { method: "POST", body: JSON.stringify(payload) }); },
   update(id, payload) { return request(`/worksheet_registers/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(payload) }); },
   build(id) { return request(`/worksheet_registers/${encodeURIComponent(id)}/build`, { method: "POST", body: JSON.stringify({}) }); },

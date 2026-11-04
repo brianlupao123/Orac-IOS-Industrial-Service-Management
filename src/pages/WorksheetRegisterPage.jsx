@@ -6,14 +6,18 @@ import Modal from "../components/Modal.jsx";
 import {
   reconciliationLabel, SEVERITY_LABEL, sortExceptions, exceptionCountsText, formatTotal, formatDateShort, formatDateFull, displayCells,
   SUB_LABEL, groupRows, refsFromException, addRowRef, removeRowRef, refsForPayload, refLabel, rosterCandidates, validateCreateForm,
-  buildCreatePayload, billingNotice, cellSourceText, sourceRows, sourceLabel, HOLIDAY_NOTICE
+  buildCreatePayload, billingNotice, cellSourceText, sourceRows, sourceLabel, HOLIDAY_NOTICE,
+  buildConsolidatePayload, previewSignature, previewWorkerRows, previewDayRows, previewHeadline, STALE_PREVIEW_CODE
 } from "../lib/worksheetRegisterLogic.js";
+import { tsFlags } from "../timesheetWorkflowFlags.js";
 
 // Worksheet = the monthly register, GENERATED from approved Timesheets. Nobody types hours here.
 // The server decides every permission and state change; `detail.actions` drives which buttons appear.
 // Every override (exclude a row, include a carry-over, acknowledge a warning) needs a reason and is audited.
 
 const MANAGE_ROLES = ["Admin", "Operations", "Supervisor"];
+// Sales can run the roll-up only where the Sales access switch is on; the server still decides (a 403 is shown as an error).
+const salesMayManage = (role) => role === "Sales" && tsFlags().workflowUi;
 const SEV_CLASS = { blocking: "bg-red-50 text-red-800 border-red-200", warning: "bg-amber-50 text-amber-800 border-amber-200", info: "bg-gray-50 text-gray-600 border-gray-200" };
 const emptyForm = () => ({ title: "", period_start: "", period_end: "", client_id: "", project_title: "", department_section: "", roster: [] });
 
@@ -36,7 +40,9 @@ export default function WorksheetRegisterPage({ user }) {
   const [reviewComment, setReviewComment] = useState("");
   const [rowReason, setRowReason] = useState({});
   const [cancelReason, setCancelReason] = useState("");
-  const canManage = MANAGE_ROLES.includes(user.role);
+  const [preview, setPreview] = useState(null);
+  const [previewSig, setPreviewSig] = useState("");
+  const canManage = MANAGE_ROLES.includes(user.role) || salesMayManage(user.role);
 
   async function loadList() {
     setLoading(true); setError("");
@@ -60,7 +66,7 @@ export default function WorksheetRegisterPage({ user }) {
   }
 
   async function openCreate() {
-    setForm(emptyForm()); setFormError(""); setManualName(""); setCreateOpen(true);
+    setForm(emptyForm()); setFormError(""); setManualName(""); setPreview(null); setPreviewSig(""); setCreateOpen(true);
     try { setClients((await collections.list("clients")) || []); setClientsNote(""); } catch { setClients([]); setClientsNote("Your role cannot list clients. Ask Operations or Admin to generate the Worksheet."); }
     const [timesheets, dailySheets] = await Promise.all([collections.list("field_worksheets").catch(() => []), collections.list("daily_timesheets").catch(() => [])]);
     setSources({ timesheets: timesheets || [], dailySheets: dailySheets || [] });
@@ -77,14 +83,30 @@ export default function WorksheetRegisterPage({ user }) {
     setManualName("");
   }
 
-  async function handleCreate() {
+  const previewIsCurrent = Boolean(preview) && previewSig === previewSignature(form);
+
+  // Step 1: compute the roll-up from approved Timesheets. Read-only: nothing is saved.
+  async function handlePreview() {
     const errors = validateCreateForm(form);
     if (errors.length) { setFormError(errors[0]); return; }
+    setBusy(true); setFormError(""); setPreview(null);
+    try {
+      const data = await worksheetRegisters.preview(buildCreatePayload(form));
+      setPreview(data); setPreviewSig(previewSignature(form));
+    } catch (err) { setFormError(err.status === 403 ? "Your role cannot generate a Worksheet. Ask Operations or Admin." : err.message); } finally { setBusy(false); }
+  }
+
+  // Step 2: save the official monthly register from the previewed figures.
+  async function handleConsolidate() {
+    if (!previewIsCurrent || !preview.can_consolidate) return;
     setBusy(true); setFormError("");
     try {
-      const created = await worksheetRegisters.create(buildCreatePayload(form));
-      setCreateOpen(false); setDetail(created); setNotice("Generated from approved Timesheets. Review the exceptions below."); await loadList();
-    } catch (err) { setFormError(err.message); } finally { setBusy(false); }
+      const created = await worksheetRegisters.create(buildConsolidatePayload(form, preview.preview_hash));
+      setCreateOpen(false); setPreview(null); setDetail(created); setNotice("Consolidated from approved Timesheets. Review the exceptions below."); await loadList();
+    } catch (err) {
+      setFormError(err.message);
+      if (err.code === STALE_PREVIEW_CODE) { setPreview(null); try { const data = await worksheetRegisters.preview(buildCreatePayload(form)); setPreview(data); setPreviewSig(previewSignature(form)); } catch { /* the message above already tells them to refresh */ } }
+    } finally { setBusy(false); }
   }
 
   function override(exc, ref, kind) {
@@ -112,7 +134,7 @@ export default function WorksheetRegisterPage({ user }) {
             Record the work on a <Link to="/worksheets" className="font-semibold text-orac-cyan underline">Timesheet</Link>.
           </p>
         </div>
-        {canManage && <button onClick={openCreate} className="min-h-11 self-start rounded-md bg-orac-cyan px-4 py-2 text-sm font-semibold text-white hover:opacity-90 sm:shrink-0">Generate Worksheet</button>}
+        {canManage && <button onClick={openCreate} className="min-h-11 self-start rounded-md bg-orac-cyan px-4 py-2 text-sm font-semibold text-white hover:opacity-90 sm:shrink-0">Generate Monthly Worksheet from Daily Timesheets</button>}
       </div>
       {error && <div role="alert" className="mb-3 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div>}
       {notice && <div role="status" className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</div>}
@@ -303,7 +325,7 @@ export default function WorksheetRegisterPage({ user }) {
         </section>
       )}
 
-      <Modal title="Generate Worksheet" isOpen={createOpen} onClose={() => setCreateOpen(false)} size="xl">
+      <Modal title="Generate Monthly Worksheet from Daily Timesheets" isOpen={createOpen} onClose={() => setCreateOpen(false)} size="xl">
         <div className="space-y-3 text-sm">
           {formError && <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{formError}</div>}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -336,8 +358,42 @@ export default function WorksheetRegisterPage({ user }) {
           <p className="text-xs text-gray-500">There is no field to type hours or a rate: the Worksheet is generated from approved Timesheets.</p>
           <div className="flex justify-end gap-2 pt-1">
             <button onClick={() => setCreateOpen(false)} className="min-h-11 rounded border border-gray-300 px-4 py-2 font-semibold text-gray-700">Cancel</button>
-            <button disabled={busy} onClick={handleCreate} className="min-h-11 rounded bg-orac-cyan px-4 py-2 font-semibold text-white disabled:opacity-50">Generate</button>
+            <button disabled={busy} onClick={handlePreview} data-evidence="worksheet-preview" className="min-h-11 rounded border border-orac-cyan px-4 py-2 font-semibold text-orac-cyan disabled:opacity-50">{preview ? "Refresh preview" : "Preview roll-up"}</button>
           </div>
+          {preview && (
+            <section aria-label="Roll-up preview" data-evidence="worksheet-rollup-preview" className="space-y-3 rounded-md border border-sky-200 bg-sky-50 p-3">
+              <p className="text-sm font-semibold text-orac-slate">Preview: nothing is saved until you click Consolidate.</p>
+              <p className="text-xs text-gray-700">{previewHeadline(preview)}</p>
+              {!previewIsCurrent && <p role="alert" className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">The form changed after this preview. Click Refresh preview before consolidating.</p>}
+              {preview.existing_register && <p role="alert" className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">Worksheet {preview.existing_register.reference} ({String(preview.existing_register.status).replace(/_/g, " ")}) already covers this client, project and period. Open it instead of consolidating a second one.</p>}
+              <div className="overflow-x-auto bg-white">
+                <table className="min-w-full text-xs">
+                  <thead className="bg-gray-50 text-left text-gray-600"><tr><th className="px-2 py-1">Employee</th><th className="px-2 py-1">Group</th><th className="px-2 py-1 text-right">Normal</th><th className="px-2 py-1 text-right">1.5</th><th className="px-2 py-1 text-right">2.0</th><th className="px-2 py-1 text-right">Total</th></tr></thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {previewWorkerRows(preview).map((r) => <tr key={r.key}><td className="px-2 py-1 font-medium">{r.name}</td><td className="px-2 py-1 text-gray-500">{r.group}</td><td className="px-2 py-1 text-right">{formatTotal(r.normal)}</td><td className="px-2 py-1 text-right">{formatTotal(r.ot_15)}</td><td className="px-2 py-1 text-right">{formatTotal(r.ot_20)}</td><td className="px-2 py-1 text-right font-semibold">{formatTotal(r.total_hours)}</td></tr>)}
+                    <tr className="bg-gray-50 font-semibold"><td className="px-2 py-1" colSpan={2}>All employees</td><td className="px-2 py-1 text-right">{formatTotal(preview.totals.normal)}</td><td className="px-2 py-1 text-right">{formatTotal(preview.totals.ot_15)}</td><td className="px-2 py-1 text-right">{formatTotal(preview.totals.ot_20)}</td><td className="px-2 py-1 text-right">{formatTotal(preview.totals.total_hours)}</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <details className="text-xs">
+                <summary className="cursor-pointer font-semibold text-orac-slate">Certified days ({previewDayRows(preview).length})</summary>
+                <div className="mt-1 max-h-48 overflow-auto bg-white">
+                  <table className="min-w-full">
+                    <thead className="text-left text-gray-600"><tr><th className="px-2 py-1">Date</th><th className="px-2 py-1 text-right">Normal</th><th className="px-2 py-1 text-right">1.5</th><th className="px-2 py-1 text-right">2.0</th></tr></thead>
+                    <tbody>{previewDayRows(preview).map((d) => <tr key={d.date}><td className="px-2 py-0.5">{formatDateFull(d.date)}</td><td className="px-2 py-0.5 text-right">{formatTotal(d.normal)}</td><td className="px-2 py-0.5 text-right">{formatTotal(d.ot_15)}</td><td className="px-2 py-0.5 text-right">{formatTotal(d.ot_20)}</td></tr>)}</tbody>
+                  </table>
+                </div>
+              </details>
+              <div>
+                <div className="text-xs font-semibold text-orac-slate">Exceptions ({exceptionCountsText(preview.exception_counts) || "none"})</div>
+                <ul className="mt-1 space-y-1">{sortExceptions(preview.exceptions).filter((e) => e.severity !== "info").map((e) => <li key={e.key} className={`rounded border px-2 py-1 text-xs ${SEV_CLASS[e.severity]}`}>{SEVERITY_LABEL[e.severity]}: {e.message}</li>)}</ul>
+                {preview.exception_counts.blocking > 0 && <p className="mt-1 text-xs text-red-800">Blocking items do not stop you saving a Draft, but the Worksheet cannot be submitted until they are fixed or excluded with a reason.</p>}
+              </div>
+              <div className="flex justify-end">
+                <button disabled={busy || !previewIsCurrent || !preview.can_consolidate} onClick={handleConsolidate} data-evidence="worksheet-consolidate" className="min-h-11 rounded bg-orac-cyan px-4 py-2 font-semibold text-white disabled:opacity-50">Consolidate</button>
+              </div>
+            </section>
+          )}
         </div>
       </Modal>
     </div>
