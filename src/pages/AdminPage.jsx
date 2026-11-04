@@ -134,6 +134,8 @@ export default function AdminPage({ user }) {
     const payload = Object.fromEntries(form.entries());
     payload.is_active = payload.is_active === "true";
     if (!payload.password) delete payload.password;
+    // Payroll identifiers: blank means "not on file", never an empty string.
+    for (const key of ["national_id", "employee_code"]) payload[key] = String(payload[key] || "").trim() || null;
 
     try {
       if (userModal.data?.id) {
@@ -458,6 +460,17 @@ export default function AdminPage({ user }) {
               {TECHNICIAN_TRADES.map((trade) => <option key={trade} value={trade}>{trade}</option>)}
             </select>
             <p className="mt-1 text-xs text-gray-500">Assign only to Technician accounts. This groups operational timesheets without changing access rights.</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">National ID Number</label>
+              <input name="national_id" maxLength={32} defaultValue={userModal.data?.national_id || ""} placeholder="Technician accounts only" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">Payroll Employee Code</label>
+              <input name="employee_code" maxLength={32} defaultValue={userModal.data?.employee_code || ""} placeholder="Pastel employee code" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+            </div>
+            <p className="text-xs text-gray-500 sm:col-span-2">Used only for the Finance payroll report and the Sage Pastel export. The employee code is sent to Pastel when set; otherwise the national ID is.</p>
           </div>
           <div>
             <label className="mb-1 block text-sm font-semibold text-gray-700">Account Status</label>

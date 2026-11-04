@@ -595,6 +595,14 @@ export const reports = {
   get(name) {
     // name: "pipeline" | "po-compliance" | "dispatch" | "worksheets" | "invoice-ready" | "variance"
     return request(`/reports/${name}`);
+  },
+  // Finance payroll: certified Worksheet hours per technician for one YYYY-MM.
+  technicianPayroll(month) {
+    return request(`/reports/technician-payroll?month=${encodeURIComponent(month)}`);
+  },
+  // Sage Pastel Payroll batch CSV (EmployeeCode/ID,Date,PayCode,Hours,ProjectCode).
+  downloadPastelPayroll(month) {
+    return downloadCsv(`/exports/pastel-payroll.csv?month=${encodeURIComponent(month)}`);
   }
 };
 

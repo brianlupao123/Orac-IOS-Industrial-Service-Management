@@ -9,6 +9,7 @@ import StatusBadge from "../components/StatusBadge.jsx";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import { ErrorBanner } from "../components/PageStates.jsx";
 import { ICONS } from "../components/icons.jsx";
+import TechnicianPayrollPanel from "../components/TechnicianPayrollPanel.jsx";
 import { csvCell } from "../csvSafe.js";
 import { formatMoney, formatNumber, formatSignedMoney } from "../lib/format.js";
 
@@ -18,8 +19,10 @@ const REPORT_TABS = [
   { key: "dispatch", label: "Dispatch", roles: ["Admin", "Management", "Operations", "Supervisor"] },
   { key: "worksheets", label: "Timesheets", roles: ["Admin", "Management", "Operations", "Supervisor"] },
   { key: "invoice-ready", label: "Invoice Ready", roles: ["Admin", "Management", "Finance"] },
-  { key: "variance", label: "Variance", roles: ["Admin", "Management", "Finance", "Operations", "Supervisor"] }
+  { key: "variance", label: "Variance", roles: ["Admin", "Management", "Finance", "Operations", "Supervisor"] },
+  { key: "technician-payroll", label: "Technician Payroll", roles: ["Admin", "Management", "Finance"] }
 ];
+const PAYROLL_TAB = "technician-payroll";
 
 const QUOTE_STATUS_MEANING = {
   Draft: "Being prepared. Can still be edited or cancelled.",
@@ -56,6 +59,8 @@ export default function ReportsPage({ user }) {
 
   useEffect(() => {
     let cancelled = false;
+    // The payroll tab loads its own month-based data inside TechnicianPayrollPanel.
+    if (active === PAYROLL_TAB) { setData(null); setError(""); setLoading(false); return undefined; }
     setLoading(true);
     setError("");
     reports.get(active)
@@ -206,7 +211,7 @@ export default function ReportsPage({ user }) {
       <div>
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
           <PageHeaderBanner className="min-w-0" eyebrow="Operational intelligence" title="Operational Reports" subtitle="Read-only views and exports. Reports do not change quotes, purchase orders, dispatches, stock, or invoices." iconPath={ICONS.report} />
-          <button
+          {active !== PAYROLL_TAB && <button
             onClick={handleExportCsv}
             disabled={loading || !canExport}
             className="flex min-h-11 items-center justify-center gap-2 self-start rounded-lg bg-orac-blue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-500 disabled:opacity-50 sm:self-auto"
@@ -215,7 +220,7 @@ export default function ReportsPage({ user }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
             Export CSV
-          </button>
+          </button>}
         </div>
 
         {/* Tab Strip */}
@@ -241,7 +246,9 @@ export default function ReportsPage({ user }) {
       {downloadError && <ErrorBanner message={downloadError} />}
       
       <div className="min-w-0">
-        {loading ? (
+        {active === PAYROLL_TAB ? (
+          <TechnicianPayrollPanel user={user} />
+        ) : loading ? (
           <div data-evidence="reports-loading" className="flex min-h-40 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500">Loading report data...</div>
         ) : (
           <div>
