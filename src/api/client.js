@@ -393,6 +393,13 @@ export const dispatch = {
 // Worksheet = the automatically generated monthly register. It is consolidated on the server
 // from approved Timesheets; no call here sends or receives hours entered by hand, a rate, an
 // amount or a cost.
+// Phase 3: certified hours vs quoted / PO hours. The server removes money figures for roles that may not see them.
+export const poVariance = {
+  forRegister(registerId) { return request(`/worksheet_registers/${encodeURIComponent(registerId)}/po-variance`); },
+  forDispatch(dispatchId) { return request(`/dispatch_cards/${encodeURIComponent(dispatchId)}/po-variance`); },
+  attachEvidence(quoteId, payload) { return request(`/quotes/${encodeURIComponent(quoteId)}/po-scope-evidence`, { method: "POST", body: JSON.stringify(payload) }); }
+};
+
 export const worksheetRegisters = {
   list() { return request("/worksheet_registers"); },
   get(id) { return request(`/worksheet_registers/${encodeURIComponent(id)}`); },

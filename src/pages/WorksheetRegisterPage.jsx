@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { collections, worksheetRegisters } from "../api/client.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import Modal from "../components/Modal.jsx";
+import PoVarianceBanner from "../components/PoVarianceBanner.jsx";
 import {
   reconciliationLabel, SEVERITY_LABEL, sortExceptions, exceptionCountsText, formatTotal, formatDateShort, formatDateFull, displayCells,
   SUB_LABEL, groupRows, refsFromException, addRowRef, removeRowRef, refsForPayload, refLabel, rosterCandidates, validateCreateForm,
@@ -182,6 +183,7 @@ export default function WorksheetRegisterPage({ user }) {
             </div>
           </div>
           <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">{billingNotice(detail)}</p>
+          <PoVarianceBanner key={detail.id} user={user} registerId={detail.id} />
           <p className="text-xs text-gray-500">{HOLIDAY_NOTICE}</p>
 
           <div className="overflow-x-auto border border-gray-200">
