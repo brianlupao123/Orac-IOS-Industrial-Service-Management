@@ -71,6 +71,21 @@ export default function SearchableSelect({
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                e.stopPropagation();
+                if (filtered.length > 0) {
+                  onChange(filtered[0].value);
+                  setOpen(false);
+                  setQuery("");
+                }
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                setOpen(false);
+                setQuery("");
+              }
+            }}
             placeholder="Type to filter..."
             aria-label={`Filter ${ariaLabel}`}
             className="orac-control w-full border-b border-gray-100 px-3 py-2 text-base outline-none"

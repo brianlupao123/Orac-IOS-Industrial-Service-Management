@@ -5,34 +5,92 @@ import { dispatch, technicianProfiles } from "../api/client.js";
 import { TECHNICIAN_TRADES, displayTrade } from "../constants/trades.js";
 import { newRequestId } from "../lib/timesheetFormLogic.js";
 
-// Commercial Rates Context:
-// Standard Client Billing: $10.00 – $15.00/hr.
-// Internal Technician Payroll: $3.50 – $7.50/hr (retained confidentially by Finance).
 const BULK_DRAFT_KEY = (userId) => `orac_draft_bulk_timesheets_${userId || "anon"}`;
 
+// Helper: strictly parses and validates real calendar dates (prevents 2026-02-30 or garbage)
+function parseAndValidateDate(raw) {
+  if (!raw || typeof raw !== "string") return { valid: false, date: "" };
+  let trimmed = raw.trim();
+  if (trimmed.includes("T")) trimmed = trimmed.split("T")[0];
+
+  let y, m, d;
+  if (/^\d{4}[/-]\d{1,2}[/-]\d{1,2}$/.test(trimmed)) {
+    const parts = trimmed.split(/[/-]/).map(Number);
+    y = parts[0]; m = parts[1]; d = parts[2];
+  } else if (/^\d{1,2}[/.-]\d{1,2}[/.-]\d{4}$/.test(trimmed)) {
+    const parts = trimmed.split(/[/.-]/).map(Number);
+    d = parts[0]; m = parts[1]; y = parts[2];
+  } else {
+    return { valid: false, date: "" };
+  }
+
+  if (m < 1 || m > 12 || d < 1 || d > 31 || y < 2000 || y > 2100) {
+    return { valid: false, date: "" };
+  }
+
+  const testDate = new Date(Date.UTC(y, m - 1, d));
+  if (testDate.getUTCFullYear() !== y || testDate.getUTCMonth() !== m - 1 || testDate.getUTCDate() !== d) {
+    return { valid: false, date: "" };
+  }
+
+  const iso = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  return { valid: true, date: iso };
+}
+
+// Helper: parse hours with decimal comma support and strict validation
+function parseHours(val, delimiter) {
+  if (val === undefined || val === null || val === "") return { ok: true, hours: 0 };
+  let str = String(val).trim();
+  if ((delimiter === ";" || delimiter === "\t") && str.includes(",") && !str.includes(".")) {
+    str = str.replace(",", ".");
+  }
+  str = str.replace(/hrs?$/i, "").trim();
+  const num = Number(str);
+  if (Number.isNaN(num)) return { ok: false, hours: 0, error: `Invalid number: "${val}"` };
+  if (num < 0) return { ok: false, hours: num, error: "Hours cannot be negative" };
+  if (num > 24) return { ok: false, hours: num, error: "Hours cannot exceed 24h" };
+  return { ok: true, hours: num };
+}
+
+// RFC-4180 quote-aware delimited text parser with zero regex infinite loop risk
 function parseDelimitedText(text) {
   if (!text || !text.trim()) return [];
-  const lines = text.trim().split(/\r?\n/).filter((l) => l.trim().length > 0);
+  const clean = text.replace(/^\uFEFF/, "").trim();
+  if (!clean) return [];
+
+  const lines = clean.split(/\r?\n/).filter((l) => l.trim().length > 0);
   if (lines.length === 0) return [];
 
-  // Detect delimiter: comma, tab, or semicolon
   const firstLine = lines[0];
   let delimiter = ",";
   if (firstLine.includes("\t")) delimiter = "\t";
   else if (firstLine.includes(";") && !firstLine.includes(",")) delimiter = ";";
 
-  function splitLine(line) {
-    if (delimiter === "\t") return line.split("\t").map((c) => c.trim().replace(/^["']|["']$/g, ""));
-    const regex = new RegExp(`(?:^|${delimiter})(?:"([^"]*)"|([^"${delimiter}]*))`, "g");
-    const cells = [];
-    let match;
-    while ((match = regex.exec(line)) !== null) {
-      cells.push((match[1] !== undefined ? match[1] : match[2] || "").trim());
+  function parseLine(line) {
+    const fields = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === delimiter && !inQuotes) {
+        fields.push(current.trim());
+        current = "";
+      } else {
+        current += char;
+      }
     }
-    return cells;
+    fields.push(current.trim());
+    return fields;
   }
 
-  const rawRows = lines.map(splitLine);
+  const rawRows = lines.map(parseLine);
   if (rawRows.length === 0) return [];
 
   // Check if first row is header
@@ -46,7 +104,6 @@ function parseDelimitedText(text) {
     dataRows = rawRows.slice(1);
   }
 
-  // Column index finders
   const findCol = (terms, defaultIdx) => {
     if (!headers.length) return defaultIdx;
     const idx = headers.findIndex((h) => terms.some((t) => h.includes(t)));
@@ -55,42 +112,45 @@ function parseDelimitedText(text) {
 
   const colDate = findCol(["date", "day"], 0);
   const colWorker = findCol(["technician", "worker", "artisan", "name"], 1);
-  const colTrade = findCol(["trade", "discipline", "category"], 2);
-  const colJob = findCol(["job", "dispatch", "dc", "po"], 3);
-  const colNormal = findCol(["normal", "regular", "std", "basic"], 4);
+  const colTrade = findCol(["trade", "discipline"], 2);
+  const colJob = findCol(["job", "dispatch", "dc"], 3);
+  const colNormal = findCol(["normal", "regular", "std", "basic", "hours"], 4);
   const colOt15 = findCol(["1.5", "ot15", "ot 1.5", "sat"], 5);
   const colOt20 = findCol(["2.0", "ot20", "ot 2.0", "sun", "double"], 6);
-  const colActivity = findCol(["activity", "work", "description", "scope", "task"], 7);
+  const colActivity = findCol(["activity", "description", "scope", "task"], 7);
 
   return dataRows.map((cols, idx) => {
     const rawDate = cols[colDate] || "";
-    // Normalize date format DD/MM/YYYY or YYYY-MM-DD
-    let normalizedDate = rawDate;
-    if (/^\d{2}[/-]\d{2}[/-]\d{4}$/.test(rawDate)) {
-      const parts = rawDate.split(/[/-]/);
-      normalizedDate = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
-    } else if (!/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
-      normalizedDate = new Date().toISOString().slice(0, 10);
-    }
+    const dateParsed = parseAndValidateDate(rawDate);
 
     const workerName = cols[colWorker] || "";
     const trade = cols[colTrade] || "";
     const jobRef = cols[colJob] || "";
-    const normal = parseFloat(cols[colNormal]) || 0;
-    const ot15 = parseFloat(cols[colOt15]) || 0;
-    const ot20 = parseFloat(cols[colOt20]) || 0;
+
+    const parsedNormal = parseHours(cols[colNormal], delimiter);
+    const parsedOt15 = parseHours(cols[colOt15], delimiter);
+    const parsedOt20 = parseHours(cols[colOt20], delimiter);
+
     const activity = cols[colActivity] || cols.slice(colActivity).join(" ") || "General field engineering operations";
+
+    const rowErrors = [];
+    if (!dateParsed.valid) rowErrors.push(`Invalid date "${rawDate}" (YYYY-MM-DD or DD/MM/YYYY required)`);
+    if (!parsedNormal.ok) rowErrors.push(parsedNormal.error);
+    if (!parsedOt15.ok) rowErrors.push(parsedOt15.error);
+    if (!parsedOt20.ok) rowErrors.push(parsedOt20.error);
 
     return {
       rowId: idx + 1,
-      date: normalizedDate,
+      date: dateParsed.valid ? dateParsed.date : rawDate,
+      isDateValid: dateParsed.valid,
       workerName: workerName.trim(),
       trade: trade.trim(),
       jobRef: jobRef.trim(),
-      normal: Math.max(0, Math.min(24, normal)),
-      ot15: Math.max(0, Math.min(24, ot15)),
-      ot20: Math.max(0, Math.min(24, ot20)),
-      activity: activity.trim()
+      normal: parsedNormal.hours,
+      ot15: parsedOt15.hours,
+      ot20: parsedOt20.hours,
+      activity: activity.trim(),
+      parseErrors: rowErrors
     };
   });
 }
@@ -107,7 +167,6 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
   const [resultSummary, setResultSummary] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Load technician profiles for auto-matching
   useEffect(() => {
     if (!isOpen) return;
     setError("");
@@ -116,7 +175,6 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
       .then((data) => setTechnicians(Array.isArray(data) ? data : []))
       .catch(() => setTechnicians([]));
 
-    // Restore draft from localStorage
     try {
       const cached = localStorage.getItem(BULK_DRAFT_KEY(user?.id));
       if (cached) {
@@ -129,9 +187,8 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
     if (dispatches && dispatches.length > 0 && !defaultDispatchId) {
       setDefaultDispatchId(dispatches[0].id);
     }
-  }, [isOpen, user?.id, dispatches]);
+  }, [isOpen, user?.id, dispatches, defaultDispatchId]);
 
-  // Handle text change and draft auto-saving
   function handleTextChange(val) {
     setRawText(val);
     try {
@@ -149,7 +206,6 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
     try { localStorage.removeItem(BULK_DRAFT_KEY(user?.id)); } catch { /* ignore */ }
   }
 
-  // Handle CSV file upload
   function handleFileUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -162,7 +218,6 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
     e.target.value = "";
   }
 
-  // Generate and download a 100% sanitized example template
   function downloadSampleTemplate() {
     const defaultJob = dispatches?.[0]?.dispatch_number || "DC-2026-001";
     const sampleCsv = [
@@ -185,42 +240,46 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
     URL.revokeObjectURL(url);
   }
 
-  // Match row to system technician profile
+  // Exact matching for active technician profiles (no loose substring or trade fallback)
   function matchTechnician(row) {
     if (!row.workerName) return null;
-    const nameLower = row.workerName.toLowerCase();
-    // Match by exact or partial name
-    const found = technicians.find((t) => {
-      const tName = (t.name || `${t.first_name || ""} ${t.last_name || ""}`).toLowerCase().trim();
-      return tName === nameLower || tName.includes(nameLower) || nameLower.includes(tName);
-    });
-    if (found) return found;
+    const cleanInput = row.workerName.trim().toLowerCase();
+    const activeTechs = (technicians || []).filter((t) => t.is_active !== false);
 
-    // Fallback: match by trade
-    if (row.trade) {
-      const tradeLower = row.trade.toLowerCase();
-      const byTrade = technicians.find((t) => (t.trade || "").toLowerCase() === tradeLower);
-      if (byTrade) return byTrade;
-    }
+    // 1. Match by exact national ID if supplied
+    const byId = activeTechs.find((t) => {
+      if (!t.national_id) return false;
+      const cleanId = t.national_id.replace(/[-\s]/g, "").toLowerCase();
+      return cleanId === cleanInput.replace(/[-\s]/g, "");
+    });
+    if (byId) return byId;
+
+    // 2. Match by exact normalized full name
+    const byName = activeTechs.find((t) => {
+      const full1 = (t.name || "").trim().toLowerCase();
+      const full2 = `${t.first_name || ""} ${t.last_name || ""}`.trim().toLowerCase();
+      return full1 === cleanInput || full2 === cleanInput;
+    });
+    if (byName) return byName;
+
     return null;
   }
 
-  // Match row to dispatch card
+  // Exact match on dispatch number or id
   function matchDispatch(row) {
     if (row.jobRef) {
-      const refLower = row.jobRef.toLowerCase();
+      const refClean = row.jobRef.trim().toLowerCase();
       const found = (dispatches || []).find((d) => {
-        const dNum = (d.dispatch_number || "").toLowerCase();
-        const dTitle = (d.title || "").toLowerCase();
-        const dId = (d.id || "").toLowerCase();
-        return dNum === refLower || dNum.includes(refLower) || dTitle.includes(refLower) || dId === refLower;
+        const dNum = (d.dispatch_number || "").trim().toLowerCase();
+        const dId = (d.id || "").trim().toLowerCase();
+        return dNum === refClean || dId === refClean;
       });
       if (found) return found.id;
+      return null; // Ref provided but not matched
     }
-    return defaultDispatchId || dispatches?.[0]?.id || "";
+    return defaultDispatchId || "";
   }
 
-  // Pre-validate rows and decorate with status
   const validatedRows = useMemo(() => {
     return parsedRows.map((row) => {
       const tech = matchTechnician(row);
@@ -228,13 +287,14 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
       const totalH = row.normal + row.ot15 + row.ot20;
 
       const warnings = [];
-      const errors = [];
+      const errors = [...(row.parseErrors || [])];
 
-      if (!row.workerName) errors.push("Missing technician / worker name");
-      if (!dispatchId) errors.push("No valid dispatch card linked");
+      if (!row.workerName) errors.push("Missing technician name");
+      if (row.jobRef && !dispatchId) errors.push(`Dispatch card "${row.jobRef}" not found`);
+      if (!row.jobRef && !dispatchId) errors.push("No default dispatch card selected");
       if (totalH <= 0) errors.push("Zero hours logged");
-      if (totalH > 24) errors.push("Total hours exceeds 24h per day");
-      if (!tech && row.workerName) warnings.push("Artisan not found in active technician registry; will record as contractor");
+      if (totalH > 24) errors.push(`Total hours (${totalH}h) exceeds maximum 24h per day`);
+      if (!tech && row.workerName) warnings.push("Technician not found in active registry; will be entered as external contractor");
 
       return {
         ...row,
@@ -248,24 +308,28 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
     });
   }, [parsedRows, technicians, dispatches, defaultDispatchId]);
 
-  const validCount = validatedRows.filter((r) => r.isValid).length;
-  const invalidCount = validatedRows.length - validCount;
+  const summary = useMemo(() => {
+    const total = validatedRows.length;
+    const valid = validatedRows.filter((r) => r.isValid).length;
+    const invalid = total - valid;
+    const totalHours = validatedRows.reduce((acc, r) => acc + (r.isValid ? r.totalHours : 0), 0);
+    return { total, valid, invalid, totalHours };
+  }, [validatedRows]);
 
-  // Execute bulk import
   async function handleImport() {
     if (validatedRows.length === 0) {
-      setError("Please paste or upload timesheet records first.");
+      setError("Please paste or upload timesheet data first.");
       return;
     }
-    if (validCount === 0) {
-      setError("None of the parsed rows are valid. Please correct the errors before importing.");
+
+    const invalidRows = validatedRows.filter((r) => !r.isValid);
+    if (invalidRows.length > 0) {
+      setError(`Cannot import: ${invalidRows.length} row(s) contain validation errors. Please correct them in the table above.`);
       return;
     }
 
     setBusy(true);
     setError("");
-    setProgress({ current: 0, total: validCount });
-
     let created = 0;
     let failed = 0;
     const failures = [];
@@ -317,8 +381,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
       failures
     });
 
-    if (created > 0) {
-      // Clear draft on successful import
+    if (created > 0 && failed === 0) {
       try { localStorage.removeItem(BULK_DRAFT_KEY(user?.id)); } catch { /* ignore */ }
       setRawText("");
       setParsedRows([]);
@@ -331,15 +394,15 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
   return (
     <Modal title="Bulk Timesheet Import (Spreadsheet / CSV)" isOpen={isOpen} onClose={onClose} size="xl">
       <div className="space-y-6">
-        {/* Commercial Banner */}
+        {/* Operational Notice Banner */}
         <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-xs text-sky-950 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-200">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
               <p className="font-semibold text-sm text-sky-900 dark:text-sky-100 mb-1">
-                Standard Client Billing: $10.00 – $15.00 / hr
+                Field Operations & Time Tracking
               </p>
               <p className="text-sky-800 dark:text-sky-300">
-                Bulk timesheets capture operational hours only. Internal technician payroll rates ($3.50 – $7.50 / hr) remain confidential to Finance to safeguard ORAC commercial margins.
+                Bulk timesheets record verified operational hours only. Commercial billing and payroll rates are managed centrally by Finance.
               </p>
             </div>
             <button
@@ -376,145 +439,143 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
           </div>
         )}
 
-        {/* Input Controls */}
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <label htmlFor="csv-paste-area" className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-              Paste Spreadsheet Data or Upload CSV
+        {/* Dispatch & Entry Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-800/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+              Fallback Dispatch Card (when omitted in CSV)
+            </label>
+            <SearchableSelect
+              options={(dispatches || []).map((d) => ({
+                value: d.id,
+                label: `${d.dispatch_number || d.id} — ${d.title || "Dispatch"}`,
+                hint: d.site_name || d.mine_site_name
+              }))}
+              value={defaultDispatchId}
+              onChange={setDefaultDispatchId}
+              placeholder="Select fallback dispatch card..."
+            />
+          </div>
+
+          <div className="flex flex-col justify-end">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={submitDirectly}
+                onChange={(e) => setSubmitDirectly(e.target.checked)}
+                className="rounded border-gray-300 text-orac-blue focus:ring-orac-blue w-4 h-4"
+              />
+              <span>Submit directly for Client Acknowledgement (bypass draft state)</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Input Textarea & File Upload */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+              Paste Spreadsheet Rows or CSV Text
             </label>
             <div className="flex items-center gap-2">
               <input
-                ref={fileInputRef}
                 type="file"
-                accept=".csv,.tsv,.txt"
+                ref={fileInputRef}
                 onChange={handleFileUpload}
+                accept=".csv,.txt,.tsv"
                 className="hidden"
               />
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                className="text-xs text-orac-blue hover:underline font-medium"
               >
-                Upload CSV File
+                Upload File (.csv, .tsv)
               </button>
               {rawText && (
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-red-600"
-                >
-                  Clear
-                </button>
+                <>
+                  <span className="text-gray-300">|</span>
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="text-xs text-red-600 hover:underline font-medium"
+                  >
+                    Clear Draft
+                  </button>
+                </>
               )}
             </div>
           </div>
-
           <textarea
-            id="csv-paste-area"
             rows={5}
             value={rawText}
             onChange={(e) => handleTextChange(e.target.value)}
-            placeholder="Paste columns from Excel or CSV: Date, Technician Name, Trade, Dispatch Ref, Normal Hours, 1.5x OT, 2.0x OT, Work Description..."
-            className="w-full rounded-lg border border-gray-300 bg-white p-3 font-mono text-xs focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            placeholder="Paste cells directly from Excel/Google Sheets, or paste CSV text here..."
+            className="orac-control w-full font-mono text-xs p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-orac-blue"
           />
-          <p className="text-[11px] text-gray-500">
-            Auto-saves draft to memory. Delimiters (comma, tab, semicolon) and column headers are recognized automatically.
-          </p>
         </div>
 
-        {/* Default Dispatch Selector */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-100 dark:border-gray-800">
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">
-              Default Dispatch Card (for rows without job ref)
-            </label>
-            <select
-              value={defaultDispatchId}
-              onChange={(e) => setDefaultDispatchId(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs focus:border-orac-blue focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-            >
-              <option value="">Select a default job</option>
-              {(dispatches || []).map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.dispatch_number || d.title || d.id}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-3 pt-4 sm:pt-6">
-            <input
-              id="bulk-submit-toggle"
-              type="checkbox"
-              checked={submitDirectly}
-              onChange={(e) => setSubmitDirectly(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-orac-blue focus:ring-orac-blue"
-            />
-            <label htmlFor="bulk-submit-toggle" className="text-xs text-gray-700 dark:text-gray-300">
-              Submit directly for Client Acknowledgement (otherwise saved as Drafts)
-            </label>
-          </div>
-        </div>
-
-        {/* Live Preview Table */}
+        {/* Live Validation Table */}
         {validatedRows.length > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                Preview: {validatedRows.length} rows parsed ({validCount} ready, {invalidCount} with issues)
+            <div className="flex items-center justify-between text-xs font-medium text-gray-600 dark:text-gray-400">
+              <span>
+                Parsed {summary.total} row(s) &bull; <strong className="text-emerald-700 dark:text-emerald-400">{summary.valid} valid</strong> &bull; <strong className={summary.invalid > 0 ? "text-red-700 dark:text-red-400" : ""}>{summary.invalid} invalid</strong> &bull; Total hours: <strong>{summary.totalHours.toFixed(1)}h</strong>
               </span>
             </div>
 
-            <div className="max-h-60 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className="max-h-60 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300">
+                <thead className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 sticky top-0">
                   <tr>
-                    <th className="px-3 py-2">#</th>
-                    <th className="px-3 py-2">Date</th>
-                    <th className="px-3 py-2">Technician / Trade</th>
-                    <th className="px-3 py-2">Hours (N/1.5/2.0)</th>
-                    <th className="px-3 py-2">Total</th>
-                    <th className="px-3 py-2">Description</th>
-                    <th className="px-3 py-2">Status</th>
+                    <th className="p-2 border-b">Row</th>
+                    <th className="p-2 border-b">Status</th>
+                    <th className="p-2 border-b">Date</th>
+                    <th className="p-2 border-b">Technician / Trade</th>
+                    <th className="p-2 border-b">Normal</th>
+                    <th className="p-2 border-b">1.5x</th>
+                    <th className="p-2 border-b">2.0x</th>
+                    <th className="p-2 border-b">Dispatch</th>
+                    <th className="p-2 border-b">Issues / Warnings</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                   {validatedRows.map((r) => (
-                    <tr key={r.rowId} className={r.isValid ? "hover:bg-gray-50/50" : "bg-red-50"}>
-                      <td className="px-3 py-2 font-mono text-gray-400">{r.rowId}</td>
-                      <td className="px-3 py-2 whitespace-nowrap">{r.date}</td>
-                      <td className="px-3 py-2">
-                        <div className="font-medium text-gray-900 dark:text-gray-100">
-                          {r.matchedTech?.name || r.workerName}
-                        </div>
-                        <div className="text-[11px] text-gray-500">
-                          Trade: {displayTrade(r.matchedTech?.trade || r.trade)}
-                          {r.matchedTech ? " (Artisan)" : " [Contractor]"}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 font-mono whitespace-nowrap">
-                        {r.normal} / {r.ot15} / {r.ot20}
-                      </td>
-                      <td className="px-3 py-2 font-semibold">
-                        {r.totalHours}h
-                      </td>
-                      <td className="px-3 py-2 max-w-xs truncate" title={r.activity}>
-                        {r.activity}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap">
+                    <tr key={r.rowId} className={r.isValid ? "bg-white dark:bg-gray-900" : "bg-red-50/50 dark:bg-red-950/20"}>
+                      <td className="p-2 font-mono">{r.rowId}</td>
+                      <td className="p-2">
                         {r.isValid ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
                             Ready
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300" title={r.errors.join(", ")}>
-                            Error: {r.errors[0]}
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200">
+                            Error
                           </span>
                         )}
-                        {r.warnings.length > 0 && r.isValid && (
-                          <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800" title={r.warnings.join(", ")}>
-                            Notice
-                          </span>
+                      </td>
+                      <td className="p-2 font-mono">{r.date}</td>
+                      <td className="p-2">
+                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                          {r.workerName}
+                        </div>
+                        <div className="text-[11px] text-gray-500">
+                          {r.trade || r.matchedTech?.trade || "General"} {r.matchedTech && "(Technician)"}
+                        </div>
+                      </td>
+                      <td className="p-2 font-mono">{r.normal}h</td>
+                      <td className="p-2 font-mono">{r.ot15}h</td>
+                      <td className="p-2 font-mono">{r.ot20}h</td>
+                      <td className="p-2 font-mono">{r.jobRef || defaultDispatchId}</td>
+                      <td className="p-2">
+                        {r.errors.length > 0 && (
+                          <div className="text-red-600 dark:text-red-400 font-medium">
+                            {r.errors.join(", ")}
+                          </div>
+                        )}
+                        {r.warnings.length > 0 && (
+                          <div className="text-amber-600 dark:text-amber-400">
+                            {r.warnings.join(", ")}
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -525,33 +586,40 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
           </div>
         )}
 
-        {/* Footer Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
-          <div className="text-xs text-gray-500">
-            {busy && (
-              <span className="font-medium text-orac-blue">
-                Importing records ({progress.current} of {progress.total})...
-              </span>
-            )}
+        {/* Progress Bar when busy */}
+        {busy && (
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+              <span>Importing rows...</span>
+              <span>{progress.current} / {progress.total}</span>
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
+              <div
+                className="bg-orac-blue h-full transition-all duration-150"
+                style={{ width: `${progress.total ? (progress.current / progress.total) * 100 : 0}%` }}
+              />
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={busy}
-              className="min-h-[44px] px-4 text-sm font-medium text-gray-600 hover:text-gray-800 dark:text-gray-300"
-            >
-              Close
-            </button>
-            <button
-              type="button"
-              onClick={handleImport}
-              disabled={busy || validCount === 0}
-              className="min-h-[44px] rounded-lg bg-orac-blue px-6 text-sm font-semibold text-white shadow-sm hover:brightness-105 disabled:opacity-50"
-            >
-              {busy ? "Importing..." : `Import ${validCount} Timesheet${validCount === 1 ? "" : "s"}`}
-            </button>
-          </div>
+        )}
+
+        {/* Modal Action Footer */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={busy || validatedRows.length === 0 || summary.invalid > 0}
+            onClick={handleImport}
+            className="px-5 py-2 text-sm font-semibold text-white bg-orac-blue hover:bg-orac-blue/90 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-sm transition"
+          >
+            {busy ? "Importing..." : `Import ${summary.valid} Valid Timesheet(s)`}
+          </button>
         </div>
       </div>
     </Modal>
