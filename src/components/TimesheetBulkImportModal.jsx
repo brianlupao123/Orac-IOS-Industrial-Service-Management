@@ -4,156 +4,12 @@ import SearchableSelect from "./SearchableSelect.jsx";
 import { dispatch, technicianProfiles } from "../api/client.js";
 import { TECHNICIAN_TRADES, displayTrade } from "../constants/trades.js";
 import { newRequestId } from "../lib/timesheetFormLogic.js";
-
-const BULK_DRAFT_KEY = (userId) => `orac_draft_bulk_timesheets_${userId || "anon"}`;
-
-// Helper: strictly parses and validates real calendar dates (prevents 2026-02-30 or garbage)
-function parseAndValidateDate(raw) {
-  if (!raw || typeof raw !== "string") return { valid: false, date: "" };
-  let trimmed = raw.trim();
-  if (trimmed.includes("T")) trimmed = trimmed.split("T")[0];
-
-  let y, m, d;
-  if (/^\d{4}[/-]\d{1,2}[/-]\d{1,2}$/.test(trimmed)) {
-    const parts = trimmed.split(/[/-]/).map(Number);
-    y = parts[0]; m = parts[1]; d = parts[2];
-  } else if (/^\d{1,2}[/.-]\d{1,2}[/.-]\d{4}$/.test(trimmed)) {
-    const parts = trimmed.split(/[/.-]/).map(Number);
-    d = parts[0]; m = parts[1]; y = parts[2];
-  } else {
-    return { valid: false, date: "" };
-  }
-
-  if (m < 1 || m > 12 || d < 1 || d > 31 || y < 2000 || y > 2100) {
-    return { valid: false, date: "" };
-  }
-
-  const testDate = new Date(Date.UTC(y, m - 1, d));
-  if (testDate.getUTCFullYear() !== y || testDate.getUTCMonth() !== m - 1 || testDate.getUTCDate() !== d) {
-    return { valid: false, date: "" };
-  }
-
-  const iso = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-  return { valid: true, date: iso };
-}
-
-// Helper: parse hours with decimal comma support and strict validation
-function parseHours(val, delimiter) {
-  if (val === undefined || val === null || val === "") return { ok: true, hours: 0 };
-  let str = String(val).trim();
-  if ((delimiter === ";" || delimiter === "\t") && str.includes(",") && !str.includes(".")) {
-    str = str.replace(",", ".");
-  }
-  str = str.replace(/hrs?$/i, "").trim();
-  const num = Number(str);
-  if (Number.isNaN(num)) return { ok: false, hours: 0, error: `Invalid number: "${val}"` };
-  if (num < 0) return { ok: false, hours: num, error: "Hours cannot be negative" };
-  if (num > 24) return { ok: false, hours: num, error: "Hours cannot exceed 24h" };
-  return { ok: true, hours: num };
-}
-
-// RFC-4180 quote-aware delimited text parser with zero regex infinite loop risk
-function parseDelimitedText(text) {
-  if (!text || !text.trim()) return [];
-  const clean = text.replace(/^\uFEFF/, "").trim();
-  if (!clean) return [];
-
-  const lines = clean.split(/\r?\n/).filter((l) => l.trim().length > 0);
-  if (lines.length === 0) return [];
-
-  const firstLine = lines[0];
-  let delimiter = ",";
-  if (firstLine.includes("\t")) delimiter = "\t";
-  else if (firstLine.includes(";") && !firstLine.includes(",")) delimiter = ";";
-
-  function parseLine(line) {
-    const fields = [];
-    let current = "";
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      if (char === '"') {
-        if (inQuotes && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-      } else if (char === delimiter && !inQuotes) {
-        fields.push(current.trim());
-        current = "";
-      } else {
-        current += char;
-      }
-    }
-    fields.push(current.trim());
-    return fields;
-  }
-
-  const rawRows = lines.map(parseLine);
-  if (rawRows.length === 0) return [];
-
-  // Check if first row is header
-  const headerCandidates = ["date", "technician", "worker", "trade", "job", "dispatch", "normal", "activity", "hours", "ot"];
-  const isHeader = rawRows[0].some((c) => headerCandidates.some((h) => c.toLowerCase().includes(h)));
-
-  let headers = [];
-  let dataRows = rawRows;
-  if (isHeader) {
-    headers = rawRows[0].map((h) => h.toLowerCase());
-    dataRows = rawRows.slice(1);
-  }
-
-  const findCol = (terms, defaultIdx) => {
-    if (!headers.length) return defaultIdx;
-    const idx = headers.findIndex((h) => terms.some((t) => h.includes(t)));
-    return idx >= 0 ? idx : defaultIdx;
-  };
-
-  const colDate = findCol(["date", "day"], 0);
-  const colWorker = findCol(["technician", "worker", "artisan", "name"], 1);
-  const colTrade = findCol(["trade", "discipline"], 2);
-  const colJob = findCol(["job", "dispatch", "dc"], 3);
-  const colNormal = findCol(["normal", "regular", "std", "basic", "hours"], 4);
-  const colOt15 = findCol(["1.5", "ot15", "ot 1.5", "sat"], 5);
-  const colOt20 = findCol(["2.0", "ot20", "ot 2.0", "sun", "double"], 6);
-  const colActivity = findCol(["activity", "description", "scope", "task"], 7);
-
-  return dataRows.map((cols, idx) => {
-    const rawDate = cols[colDate] || "";
-    const dateParsed = parseAndValidateDate(rawDate);
-
-    const workerName = cols[colWorker] || "";
-    const trade = cols[colTrade] || "";
-    const jobRef = cols[colJob] || "";
-
-    const parsedNormal = parseHours(cols[colNormal], delimiter);
-    const parsedOt15 = parseHours(cols[colOt15], delimiter);
-    const parsedOt20 = parseHours(cols[colOt20], delimiter);
-
-    const activity = cols[colActivity] || cols.slice(colActivity).join(" ") || "General field engineering operations";
-
-    const rowErrors = [];
-    if (!dateParsed.valid) rowErrors.push(`Invalid date "${rawDate}" (YYYY-MM-DD or DD/MM/YYYY required)`);
-    if (!parsedNormal.ok) rowErrors.push(parsedNormal.error);
-    if (!parsedOt15.ok) rowErrors.push(parsedOt15.error);
-    if (!parsedOt20.ok) rowErrors.push(parsedOt20.error);
-
-    return {
-      rowId: idx + 1,
-      date: dateParsed.valid ? dateParsed.date : rawDate,
-      isDateValid: dateParsed.valid,
-      workerName: workerName.trim(),
-      trade: trade.trim(),
-      jobRef: jobRef.trim(),
-      normal: parsedNormal.hours,
-      ot15: parsedOt15.hours,
-      ot20: parsedOt20.hours,
-      activity: activity.trim(),
-      parseErrors: rowErrors
-    };
-  });
-}
+import {
+  BULK_DRAFT_KEY,
+  parseDelimitedText,
+  matchTechnician,
+  reconstructFailedText
+} from "../lib/timesheetBulkImportLogic.js";
 
 export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispatches, onImportComplete }) {
   const [rawText, setRawText] = useState("");
@@ -167,10 +23,13 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
   const [resultSummary, setResultSummary] = useState(null);
   const fileInputRef = useRef(null);
 
+  // Initialize once when the modal opens: load cached draft, fetch active technicians,
+  // and auto-select default dispatch ONLY if exactly one dispatch exists.
   useEffect(() => {
     if (!isOpen) return;
     setError("");
     setResultSummary(null);
+
     technicianProfiles.list()
       .then((data) => setTechnicians(Array.isArray(data) ? data : []))
       .catch(() => setTechnicians([]));
@@ -184,10 +43,11 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
       }
     } catch { /* storage fallback */ }
 
-    if (dispatches && dispatches.length > 0 && !defaultDispatchId) {
+    // Only auto-select if there is exactly 1 dispatch card. If multiple, user must explicitly select.
+    if (dispatches && dispatches.length === 1) {
       setDefaultDispatchId(dispatches[0].id);
     }
-  }, [isOpen, user?.id, dispatches, defaultDispatchId]);
+  }, [isOpen, user?.id]);
 
   function handleTextChange(val) {
     setRawText(val);
@@ -240,31 +100,6 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
     URL.revokeObjectURL(url);
   }
 
-  // Exact matching for active technician profiles (no loose substring or trade fallback)
-  function matchTechnician(row) {
-    if (!row.workerName) return null;
-    const cleanInput = row.workerName.trim().toLowerCase();
-    const activeTechs = (technicians || []).filter((t) => t.is_active !== false);
-
-    // 1. Match by exact national ID if supplied
-    const byId = activeTechs.find((t) => {
-      if (!t.national_id) return false;
-      const cleanId = t.national_id.replace(/[-\s]/g, "").toLowerCase();
-      return cleanId === cleanInput.replace(/[-\s]/g, "");
-    });
-    if (byId) return byId;
-
-    // 2. Match by exact normalized full name
-    const byName = activeTechs.find((t) => {
-      const full1 = (t.name || "").trim().toLowerCase();
-      const full2 = `${t.first_name || ""} ${t.last_name || ""}`.trim().toLowerCase();
-      return full1 === cleanInput || full2 === cleanInput;
-    });
-    if (byName) return byName;
-
-    return null;
-  }
-
   // Exact match on dispatch number or id
   function matchDispatch(row) {
     if (row.jobRef) {
@@ -282,7 +117,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
 
   const validatedRows = useMemo(() => {
     return parsedRows.map((row) => {
-      const tech = matchTechnician(row);
+      const tech = matchTechnician(row, technicians);
       const dispatchId = matchDispatch(row);
       const totalH = row.normal + row.ot15 + row.ot20;
 
@@ -333,12 +168,15 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
     let created = 0;
     let failed = 0;
     const failures = [];
+    const failedRowIds = [];
 
     const toImport = validatedRows.filter((r) => r.isValid);
 
     for (let i = 0; i < toImport.length; i++) {
       const item = toImport[i];
       setProgress({ current: i + 1, total: toImport.length });
+
+      const trade = item.matchedTech?.trade || item.trade || "Unclassified";
 
       const payload = {
         work_date: item.date,
@@ -355,14 +193,27 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
       if (item.matchedTech) {
         payload.technician_id = item.matchedTech.id;
         payload.worker_name = item.matchedTech.name;
-        payload.technician_trade = item.matchedTech.trade || item.trade || "Fitter";
-        payload.worker_category = payload.technician_trade;
+        payload.technician_trade = trade;
+        payload.worker_category = trade;
         if (item.matchedTech.national_id) payload.national_id = item.matchedTech.national_id;
         payload.worker_type = item.matchedTech.worker_type || "permanent";
       } else {
         payload.worker_type = "contractor";
         payload.worker_name = item.workerName;
-        if (item.trade) payload.worker_category = item.trade;
+        payload.technician_trade = trade;
+        payload.worker_category = trade;
+      }
+
+      // If directly submitting, provide valid employee sign-off payload satisfying backend employeeSignoffMissing
+      if (submitDirectly) {
+        payload.signatures = {
+          employee: {
+            name: payload.worker_name,
+            date: item.date,
+            method: "on_device",
+            attest: true
+          }
+        };
       }
 
       try {
@@ -370,6 +221,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
         created++;
       } catch (err) {
         failed++;
+        failedRowIds.push(item.rowId);
         failures.push(`Row ${item.rowId} (${item.workerName}): ${err.message || "Failed to create"}`);
       }
     }
@@ -388,6 +240,16 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
       if (onImportComplete) {
         onImportComplete(`Successfully imported ${created} timesheet(s)${submitDirectly ? " and submitted for client acknowledgement" : " as drafts"}.`);
       }
+    } else if (created > 0 && failed > 0) {
+      // Partial failure: Retain ONLY failed rows to prevent duplicate re-imports on retry
+      const remainingText = reconstructFailedText(validatedRows, failedRowIds);
+      setRawText(remainingText);
+      try {
+        if (remainingText) localStorage.setItem(BULK_DRAFT_KEY(user?.id), remainingText);
+        else localStorage.removeItem(BULK_DRAFT_KEY(user?.id));
+      } catch { /* storage fallback */ }
+      setParsedRows(parseDelimitedText(remainingText));
+      setError(`Partial import: ${created} timesheet(s) imported successfully. ${failed} row(s) failed and remain in the editor below for review.`);
     }
   }
 
@@ -453,7 +315,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
               }))}
               value={defaultDispatchId}
               onChange={setDefaultDispatchId}
-              placeholder="Select fallback dispatch card..."
+              placeholder={dispatches?.length === 1 ? "Auto-selected single dispatch" : "Select fallback dispatch card..."}
             />
           </div>
 
@@ -559,7 +421,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
                           {r.workerName}
                         </div>
                         <div className="text-[11px] text-gray-500">
-                          {r.trade || r.matchedTech?.trade || "General"} {r.matchedTech && "(Technician)"}
+                          {r.trade || r.matchedTech?.trade || "Unclassified"} {r.matchedTech && "(Technician)"}
                         </div>
                       </td>
                       <td className="p-2 font-mono">{r.normal}h</td>

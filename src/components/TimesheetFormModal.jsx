@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "./Modal.jsx";
 import SearchableSelect from "./SearchableSelect.jsx";
 import PaperPhotoField from "./PaperPhotoField.jsx";
@@ -31,6 +31,7 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const isSubmittedRef = useRef(false);
   const isStaff = STAFF_ROLES.includes(user.role);
   const online = typeof navigator === "undefined" ? true : navigator.onLine !== false;
   const canPick = canPickTechnician(user.role);
@@ -44,6 +45,7 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
 
   useEffect(() => {
     if (!isOpen) return;
+    isSubmittedRef.current = false;
     setError(""); setNote("");
     if (editing) { setForm({ ...formFromTimesheet(editing), client_request_id: "" }); return; }
     const saved = loadDraft(storage(), user.id, "timesheet", "new");
@@ -75,7 +77,7 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
 
   // Unsent text is kept on this device. The declaration and photo are never stored in the draft.
   useEffect(() => {
-    if (!isOpen || editing) return;
+    if (!isOpen || editing || isSubmittedRef.current) return;
     if (form.activity || form.normal || form.ot_15 || form.ot_20 || form.technician_id) {
       const { signed_copy_image, employee_attest, ...text } = form;
       saveDraft(storage(), user.id, "timesheet", "new", { form: text });
@@ -111,7 +113,10 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
       if (!online) return queue(form.dispatch_card_id, { ...body, captured_offline_at: new Date().toISOString() }, submit);
       try {
         await dispatch.createWorksheet(form.dispatch_card_id, body);
+        isSubmittedRef.current = true;
         clearDraft(storage(), user.id, "timesheet", "new");
+        setForm({ ...EMPTY_TIMESHEET_FORM(), client_request_id: newRequestId() });
+        setNote("");
         onSaved(submit ? "Timesheet submitted. The customer representative is asked to acknowledge it next." : "Timesheet saved as a Draft.");
         onClose();
       } catch (err) {
@@ -312,10 +317,28 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
           </fieldset>
         )}
 
-        <div className="flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-4">
-          <button type="button" onClick={onClose} className="min-h-[44px] px-4 text-sm font-medium text-gray-600">Cancel</button>
-          <button type="submit" disabled={busy} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 text-sm font-semibold text-gray-700 disabled:opacity-50">{busy ? "Saving..." : editing ? "Save changes" : "Save as draft"}</button>
-          {!editing && <button type="button" disabled={busy} onClick={() => save(true)} className="min-h-[44px] rounded-lg bg-orac-blue px-5 text-sm font-semibold text-white disabled:opacity-50">Sign and submit</button>}
+        <div className="flex flex-wrap items-center justify-between border-t border-gray-100 pt-4">
+          <div>
+            {!editing && (form.activity || form.normal || form.ot_15 || form.ot_20 || form.technician_id) && (
+              <button
+                type="button"
+                onClick={() => {
+                  isSubmittedRef.current = true;
+                  clearDraft(storage(), user.id, "timesheet", "new");
+                  setForm({ ...EMPTY_TIMESHEET_FORM(), client_request_id: newRequestId() });
+                  setNote("");
+                }}
+                className="min-h-[44px] px-2 text-sm font-semibold text-red-600 hover:text-red-800"
+              >
+                Clear Draft
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" onClick={onClose} className="min-h-[44px] px-4 text-sm font-medium text-gray-600">Cancel</button>
+            <button type="submit" disabled={busy} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 text-sm font-semibold text-gray-700 disabled:opacity-50">{busy ? "Saving..." : editing ? "Save changes" : "Save as draft"}</button>
+            {!editing && <button type="button" disabled={busy} onClick={() => save(true)} className="min-h-[44px] rounded-lg bg-orac-blue px-5 text-sm font-semibold text-white disabled:opacity-50">Sign and submit</button>}
+          </div>
         </div>
       </form>
     </Modal>

@@ -179,7 +179,7 @@ export const auth = {
       const doomed = [];
       for (let i = 0; i < localStorage.length; i += 1) {
         const key = localStorage.key(i);
-        if (key && key.startsWith("orac-draft:v1:")) doomed.push(key);
+        if (key && (key.startsWith("orac-draft:v1:") || key.startsWith("orac_draft_bulk_timesheets_"))) doomed.push(key);
       }
       doomed.forEach((key) => localStorage.removeItem(key));
     } catch { /* storage unavailable */ }

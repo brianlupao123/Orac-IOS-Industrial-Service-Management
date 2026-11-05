@@ -59,12 +59,14 @@ export default function PaperEntryModal({ isOpen, onClose, user, dispatches, wor
   const [busy, setBusy] = useState(false);
   const [scanBusy, setScanBusy] = useState(false);
   const [scanName, setScanName] = useState("");
+  const isSubmittedRef = useRef(false);
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
 
   // Fresh form each time it opens; load draft memory if available
   useEffect(() => {
     if (!isOpen) return;
+    isSubmittedRef.current = false;
     setError(""); setNote(""); setScanName("");
     const saved = loadDraft(storage(), user.id, "paper_timesheet", "new");
     if (saved?.data?.form) {
@@ -85,9 +87,9 @@ export default function PaperEntryModal({ isOpen, onClose, user, dispatches, wor
     return () => { alive = false; };
   }, [isOpen, user.id]);
 
-  // Unsent draft text is saved on this device to protect user input
+  // Unsent draft text is saved on this device to protect user input (prevent ghost re-saving on submit)
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || isSubmittedRef.current) return;
     if (form.paper_reference || form.technician_id || form.dispatch_card_id || form.activity || form.normal || form.ot_15 || form.ot_20) {
       const { signed_copy_image, ...text } = form;
       saveDraft(storage(), user.id, "paper_timesheet", "new", { form: text });
@@ -135,7 +137,10 @@ export default function PaperEntryModal({ isOpen, onClose, user, dispatches, wor
     setBusy(true); setError("");
     try {
       await dispatch.createWorksheet(form.dispatch_card_id, buildPaperPayload(form, tech, { submit, role: user.role }));
+      isSubmittedRef.current = true;
       clearDraft(storage(), user.id, "paper_timesheet", "new");
+      setForm({ ...EMPTY_PAPER_FORM(), client_request_id: newRequestId() });
+      setNote("");
       onSaved(submit
         ? `Paper timesheet ${form.paper_reference.trim()} submitted. It now follows the normal acknowledgement and approval steps.`
         : `Paper timesheet ${form.paper_reference.trim()} saved as a Draft.`);
@@ -274,10 +279,23 @@ export default function PaperEntryModal({ isOpen, onClose, user, dispatches, wor
           {hints.map((h) => <p key={h} className="rounded-lg bg-amber-50 p-2 text-xs text-amber-900">{h}</p>)}
         </fieldset>
 
-        <div className="flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-4">
-          <button type="button" onClick={onClose} className="min-h-[44px] px-4 text-sm font-medium text-gray-600">Cancel</button>
-          <button type="submit" disabled={busy || scanBusy} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 text-sm font-semibold text-gray-700 disabled:opacity-50 dark:bg-transparent dark:text-slate-200">{busy ? "Saving..." : "Save as draft"}</button>
-          <button type="button" disabled={busy || scanBusy} onClick={() => save(true)} className="min-h-[44px] rounded-lg bg-orac-blue px-5 text-sm font-semibold text-white disabled:opacity-50">Submit paper entry</button>
+        <div className="flex flex-wrap items-center justify-between border-t border-gray-100 pt-4">
+          <div>
+            {(form.paper_reference || form.technician_id || form.dispatch_card_id || form.activity || form.normal || form.ot_15 || form.ot_20) && (
+              <button
+                type="button"
+                onClick={handleClearDraft}
+                className="min-h-[44px] px-2 text-sm font-semibold text-red-600 hover:text-red-800"
+              >
+                Clear Draft
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" onClick={onClose} className="min-h-[44px] px-4 text-sm font-medium text-gray-600">Cancel</button>
+            <button type="submit" disabled={busy || scanBusy} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 text-sm font-semibold text-gray-700 disabled:opacity-50 dark:bg-transparent dark:text-slate-200">{busy ? "Saving..." : "Save as draft"}</button>
+            <button type="button" disabled={busy || scanBusy} onClick={() => save(true)} className="min-h-[44px] rounded-lg bg-orac-blue px-5 text-sm font-semibold text-white disabled:opacity-50">Submit paper entry</button>
+          </div>
         </div>
       </form>
     </Modal>
