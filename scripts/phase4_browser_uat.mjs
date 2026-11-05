@@ -63,7 +63,7 @@ async function run() {
   if (!backendUp) {
     console.log("Starting backend server on port 5050...");
     backendProc = spawn("node", ["server.js"], {
-      cwd: "C:\\Users\\ORAC Field Engineer\\Desktop\\ffims-asset-register\\two-concept-packet-backend-20261005-235259",
+      cwd: "C:\\Users\\ORAC Field Engineer\\Desktop\\orac-backend",
       stdio: "ignore",
       env: { ...process.env, PORT: "5050" }
     });

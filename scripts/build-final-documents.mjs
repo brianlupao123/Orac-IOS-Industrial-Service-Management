@@ -2,8 +2,8 @@ import fs from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { Presentation, PresentationFile } from "file:///C:/Users/BRIAN%20LUPAO/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/@oai/artifact-tool/dist/artifact_tool.mjs";
-import { PDFDocument, StandardFonts, rgb } from "file:///C:/Users/BRIAN%20LUPAO/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/pdf-lib/dist/pdf-lib.esm.js";
+import { Presentation, PresentationFile } from "@oai/artifact-tool/dist/artifact_tool.mjs";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib/dist/pdf-lib.esm.js";
 
 const workspaceDir = process.cwd();
 const skillDir = "C:\\Users\\ORAC Field Engineer\\.codex\\plugins\\cache\\openai-primary-runtime\\presentations\\26.909.11809\\skills\\presentations";

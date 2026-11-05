@@ -9,10 +9,10 @@ session remain `NOT VERIFIED` until that evidence exists.
 
 ## Evidence Snapshot
 
-- Frontend repository: `brianlupao123/Orac-IOS-Industrial-Service-Management`
+- Frontend repository: `orac-systems/Orac-IOS-Industrial-Service-Management`
 - Frontend latest pushed commit: `b2a4bed` (the last functional security
   change is `bcb0c7e`; `b2a4bed` adds this evidence report).
-- Backend repository: `brianlupao123/orac-portal-api`
+- Backend repository: `orac-systems/orac-portal-api`
 - Backend latest pushed commit: `3884dd7`.
 - Frontend build: `npm run build` passed on 2026-09-12.
 - Backend suite: `npm test` passed, 31/31 tests, on 2026-09-12.

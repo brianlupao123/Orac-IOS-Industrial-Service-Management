@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import pptxgen from "file:///C:/Users/BRIAN%20LUPAO/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/pptxgenjs/dist/pptxgen.es.js";
-import { PDFDocument, StandardFonts, rgb } from "file:///C:/Users/BRIAN%20LUPAO/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/pdf-lib/dist/pdf-lib.esm.js";
+import pptxgen from "pptxgenjs/dist/pptxgen.es.js";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib/dist/pdf-lib.esm.js";
 
 const root = process.cwd();
 const shots = path.join(root, "deliverables", "final-uat", "screenshots");
