@@ -174,7 +174,7 @@ export default function PaperEntryModal({ isOpen, onClose, user, dispatches, wor
             </div>
             <div>
               <label htmlFor="pe-signer" className={labelCls}>Client Representative Who Signed</label>
-              <input id="pe-signer" value={form.client_signatory} onChange={(e) => set({ client_signatory: e.target.value })} placeholder="Eng. J. Phiri - Plant Manager" className={inputCls} />
+              <input id="pe-signer" value={form.client_signatory} onChange={(e) => set({ client_signatory: e.target.value })} placeholder="Eng. T. Moyo - Plant Manager" className={inputCls} />
               <p className="mt-1 text-xs text-gray-500">Needed to submit.</p>
             </div>
           </div>
