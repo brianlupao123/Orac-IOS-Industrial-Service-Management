@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
 
-const EVIDENCE_DIR = "C:\\Users\\BRIAN LUPAO\\.gemini\\antigravity\\brain\\796e2400-706b-49a0-8424-2f8af0202094\\evidence_phase4";
+const EVIDENCE_DIR = "C:\\Users\\ORAC Field Engineer\\.gemini\\antigravity\\brain\\796e2400-706b-49a0-8424-2f8af0202094\\evidence_phase4";
 fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
 
 const API = "http://127.0.0.1:5050/api";
@@ -63,7 +63,7 @@ async function run() {
   if (!backendUp) {
     console.log("Starting backend server on port 5050...");
     backendProc = spawn("node", ["server.js"], {
-      cwd: "C:\\Users\\BRIAN LUPAO\\Desktop\\ffims-asset-register\\two-concept-packet-backend-20261005-235259",
+      cwd: "C:\\Users\\ORAC Field Engineer\\Desktop\\ffims-asset-register\\two-concept-packet-backend-20261005-235259",
       stdio: "ignore",
       env: { ...process.env, PORT: "5050" }
     });

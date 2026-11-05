@@ -3,10 +3,10 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { chromium } from "playwright";
 
-const backendPdfGen = pathToFileURL("C:/Users/BRIAN LUPAO/Desktop/ffims-asset-register/two-concept-packet-backend-20261005-235259/src/pdfGenerator.js").href;
+const backendPdfGen = pathToFileURL("/workspace/orac-portal").href;
 const { generateControlledPdf, layoutControlledDocument, formatCurrency, sanitizeForPdfText } = await import(backendPdfGen);
 
-const EVIDENCE_DIR = "C:\\Users\\BRIAN LUPAO\\.gemini\\antigravity\\brain\\796e2400-706b-49a0-8424-2f8af0202094\\evidence_phase2";
+const EVIDENCE_DIR = "C:\\Users\\ORAC Field Engineer\\.gemini\\antigravity\\brain\\796e2400-706b-49a0-8424-2f8af0202094\\evidence_phase2";
 fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
 
 // ---------------------------------------------------------------------------

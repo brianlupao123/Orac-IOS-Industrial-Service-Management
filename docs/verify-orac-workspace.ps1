@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 
 $repositories = @(
   @{ Name = "Backend API"; Path = "C:\deploy-backend" },
-  @{ Name = "Frontend portal"; Path = "C:\Users\BRIAN LUPAO\Desktop\ffims-asset-register\render-deploy\orac-ios-web" }
+  @{ Name = "Frontend portal"; Path = "/workspace/orac-portal" }
 )
 
 foreach ($repository in $repositories) {

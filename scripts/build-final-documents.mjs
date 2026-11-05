@@ -6,8 +6,8 @@ import { Presentation, PresentationFile } from "file:///C:/Users/BRIAN%20LUPAO/.
 import { PDFDocument, StandardFonts, rgb } from "file:///C:/Users/BRIAN%20LUPAO/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/pdf-lib/dist/pdf-lib.esm.js";
 
 const workspaceDir = process.cwd();
-const skillDir = "C:\\Users\\BRIAN LUPAO\\.codex\\plugins\\cache\\openai-primary-runtime\\presentations\\26.909.11809\\skills\\presentations";
-const runtimePython = "C:\\Users\\BRIAN LUPAO\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe";
+const skillDir = "C:\\Users\\ORAC Field Engineer\\.codex\\plugins\\cache\\openai-primary-runtime\\presentations\\26.909.11809\\skills\\presentations";
+const runtimePython = "C:\\Users\\ORAC Field Engineer\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe";
 const outputDir = path.join(workspaceDir, "deliverables", "final-documents");
 const buildDir = path.join(workspaceDir, ".orac-document-build");
 const shotsDir = path.join(workspaceDir, "deliverables", "final-uat", "screenshots");

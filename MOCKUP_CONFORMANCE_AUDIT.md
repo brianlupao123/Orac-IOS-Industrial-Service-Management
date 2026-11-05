@@ -1,7 +1,7 @@
 # ORAC portal mock-up conformance audit
 
 Date: 2026-10-27  
-Reference reviewed: `C:\Users\BRIAN LUPAO\Downloads\ORAC_UI_MOCKUP (1).html`  
+Reference reviewed: `/workspace/orac-portal (1).html`  
 Supporting references: `DESIGN_SYSTEM_SPEC (1).md` and `BENCHMARK_AND_RECOMMENDATIONS (1).md`
 
 ## Result

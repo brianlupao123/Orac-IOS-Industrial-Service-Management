@@ -2,7 +2,7 @@ from pptx import Presentation
 import copy
 import xml.etree.ElementTree as ET
 
-pptx_path = r'C:\Users\BRIAN LUPAO\Desktop\orac-ios\frontend\deliverables\final-documents\ORAC_IOS_FINAL_EXECUTIVE_PRESENTATION.pptx'
+pptx_path = r'/workspace/orac-portal'
 prs = Presentation(pptx_path)
 slides = prs.slides
 

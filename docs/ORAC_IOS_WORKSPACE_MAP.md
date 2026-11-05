@@ -7,8 +7,8 @@ This system is intentionally deployed from two repositories. They form one produ
 | Area | Directory | Owns | Deployment |
 | --- | --- | --- | --- |
 | Backend API | `C:\deploy-backend` | Authentication, roles, record scope, workflow, audit, invoices, database and assistant responses | Render service `orac-operations-api` |
-| Frontend portal | `C:\Users\BRIAN LUPAO\Desktop\ffims-asset-register\render-deploy\orac-ios-web` | Pages, dashboards, assistant drawer, branding, accessibility and browser tests | Render service `orac-industrial-service-portal` |
-| Submission hub | `C:\Users\BRIAN LUPAO\Desktop\orac-ios` | Final documents and bundles only | Not deployed |
+| Frontend portal | `/workspace/orac-portal` | Pages, dashboards, assistant drawer, branding, accessibility and browser tests | Render service `orac-industrial-service-portal` |
+| Submission hub | `/workspace/orac-portal` | Final documents and bundles only | Not deployed |
 
 ## Why The Code Is Not Merged
 
@@ -24,4 +24,4 @@ The frontend must not contain database passwords, database logic, role decisions
 
 ## One Command Check
 
-From `C:\Users\BRIAN LUPAO\Desktop\orac-ios`, run `./verify-orac-workspace.ps1`. It reports the current commit and working-tree state for both repositories. It changes nothing.
+From `/workspace/orac-portal`, run `./verify-orac-workspace.ps1`. It reports the current commit and working-tree state for both repositories. It changes nothing.
