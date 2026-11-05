@@ -15,6 +15,7 @@ import { recordAnalysisVisible } from "../recordAnalysisFlags.js";
 import { displayTrade } from "../constants/trades.js";
 import { canEditWorksheet, canReviewWorksheet, canReviseWorksheet, worksheetStatusLabel } from "../fieldStatusModel.js";
 import TimesheetFormModal from "../components/TimesheetFormModal.jsx";
+import TimesheetBulkImportModal from "../components/TimesheetBulkImportModal.jsx";
 import { PaperEvidenceBadge, PaperEvidenceModal } from "../components/PaperEvidence.jsx";
 import PaperEntryModal from "../components/PaperEntryModal.jsx";
 import EntrySourceBadge from "../components/EntrySourceBadge.jsx";
@@ -27,6 +28,7 @@ import { PageLoadingSkeleton } from "../components/PageStates.jsx";
 import { v5ReadinessVisible, v5SheetEligibleForPanel, v5SignatureVisible } from "../v5SignatureModel.js";
 
 const SUBMIT_ROLES = ["Admin", "Operations", "Technician", "Supervisor"];
+const BULK_IMPORT_ROLES = ["Admin", "Operations", "Supervisor", "Sales"];
 const KIOSK_REVIEW_ROLES = ["Admin", "Operations", "Supervisor"];
 const MATERIAL_ROLES = ["Admin", "Operations", "Technician", "Supervisor"];
 const PERIOD_PACK_ROLES = ["Admin", "Operations"];
@@ -62,6 +64,7 @@ export default function WorksheetsPage({ user }) {
   const [editingWs, setEditingWs] = useState(null);
   const [outboxKey, setOutboxKey] = useState(0);
   const [paperOpen, setPaperOpen] = useState(false);
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [paperView, setPaperView] = useState(null); // the Timesheet whose signed paper copy is open
   const [searchParams, setSearchParams] = useSearchParams();
   const [notice, setNotice] = useState("");
@@ -209,6 +212,15 @@ export default function WorksheetsPage({ user }) {
           </p>
         </div>
         <div className="flex shrink-0 flex-col gap-2 self-start sm:flex-row sm:self-auto">
+          {BULK_IMPORT_ROLES.includes(user.role) && (
+            <button
+              type="button"
+              onClick={() => setBulkImportOpen(true)}
+              className="min-h-11 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-transparent dark:text-slate-200"
+            >
+              Bulk Import (CSV / Excel)
+            </button>
+          )}
           {canPaperEntry && (
             <button
               type="button"
@@ -458,6 +470,18 @@ export default function WorksheetsPage({ user }) {
       <TimesheetFormModal isOpen={formOpen} onClose={() => { setFormOpen(false); setEditingWs(null); }} user={user} dispatches={dispatches} editing={editingWs} onSaved={handleSaved} />
       {canPaperEntry && (
         <PaperEntryModal isOpen={paperOpen} onClose={() => setPaperOpen(false)} user={user} dispatches={dispatches} worksheets={items} onSaved={handleSaved} />
+      )}
+      {BULK_IMPORT_ROLES.includes(user.role) && (
+        <TimesheetBulkImportModal
+          isOpen={bulkImportOpen}
+          onClose={() => setBulkImportOpen(false)}
+          user={user}
+          dispatches={dispatches}
+          onImportComplete={(msg) => {
+            setNotice(msg);
+            load();
+          }}
+        />
       )}
       {showSignatureModal && (
         <Modal title="Client Representative Sign-Off" isOpen={showSignatureModal} onClose={() => setShowSignatureModal(false)}>

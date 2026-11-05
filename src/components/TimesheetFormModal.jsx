@@ -139,7 +139,22 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
       <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-5">
         {!online && <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">You are offline. This Timesheet will be kept on this device and sent when the connection returns. The server still checks it before anyone can approve it.</p>}
         {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">{error}</div>}
-        {note && <p role="status" className="text-xs text-gray-500">{note}</p>}
+        {note && (
+          <div role="status" className="flex items-center justify-between rounded-lg bg-sky-50 p-3 text-xs text-sky-900 border border-sky-200">
+            <span>{note}</span>
+            <button
+              type="button"
+              onClick={() => {
+                clearDraft(storage(), user.id, "timesheet", "new");
+                setForm({ ...EMPTY_TIMESHEET_FORM(), client_request_id: newRequestId() });
+                setNote("");
+              }}
+              className="ml-2 font-semibold text-sky-700 underline hover:text-sky-900"
+            >
+              Clear Draft
+            </button>
+          </div>
+        )}
         {editingLegacy && <p className="rounded-lg bg-sky-50 p-3 text-xs text-sky-900">This Timesheet was recorded before Normal / 1.5 / 2.0 hours were captured. Enter the breakdown to bring it up to date.</p>}
 
         <fieldset className="space-y-4">
@@ -223,13 +238,13 @@ export default function TimesheetFormModal({ isOpen, onClose, user, dispatches, 
           )}
           {!showPicker && form.worker_type !== "contractor" && !showIdentity && (
             <div>
-              <label htmlFor="ts-category" className={labelCls}>Category / trade (optional)</label>
+              <label htmlFor="ts-category" className={labelCls}>Trade (optional)</label>
               <input id="ts-category" value={form.worker_category} onChange={(e) => set({ worker_category: e.target.value })} className={inputCls} />
             </div>
           )}
           {form.worker_type === "contractor" && (
             <div>
-              <label htmlFor="ts-category" className={labelCls}>Category / trade (optional)</label>
+              <label htmlFor="ts-category" className={labelCls}>Trade (optional)</label>
               <input id="ts-category" value={form.worker_category} onChange={(e) => set({ worker_category: e.target.value })} className={inputCls} />
             </div>
           )}

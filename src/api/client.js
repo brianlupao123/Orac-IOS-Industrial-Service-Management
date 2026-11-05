@@ -333,7 +333,8 @@ export const salesPortfolio = {
   dispatchProgress(dispatchId) { return request(`/sales-portfolio/dispatches/${encodeURIComponent(dispatchId)}/progress`); },
   approvedWork(dispatchId) { return request(`/sales-portfolio/dispatches/${encodeURIComponent(dispatchId)}/approved-work`); },
   materials(dispatchId) { return request(`/sales-portfolio/dispatches/${encodeURIComponent(dispatchId)}/materials`); },
-  invoices() { return request(`/sales-portfolio/invoices`); }
+  invoices() { return request(`/sales-portfolio/invoices`); },
+  purchaseOrders() { return request(`/sales-portfolio/purchase_orders`); }
 };
 
 export const dispatch = {

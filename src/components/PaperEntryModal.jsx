@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "./Modal.jsx";
-import { collections, dispatch } from "../api/client.js";
+import SearchableSelect from "./SearchableSelect.jsx";
+import { collections, dispatch, technicianProfiles } from "../api/client.js";
 import { displayTrade } from "../constants/trades.js";
 import { totalHours, reviewHints, newRequestId } from "../lib/timesheetFormLogic.js";
+import { saveDraft, loadDraft, clearDraft } from "../offlineDraftModel.js";
 import {
   EMPTY_PAPER_FORM, MAX_SCAN_DATA_URL_CHARS, technicianOptions, validatePaperEntry, buildPaperPayload
 } from "../lib/paperEntryLogic.js";
@@ -14,6 +16,9 @@ import {
 
 const inputCls = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20 dark:bg-transparent";
 const labelCls = "mb-1 block text-sm font-semibold text-gray-600";
+const readOnlyCls = "w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 cursor-default focus:outline-none";
+
+function storage() { try { return window.localStorage; } catch { return null; } }
 
 // Phone photos are often several MB. Shrink to fit the upload limit, entirely on this device.
 async function shrinkToDataUrl(file) {
@@ -48,26 +53,60 @@ async function shrinkToDataUrl(file) {
 export default function PaperEntryModal({ isOpen, onClose, user, dispatches, worksheets, onSaved }) {
   const [form, setForm] = useState(EMPTY_PAPER_FORM());
   const [users, setUsers] = useState([]);
+  const [profiles, setProfiles] = useState([]);
   const [error, setError] = useState("");
+  const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [scanBusy, setScanBusy] = useState(false);
   const [scanName, setScanName] = useState("");
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
 
-  // Fresh form each time it opens; the technician list is read once per opening.
+  // Fresh form each time it opens; load draft memory if available
   useEffect(() => {
     if (!isOpen) return;
-    setForm({ ...EMPTY_PAPER_FORM(), client_request_id: newRequestId() });
-    setError(""); setScanName("");
+    setError(""); setNote(""); setScanName("");
+    const saved = loadDraft(storage(), user.id, "paper_timesheet", "new");
+    if (saved?.data?.form) {
+      setForm({ ...EMPTY_PAPER_FORM(), ...saved.data.form, client_request_id: saved.data.form.client_request_id || newRequestId(), signed_copy_image: "" });
+      setNote("Restored an unsent paper entry draft saved on this device.");
+    } else {
+      setForm({ ...EMPTY_PAPER_FORM(), client_request_id: newRequestId() });
+    }
     let alive = true;
-    collections.list("users").then((u) => { if (alive) setUsers(Array.isArray(u) ? u : []); }).catch(() => { if (alive) setUsers([]); });
+    Promise.all([
+      collections.list("users").catch(() => []),
+      technicianProfiles.list().catch(() => [])
+    ]).then(([u, p]) => {
+      if (!alive) return;
+      setUsers(Array.isArray(u) ? u : []);
+      setProfiles(Array.isArray(p) ? p : []);
+    });
     return () => { alive = false; };
-  }, [isOpen]);
+  }, [isOpen, user.id]);
 
-  const technicians = useMemo(() => technicianOptions(users, worksheets), [users, worksheets]);
+  // Unsent draft text is saved on this device to protect user input
+  useEffect(() => {
+    if (!isOpen) return;
+    if (form.paper_reference || form.technician_id || form.dispatch_card_id || form.activity || form.normal || form.ot_15 || form.ot_20) {
+      const { signed_copy_image, ...text } = form;
+      saveDraft(storage(), user.id, "paper_timesheet", "new", { form: text });
+    }
+  }, [form, isOpen, user.id]);
+
+  const technicians = useMemo(() => technicianOptions(users, worksheets, profiles), [users, worksheets, profiles]);
   const tech = technicians.find((t) => t.id === form.technician_id) || null;
-  const dispatchOptions = useMemo(() => (dispatches || []).map((d) => ({ id: d.id, label: d.dispatch_number || d.title || d.id })), [dispatches]);
+
+  const techOptions = useMemo(() => technicians.map((t) => ({
+    value: t.id,
+    label: `[${t.trade || "Unclassified"}] ${t.name}${t.national_id ? ` (ID: ${t.national_id})` : ""}${t.worker_type === "contractor" ? " [Contractor]" : ""}`
+  })), [technicians]);
+
+  const dispatchOptions = useMemo(() => (dispatches || []).map((d) => ({
+    value: d.id,
+    label: d.dispatch_number || d.title || d.id
+  })), [dispatches]);
+
   const set = (patch) => setForm((p) => ({ ...p, ...patch }));
   const total = totalHours(form);
   const hints = reviewHints(form);
@@ -84,12 +123,19 @@ export default function PaperEntryModal({ isOpen, onClose, user, dispatches, wor
     finally { setScanBusy(false); }
   }
 
+  function handleClearDraft() {
+    clearDraft(storage(), user.id, "paper_timesheet", "new");
+    setForm({ ...EMPTY_PAPER_FORM(), client_request_id: newRequestId() });
+    setNote("");
+  }
+
   async function save(submit) {
     const errors = validatePaperEntry(form, tech, { submit, role: user.role });
     if (errors.length) { setError(errors[0]); return; }
     setBusy(true); setError("");
     try {
       await dispatch.createWorksheet(form.dispatch_card_id, buildPaperPayload(form, tech, { submit, role: user.role }));
+      clearDraft(storage(), user.id, "paper_timesheet", "new");
       onSaved(submit
         ? `Paper timesheet ${form.paper_reference.trim()} submitted. It now follows the normal acknowledgement and approval steps.`
         : `Paper timesheet ${form.paper_reference.trim()} saved as a Draft.`);
@@ -105,6 +151,18 @@ export default function PaperEntryModal({ isOpen, onClose, user, dispatches, wor
         <p className="rounded-lg bg-sky-50 p-3 text-xs text-sky-900 dark:bg-sky-950/30 dark:text-sky-200">
           Use this for a signed paper timesheet received from a field supervisor. Type exactly what the paper shows, and keep the original booklet safe.
         </p>
+        {note && (
+          <div className="flex items-center justify-between rounded-lg bg-sky-50 p-3 text-xs text-sky-900 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-200">
+            <span>{note}</span>
+            <button
+              type="button"
+              onClick={handleClearDraft}
+              className="ml-2 font-semibold text-sky-700 underline hover:text-sky-900 dark:text-sky-300"
+            >
+              Clear Draft
+            </button>
+          </div>
+        )}
         {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">{error}</div>}
 
         <fieldset className="space-y-4">
@@ -144,20 +202,38 @@ export default function PaperEntryModal({ isOpen, onClose, user, dispatches, wor
           <legend className="text-sm font-semibold text-gray-500">Technician</legend>
           <div>
             <label htmlFor="pe-tech" className={labelCls}>Technician <span className="text-red-600">*</span></label>
-            <select id="pe-tech" required value={form.technician_id} onChange={(e) => set({ technician_id: e.target.value })} className={inputCls}>
-              <option value="">Select a technician</option>
-              {technicians.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
+            <SearchableSelect
+              id="pe-tech"
+              ariaLabel="Technician"
+              placeholder="Search technician by name, trade or ID..."
+              emptyLabel="No technician matches"
+              options={techOptions}
+              value={form.technician_id}
+              onChange={(val) => {
+                const picked = technicians.find((x) => x.id === val);
+                set({
+                  technician_id: val,
+                  technician_trade: picked?.trade || "",
+                  national_id: picked?.national_id || "",
+                  worker_name: picked?.name || "",
+                  worker_type: picked?.worker_type || "permanent"
+                });
+              }}
+            />
             {technicians.length === 0 && <p className="mt-1 text-xs text-amber-800">No technicians are available to your account yet. Ask an Admin to check the technician list.</p>}
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label htmlFor="pe-worker-name" className={labelCls}>Worker Name</label>
+              <input id="pe-worker-name" readOnly aria-readonly="true" value={tech ? tech.name : ""} placeholder="Fills in from technician" className={readOnlyCls} />
+            </div>
             <div>
               <label htmlFor="pe-trade" className={labelCls}>Trade</label>
-              <input id="pe-trade" readOnly value={tech ? displayTrade(tech.trade) : ""} placeholder="Fills in from the technician" className={`${inputCls} bg-gray-50`} />
+              <input id="pe-trade" readOnly aria-readonly="true" value={tech ? displayTrade(tech.trade) : ""} placeholder="Fills in from technician" className={readOnlyCls} />
             </div>
             <div>
               <label htmlFor="pe-nid" className={labelCls}>National ID</label>
-              <input id="pe-nid" readOnly value={tech ? (tech.national_id || "Not on file") : ""} placeholder="Fills in from the technician" className={`${inputCls} bg-gray-50`} />
+              <input id="pe-nid" readOnly aria-readonly="true" value={tech ? (tech.national_id || "Not on file") : ""} placeholder="Fills in from technician" className={readOnlyCls} />
             </div>
           </div>
         </fieldset>
@@ -166,14 +242,19 @@ export default function PaperEntryModal({ isOpen, onClose, user, dispatches, wor
           <legend className="text-sm font-semibold text-gray-500">Job &amp; hours (as written on the paper)</legend>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="pe-dispatch" className={labelCls}>Job (dispatch card)</label>
-              <select id="pe-dispatch" required value={form.dispatch_card_id} onChange={(e) => set({ dispatch_card_id: e.target.value })} className={inputCls}>
-                <option value="">Select a job</option>
-                {dispatchOptions.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
-              </select>
+              <label htmlFor="pe-dispatch" className={labelCls}>Job (dispatch card) <span className="text-red-600">*</span></label>
+              <SearchableSelect
+                id="pe-dispatch"
+                ariaLabel="Job (dispatch card)"
+                placeholder="Search job or dispatch card..."
+                emptyLabel="No matching dispatch"
+                options={dispatchOptions}
+                value={form.dispatch_card_id}
+                onChange={(val) => set({ dispatch_card_id: val })}
+              />
             </div>
             <div>
-              <label htmlFor="pe-date" className={labelCls}>Work date</label>
+              <label htmlFor="pe-date" className={labelCls}>Work date <span className="text-red-600">*</span></label>
               <input id="pe-date" type="date" required value={form.work_date} onChange={(e) => set({ work_date: e.target.value })} className={inputCls} />
             </div>
           </div>

@@ -44,16 +44,47 @@ export const EMPTY_PAPER_FORM = () => ({
   client_signatory: ""
 });
 
-// Technician choices from a users list and/or already-recorded Timesheets. De-duplicated by id.
-export function technicianOptions(users = [], worksheets = []) {
+// Technician choices from a users list, recorded Timesheets, and/or active technician profiles. De-duplicated by id.
+export function technicianOptions(users = [], worksheets = [], profiles = []) {
   const map = new Map();
+  for (const p of profiles || []) {
+    if (!p) continue;
+    const id = p.id || p.technician_id;
+    if (!id) continue;
+    map.set(id, {
+      id,
+      name: p.name || p.full_name || id,
+      trade: p.trade || p.technician_trade || "",
+      national_id: p.national_id || "",
+      worker_type: p.worker_type || "permanent"
+    });
+  }
   for (const u of users || []) {
     if (!u || u.role !== "Technician" || u.active === false || u.is_active === false || u.status === "Inactive") continue;
-    map.set(u.id, { id: u.id, name: u.name || u.full_name || u.email || u.id, trade: u.trade || u.technician_trade || "", national_id: u.national_id || "" });
+    if (map.has(u.id)) {
+      const existing = map.get(u.id);
+      if (!existing.trade && (u.trade || u.technician_trade)) existing.trade = u.trade || u.technician_trade;
+      if (!existing.national_id && u.national_id) existing.national_id = u.national_id;
+      if (!existing.worker_type && u.worker_type) existing.worker_type = u.worker_type;
+      continue;
+    }
+    map.set(u.id, {
+      id: u.id,
+      name: u.name || u.full_name || u.email || u.id,
+      trade: u.trade || u.technician_trade || "",
+      national_id: u.national_id || "",
+      worker_type: u.worker_type || "permanent"
+    });
   }
   for (const w of worksheets || []) {
     if (!w?.technician_id || map.has(w.technician_id)) continue;
-    map.set(w.technician_id, { id: w.technician_id, name: w.technician_name || w.worker_name || w.technician_id, trade: w.technician_trade || "", national_id: w.technician_national_id || "" });
+    map.set(w.technician_id, {
+      id: w.technician_id,
+      name: w.technician_name || w.worker_name || w.technician_id,
+      trade: w.technician_trade || "",
+      national_id: w.technician_national_id || "",
+      worker_type: w.worker_type || "permanent"
+    });
   }
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
