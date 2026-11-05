@@ -4,6 +4,9 @@ services:
     runtime: static
     buildCommand: npm ci && npm run build
     staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://orac-operations-api.fly.dev/api
     routes:
       - type: rewrite
         source: /*
