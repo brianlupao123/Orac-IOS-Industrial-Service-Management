@@ -16,7 +16,7 @@ import { tsFlags } from "../timesheetWorkflowFlags.js";
 // The server decides every permission and state change; `detail.actions` drives which buttons appear.
 // Every override (exclude a row, include a carry-over, acknowledge a warning) needs a reason and is audited.
 
-const MANAGE_ROLES = ["Admin", "Operations", "Supervisor"];
+const MANAGE_ROLES = ["Admin", "Operations", "Supervisor", "Sales"];
 // Sales can run the roll-up only where the Sales access switch is on; the server still decides (a 403 is shown as an error).
 const salesMayManage = (role) => role === "Sales" && tsFlags().workflowUi;
 const SEV_CLASS = { blocking: "bg-red-50 text-red-800 border-red-200", warning: "bg-amber-50 text-amber-800 border-amber-200", info: "bg-gray-50 text-gray-600 border-gray-200" };
