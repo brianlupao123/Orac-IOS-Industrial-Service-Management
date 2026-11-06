@@ -1,0 +1,631 @@
+{
+  "_about": "UX requirements register. Every requirement has a source, a design anchor in the prototype, a build target, a phase, and at least one automated or manual verification. Status is computed by scripts/ux-trace.mjs.",
+  "phases": {
+    "P0": "Tooling and baseline",
+    "P1": "Tokens, contrast and quick fixes",
+    "P2": "Type system",
+    "P3": "Shared components",
+    "P4": "Shared-component migration",
+    "P5": "Page migration waves",
+    "P6": "Brand and documents",
+    "P7": "States",
+    "P8": "Prototype parity",
+    "P9": "Verification and release"
+  },
+  "requirements": [
+    {
+      "id": "TYP-01",
+      "area": "Typography",
+      "statement": "All text uses one scale: 12, 14, 16, 18, 20, 24, 28 px. Semantic classes (text-ux-title, text-ux-section, text-ux-label, text-ux-body, text-ux-caption, text-ux-stat) carry size, weight and line height together.",
+      "source": "Owner feedback (font size and uniformity)",
+      "design": "Design system > Typography",
+      "build": "tailwind.config.js fontSize; src/index.css tokens",
+      "phase": "P2",
+      "verify": [
+        {
+          "kind": "tokens",
+          "ref": "scale"
+        }
+      ]
+    },
+    {
+      "id": "TYP-02",
+      "area": "Typography",
+      "statement": "No text smaller than 12 px anywhere.",
+      "source": "Agent audit files (UI_UX_REFINEMENT_SCOPE: no text under 12 px)",
+      "design": "Design system > Typography",
+      "build": "Replace text-[10px] and text-[11px]",
+      "phase": "P1",
+      "verify": [
+        {
+          "kind": "ratchet",
+          "ref": "TYP-FLOOR"
+        },
+        {
+          "kind": "probe",
+          "ref": "TYP-FLOOR"
+        }
+      ]
+    },
+    {
+      "id": "TYP-03",
+      "area": "Typography",
+      "statement": "No arbitrary text sizes (text-[Npx]).",
+      "source": "Uniformity",
+      "design": "Design system > Typography",
+      "build": "Use the scale",
+      "phase": "P1",
+      "verify": [
+        {
+          "kind": "ratchet",
+          "ref": "TYP-ARBITRARY"
+        }
+      ]
+    },
+    {
+      "id": "TYP-04",
+      "area": "Typography",
+      "statement": "text-xs (12 px) is only for badges and captions.",
+      "source": "Readability",
+      "design": "Design system > Typography",
+      "build": "Badge and Caption components",
+      "phase": "P3",
+      "verify": [
+        {
+          "kind": "ratchet",
+          "ref": "TYP-XS"
+        }
+      ]
+    },
+    {
+      "id": "TYP-05",
+      "area": "Typography",
+      "statement": "Reading text is 16 px. 14 px is for compact density and secondary text only.",
+      "source": "Owner feedback (text too small)",
+      "design": "Design system > Typography",
+      "build": "Semantic type classes",
+      "phase": "P4",
+      "verify": [
+        {
+          "kind": "ratchet",
+          "ref": "TYP-SM"
+        }
+      ]
+    },
+    {
+      "id": "TYP-06",
+      "area": "Typography",
+      "statement": "Headings descend: page title (h1) > section (h2) > sub-section (h3), one look per level on every page.",
+      "source": "Owner feedback (largeness always descending)",
+      "design": "Design system > Page anatomy",
+      "build": "PageTitle, SectionTitle, SubTitle components",
+      "phase": "P3",
+      "verify": [
+        {
+          "kind": "probe",
+          "ref": "TYP-HIERARCHY"
+        },
+        {
+          "kind": "probe",
+          "ref": "CON-VARIANTS"
+        }
+      ]
+    },
+    {
+      "id": "TYP-07",
+      "area": "Typography",
+      "statement": "On stat tiles the label leads (bold, primary colour) and the count supports (regular, secondary colour).",
+      "source": "Owner feedback (card purpose more visible than count)",
+      "design": "Role dashboard > tiles",
+      "build": "StatTile (IconStatCard, StatCard, AttentionBand)",
+      "phase": "P4",
+      "verify": [
+        {
+          "kind": "probe",
+          "ref": "TYP-TILE"
+        }
+      ]
+    },
+    {
+      "id": "LAY-01",
+      "area": "Layout",
+      "statement": "The shell owns page width and padding. Pages do not add max-w, mx-auto or outer padding.",
+      "source": "Agent audit files (STYLE_GUIDE)",
+      "design": "Design system > Page anatomy",
+      "build": "PortalLayout",
+      "phase": "P5",
+      "verify": [
+        {
+          "kind": "ratchet",
+          "ref": "LAY-PAGEWIDTH"
+        }
+      ]
+    },
+    {
+      "id": "LAY-02",
+      "area": "Layout",
+      "statement": "Spacing comes from the 4 px scale (4, 8, 12, 16, 24, 32, 48).",
+      "source": "Uniformity",
+      "design": "Design system > Spacing",
+      "build": "Tokens and Panel",
+      "phase": "P2",
+      "verify": [
+        {
+          "kind": "tokens",
+          "ref": "scale"
+        }
+      ]
+    },
+    {
+      "id": "LAY-03",
+      "area": "Layout",
+      "statement": "No sideways page scroll at 1440, 1024, 900 and 390 px.",
+      "source": "Responsive",
+      "design": "Preview > Desktop, Tablet, Mobile",
+      "build": "Existing visual audit",
+      "phase": "P9",
+      "verify": [
+        {
+          "kind": "probe",
+          "ref": "LAY-OVERFLOW"
+        }
+      ]
+    },
+    {
+      "id": "LAY-04",
+      "area": "Layout",
+      "statement": "Grey page, white cards, in both themes (UXD-3).",
+      "source": "Visual hierarchy",
+      "design": "Role dashboard",
+      "build": "Tokens --orac-page, --orac-surface",
+      "phase": "P1",
+      "verify": [
+        {
+          "kind": "tokens",
+          "ref": "parity"
+        }
+      ]
+    },
+    {
+      "id": "CMP-01",
+      "area": "Components",
+      "statement": "One Button with variants (primary, secondary, danger, ghost), two sizes (44 and 40 px), 16 px bold text and all states.",
+      "source": "Owner feedback (buttons visible enough)",
+      "design": "Design system > Buttons",
+      "build": "src/components/ui/Button.jsx",
+      "phase": "P3",
+      "verify": [
+        {
+          "kind": "ratchet",
+          "ref": "CMP-BUTTON"
+        },
+        {
+          "kind": "probe",
+          "ref": "CMP-button"
+        }
+      ]
+    },
+    {
+      "id": "CMP-02",
+      "area": "Components",
+      "statement": "One Field: label above, 16 px label and text, 44 px control, error and helper text.",
+      "source": "Uniformity",
+      "design": "Design system > Forms",
+      "build": "src/components/ui/Field.jsx, Input.jsx",
+      "phase": "P3",
+      "verify": [
+        {
+          "kind": "ratchet",
+          "ref": "CMP-INPUT"
+        },
+        {
+          "kind": "probe",
+          "ref": "CMP-input"
+        },
+        {
+          "kind": "probe",
+          "ref": "CMP-label"
+        }
+      ]
+    },
+    {
+      "id": "CMP-03",
+      "area": "Components",
+      "statement": "One Panel (card): 12 px radius, one border, one shadow, 24 px padding.",
+      "source": "Uniformity",
+      "design": "Design system > Cards",
+      "build": "src/components/ui/Panel.jsx",
+      "phase": "P3",
+      "verify": [
+        {
+          "kind": "probe",
+          "ref": "CMP-panel"
+        }
+      ]
+    },
+    {
+      "id": "CMP-04",
+      "area": "Components",
+      "statement": "Tables: 16 px cells, right-aligned tabular numbers, whole-row click, local scroll on small screens.",
+      "source": "Readability",
+      "design": "Design system > Tables",
+      "build": "DataTable",
+      "phase": "P4",
+      "verify": [
+        {
+          "kind": "probe",
+          "ref": "CMP-table-cell"
+        }
+      ]
+    },
+    {
+      "id": "CMP-05",
+      "area": "Components",
+      "statement": "Status colour only through StatusBadge (no local tone maps).",
+      "source": "Agent audit files",
+      "design": "Design system > Status",
+      "build": "StatusBadge",
+      "phase": "P4",
+      "verify": [
+        {
+          "kind": "ratchet",
+          "ref": "TONE-LOCAL"
+        },
+        {
+          "kind": "probe",
+          "ref": "CMP-badge"
+        }
+      ]
+    },
+    {
+      "id": "CMP-06",
+      "area": "Components",
+      "statement": "One Notice component for error, warning, info and success messages.",
+      "source": "Uniformity",
+      "design": "Design system > Alerts",
+      "build": "src/components/ui/Notice.jsx",
+      "phase": "P3",
+      "verify": [
+        {
+          "kind": "manual",
+          "ref": "CMP-06"
+        }
+      ]
+    },
+    {
+      "id": "CMP-07",
+      "area": "Components",
+      "statement": "Page and section headings come from shared components.",
+      "source": "Uniformity",
+      "design": "Design system > Page anatomy",
+      "build": "PageHeaderBanner, SectionTitle",
+      "phase": "P3",
+      "verify": [
+        {
+          "kind": "probe",
+          "ref": "CMP-page-title"
+        },
+        {
+          "kind": "probe",
+          "ref": "CMP-section-title"
+        }
+      ]
+    },
+    {
+      "id": "NAV-01",
+      "area": "Navigation",
+      "statement": "Desktop navigation is labelled, evenly spread, 46 px high, inside a 72 px three-zone header.",
+      "source": "Owner feedback (labelled and equally distributed)",
+      "design": "Header",
+      "build": "PortalLayout",
+      "phase": "P9",
+      "verify": [
+        {
+          "kind": "manual",
+          "ref": "NAV-01"
+        }
+      ]
+    },
+    {
+      "id": "NAV-02",
+      "area": "Navigation",
+      "statement": "Under 900 px a labelled bottom tab bar with More replaces the top nav.",
+      "source": "Owner feedback",
+      "design": "Preview > Mobile",
+      "build": "PortalLayout",
+      "phase": "P9",
+      "verify": [
+        {
+          "kind": "manual",
+          "ref": "NAV-02"
+        }
+      ]
+    },
+    {
+      "id": "NAV-03",
+      "area": "Navigation",
+      "statement": "Skip link, aria-current on the selected item, Esc closes menus.",
+      "source": "WCAG 2.2 AA",
+      "design": "Header",
+      "build": "PortalLayout",
+      "phase": "P9",
+      "verify": [
+        {
+          "kind": "manual",
+          "ref": "NAV-03"
+        }
+      ]
+    },
+    {
+      "id": "A11Y-01",
+      "area": "Accessibility",
+      "statement": "All text meets 4.5:1 contrast (3:1 for large text) in both themes. No grey-200/300/400 text.",
+      "source": "WCAG 2.2 AA",
+      "design": "Design system > Accessibility",
+      "build": "Tokens and text-orac-text-muted",
+      "phase": "P1",
+      "verify": [
+        {
+          "kind": "tokens",
+          "ref": "contrast"
+        },
+        {
+          "kind": "ratchet",
+          "ref": "COL-LOWCONTRAST"
+        },
+        {
+          "kind": "probe",
+          "ref": "A11Y-CONTRAST"
+        }
+      ]
+    },
+    {
+      "id": "A11Y-02",
+      "area": "Accessibility",
+      "statement": "Every image has alt text.",
+      "source": "WCAG 2.2 AA",
+      "design": "Design system > Accessibility",
+      "build": "Components",
+      "phase": "P1",
+      "verify": [
+        {
+          "kind": "ratchet",
+          "ref": "A11Y-IMGALT"
+        },
+        {
+          "kind": "probe",
+          "ref": "A11Y-IMGALT"
+        }
+      ]
+    },
+    {
+      "id": "A11Y-03",
+      "area": "Accessibility",
+      "statement": "Controls are at least 44 px high (40 px for small controls).",
+      "source": "WCAG 2.2 AA 2.5.8 and owner request",
+      "design": "Design system > Buttons",
+      "build": "Button, Field",
+      "phase": "P3",
+      "verify": [
+        {
+          "kind": "probe",
+          "ref": "A11Y-TARGET"
+        }
+      ]
+    },
+    {
+      "id": "A11Y-04",
+      "area": "Accessibility",
+      "statement": "Every interactive element shows a visible focus indicator.",
+      "source": "WCAG 2.2 AA",
+      "design": "Design system > Accessibility",
+      "build": "Global focus rule",
+      "phase": "P3",
+      "verify": [
+        {
+          "kind": "probe",
+          "ref": "A11Y-FOCUS"
+        }
+      ]
+    },
+    {
+      "id": "A11Y-05",
+      "area": "Accessibility",
+      "statement": "A keyboard-only and screen-reader smoke test passes on a real device.",
+      "source": "Agent audit files (recommended final check)",
+      "design": "Design system > Accessibility",
+      "build": "None",
+      "phase": "P9",
+      "verify": [
+        {
+          "kind": "manual",
+          "ref": "A11Y-05"
+        }
+      ]
+    },
+    {
+      "id": "CON-01",
+      "area": "Consistency",
+      "statement": "Colour comes from tokens, not raw Tailwind palettes.",
+      "source": "Uniformity",
+      "design": "Design system > Tokens",
+      "build": "Migration waves",
+      "phase": "P5",
+      "verify": [
+        {
+          "kind": "ratchet",
+          "ref": "COL-RAW"
+        }
+      ]
+    },
+    {
+      "id": "CON-02",
+      "area": "Consistency",
+      "statement": "No hex colours in components.",
+      "source": "Uniformity",
+      "design": "Design system > Tokens",
+      "build": "Migration waves",
+      "phase": "P5",
+      "verify": [
+        {
+          "kind": "ratchet",
+          "ref": "COL-HEX"
+        }
+      ]
+    },
+    {
+      "id": "CON-03",
+      "area": "Consistency",
+      "statement": "No inline style objects (dynamic positions excepted, marked ux-allow).",
+      "source": "Uniformity",
+      "design": "Design system > Tokens",
+      "build": "Migration waves",
+      "phase": "P5",
+      "verify": [
+        {
+          "kind": "ratchet",
+          "ref": "CMP-STYLE"
+        }
+      ]
+    },
+    {
+      "id": "CON-04",
+      "area": "Consistency",
+      "statement": "src/index.css and the HTML prototype share one token source (ux/tokens.json).",
+      "source": "Owner feedback (pages must not look like separate products)",
+      "design": "Design system > Tokens",
+      "build": "ux/tokens.json",
+      "phase": "P1",
+      "verify": [
+        {
+          "kind": "tokens",
+          "ref": "parity"
+        }
+      ]
+    },
+    {
+      "id": "STA-01",
+      "area": "States",
+      "statement": "Loading shows skeletons, not plain text.",
+      "source": "Agent audit files (open item)",
+      "design": "Simulate loading",
+      "build": "PageLoadingSkeleton, Skeleton",
+      "phase": "P7",
+      "verify": [
+        {
+          "kind": "ratchet",
+          "ref": "STATE-LOADINGTEXT"
+        }
+      ]
+    },
+    {
+      "id": "STA-02",
+      "area": "States",
+      "statement": "Empty, error, restricted, offline and signed-out states use PageStates.",
+      "source": "Agent audit files",
+      "design": "Design system > States",
+      "build": "PageStates",
+      "phase": "P7",
+      "verify": [
+        {
+          "kind": "manual",
+          "ref": "STA-02"
+        }
+      ]
+    },
+    {
+      "id": "BRD-01",
+      "area": "Brand",
+      "statement": "One BrandMark renders the approved logo at 40, 48 and 80 px everywhere.",
+      "source": "Owner feedback (minding the ORAC logo)",
+      "design": "Header, Documents",
+      "build": "src/components/ui/BrandMark.jsx",
+      "phase": "P6",
+      "verify": [
+        {
+          "kind": "ratchet",
+          "ref": "BRAND-LOGO"
+        },
+        {
+          "kind": "probe",
+          "ref": "BRD-SIZE"
+        }
+      ]
+    },
+    {
+      "id": "BRD-02",
+      "area": "Brand",
+      "statement": "Gear blue (#2FA2E3) is for fills and the mark only. Text and white-text buttons use navy.",
+      "source": "MAINTAINER_GUARDRAILS",
+      "design": "Design system > Colour",
+      "build": "Tokens",
+      "phase": "P1",
+      "verify": [
+        {
+          "kind": "tokens",
+          "ref": "contrast"
+        }
+      ]
+    },
+    {
+      "id": "DOC-01",
+      "area": "Documents",
+      "statement": "Quotation, invoice, PO, job card and worksheet PDFs follow the prototype's Documents screen with the approved logo.",
+      "source": "Owner feedback (document quality)",
+      "design": "Screen > Quotation and invoice documents",
+      "build": "Backend PDF templates (owner decision)",
+      "phase": "P6",
+      "verify": [
+        {
+          "kind": "manual",
+          "ref": "DOC-01"
+        }
+      ]
+    },
+    {
+      "id": "DOC-02",
+      "area": "Documents",
+      "statement": "Print output is A4, 15 mm margins, repeating table header, no controls.",
+      "source": "Document quality",
+      "design": "Documents > Print rules",
+      "build": "Print stylesheet",
+      "phase": "P6",
+      "verify": [
+        {
+          "kind": "manual",
+          "ref": "DOC-02"
+        }
+      ]
+    },
+    {
+      "id": "PRC-01",
+      "area": "Process",
+      "statement": "Tests, build and maintenance gate pass (npm run maintain).",
+      "source": "MAINTAINER_GUARDRAILS",
+      "design": "n/a",
+      "build": "scripts/verify-maintenance.mjs",
+      "phase": "P9",
+      "verify": [
+        {
+          "kind": "manual",
+          "ref": "PRC-01"
+        }
+      ]
+    },
+    {
+      "id": "PRC-02",
+      "area": "Process",
+      "statement": "Guarded files change only with a recorded owner decision.",
+      "source": "Original brief",
+      "design": "n/a",
+      "build": "scripts/ux-guard.mjs",
+      "phase": "P0",
+      "verify": [
+        {
+          "kind": "guard",
+          "ref": "guard"
+        }
+      ]
+    }
+  ]
+}

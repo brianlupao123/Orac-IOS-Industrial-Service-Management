@@ -1,0 +1,101 @@
+{
+  "_about": "Measurable rules used by scripts/ux-probe.mjs on BOTH the HTML prototype and the running portal. If the prototype passes and the portal passes the same file, they are the same design. Change a number here, never in the script.",
+  "global": {
+    "minFontPx": 12,
+    "readingFontPx": 16,
+    "minTargetPx": 44,
+    "minContrast": 4.5,
+    "minContrastLarge": 3,
+    "focusTabStops": 30,
+    "maxVariantsPerTag": {
+      "h1": 1,
+      "h2": 1,
+      "h3": 1,
+      "th": 1,
+      "label": 1
+    },
+    "smallTargetPx": 40,
+    "smallTarget": {
+      "app": "[data-size=sm]",
+      "proto": ".btn--sm, .btn--text, .chip, .dt .btn, .tab, .xbtn"
+    },
+    "ignore": {
+      "app": "[data-probe-ignore]",
+      "proto": "[data-probe-ignore], .sheet"
+    }
+  },
+  "components": {
+    "button": {
+      "app": "[data-ux=button]",
+      "proto": ".btn",
+      "minHeight": 40,
+      "minFontPx": 16,
+      "minFontWeight": 600
+    },
+    "input": {
+      "app": "[data-ux=input]",
+      "proto": ".input, .select",
+      "minHeight": 44,
+      "minFontPx": 16
+    },
+    "label": {
+      "app": "[data-ux=label]",
+      "proto": ".h-label",
+      "minFontPx": 16,
+      "minFontWeight": 600
+    },
+    "page-title": {
+      "app": "[data-ux=page-title]",
+      "proto": ".banner h1, .banner .h-page",
+      "minFontPx": 20,
+      "minFontWeight": 600,
+      "_note": "24 px from 1024 px up, 20 px on mobile (scale step xl)."
+    },
+    "section-title": {
+      "app": "[data-ux=section-title]",
+      "proto": ".h-section",
+      "minFontPx": 18,
+      "minFontWeight": 600
+    },
+    "panel": {
+      "app": "[data-ux=panel]",
+      "proto": ".card",
+      "borderRadiusPx": 12
+    },
+    "badge": {
+      "app": "[data-ux=badge]",
+      "proto": ".pill",
+      "minFontPx": 12,
+      "minFontWeight": 600
+    },
+    "table-cell": {
+      "app": "[data-ux=table] td",
+      "proto": ".dt td",
+      "minFontPx": 14
+    }
+  },
+  "tile": {
+    "app": "[data-ux=stat-tile]",
+    "proto": ".tile",
+    "label": {
+      "app": "[data-ux=stat-label]",
+      "proto": ".tile__top"
+    },
+    "count": {
+      "app": "[data-ux=stat-count]",
+      "proto": ".tile__val"
+    },
+    "rule": "label weight >= count weight and label contrast >= count contrast (labels lead, counts support)"
+  },
+  "brand": {
+    "app": "[data-ux=brandmark]",
+    "proto": ".brandmark",
+    "allowedSizesPx": [
+      38,
+      40,
+      44,
+      48,
+      80
+    ]
+  }
+}

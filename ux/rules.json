@@ -1,0 +1,175 @@
+{
+  "_about": "Rules for scripts/ux-ratchet.mjs. Each rule counts matches per file in src/. The baseline (ux/baseline.json) records today's counts; the gate fails if any file goes UP, or if a rule with target 0 appears in a new file. Counts only go down. Edit exemptions here, never in code.",
+  "scan": {
+    "dirs": [
+      "src"
+    ],
+    "exts": [
+      ".jsx",
+      ".js"
+    ]
+  },
+  "guarded": [
+    "src/App.jsx",
+    "src/accessPolicy.js",
+    "src/api/client.js",
+    "src/pages/QuotationsPage.jsx",
+    "src/pages/DailyTimesheetPage.jsx",
+    "src/pages/DailyTimesheetPrintPage.jsx",
+    "src/pages/ContractorLogPage.jsx",
+    "src/pages/ContractorLogPrintPage.jsx",
+    "src/pages/TimesheetWorkflowPage.jsx",
+    "src/pages/WorksheetRegisterPage.jsx",
+    "src/pages/WorksheetRegisterPrintPage.jsx"
+  ],
+  "_guarded_note": "Guarded files are counted but may only be edited with an owner decision. They stay in the baseline so the report shows the whole system.",
+  "rules": [
+    {
+      "id": "TYP-FLOOR",
+      "req": "TYP-02",
+      "title": "No arbitrary text size under 12 px",
+      "regex": "text-\\[(?:[0-9]|1[01])(?:\\.\\d+)?px\\]",
+      "target": 0,
+      "fix": "Use text-xs (12 px) for badges and captions, text-sm for secondary text."
+    },
+    {
+      "id": "TYP-ARBITRARY",
+      "req": "TYP-03",
+      "title": "No arbitrary text sizes (text-[Npx])",
+      "regex": "text-\\[[\\d.]+(?:px|rem)\\]",
+      "target": 0,
+      "fix": "Use the type scale classes only."
+    },
+    {
+      "id": "TYP-XS",
+      "req": "TYP-04",
+      "title": "text-xs only for badges and captions",
+      "regex": "\\btext-xs\\b",
+      "target": 0,
+      "fix": "Use the shared Badge or Caption. Anything else is text-sm or text-base."
+    },
+    {
+      "id": "TYP-SM",
+      "req": "TYP-05",
+      "title": "text-sm only in compact density and secondary text",
+      "regex": "\\btext-sm\\b",
+      "target": 0,
+      "fix": "Use the semantic type classes (text-ux-*) or text-base."
+    },
+    {
+      "id": "COL-LOWCONTRAST",
+      "req": "A11Y-01",
+      "title": "No low-contrast greys for text",
+      "regex": "\\btext-(?:gray|slate|zinc|neutral|stone)-(?:200|300|400)\\b",
+      "target": 0,
+      "fix": "Use text-orac-text-muted for secondary text."
+    },
+    {
+      "id": "COL-RAW",
+      "req": "CON-01",
+      "title": "Colour comes from tokens, not raw Tailwind palettes",
+      "regex": "\\b(?:bg|text|border|ring|divide|from|to|via|fill|stroke|outline|placeholder)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\\d{2,3}\\b",
+      "target": 0,
+      "fix": "Use bg-orac-*, text-orac-*, border-orac-* tokens or a status component."
+    },
+    {
+      "id": "COL-HEX",
+      "req": "CON-02",
+      "title": "No hex colours in components",
+      "regex": "#[0-9a-fA-F]{6}\\b|#[0-9a-fA-F]{3}\\b(?![0-9a-fA-F])",
+      "target": 0,
+      "fix": "Add or reuse a token in ux/tokens.json.",
+      "exceptFiles": [
+        "src/index.css"
+      ]
+    },
+    {
+      "id": "CMP-BUTTON",
+      "req": "CMP-01",
+      "title": "Buttons use the shared Button",
+      "regex": "<button\\b",
+      "target": 0,
+      "fix": "Use <Button variant size>.",
+      "exceptFiles": [
+        "src/components/ui/Button.jsx"
+      ]
+    },
+    {
+      "id": "CMP-INPUT",
+      "req": "CMP-02",
+      "title": "Inputs use the shared field components",
+      "regex": "<(?:input|select|textarea)\\b",
+      "target": 0,
+      "fix": "Use <Field> with <Input>, <Select> or <Textarea>.",
+      "exceptFiles": [
+        "src/components/ui/Field.jsx",
+        "src/components/ui/Input.jsx"
+      ]
+    },
+    {
+      "id": "CMP-STYLE",
+      "req": "CON-03",
+      "title": "No inline style objects",
+      "regex": "style=\\{\\{",
+      "target": 0,
+      "fix": "Use a token class. Dynamic widths and positions may stay with a comment 'ux-allow'.",
+      "allowComment": "ux-allow"
+    },
+    {
+      "id": "LAY-PAGEWIDTH",
+      "req": "LAY-01",
+      "title": "Pages do not set their own width or outer padding",
+      "regex": "\\bmax-w-(?:xl|2xl|3xl|4xl|5xl|6xl|7xl|screen-\\w+|\\[1\\d{3}px\\])\\b|\\bmx-auto\\b",
+      "target": 0,
+      "fix": "PortalLayout owns the page container.",
+      "onlyDirs": [
+        "src/pages"
+      ],
+      "exceptFiles": [
+        "src/pages/LandingPage.jsx",
+        "src/pages/LoginPage.jsx",
+        "src/pages/RequestAccess.jsx",
+        "src/pages/ForgotPassword.jsx",
+        "src/pages/ResetPassword.jsx"
+      ]
+    },
+    {
+      "id": "STATE-LOADINGTEXT",
+      "req": "STA-01",
+      "title": "Loading uses skeletons, not plain text",
+      "regex": ">\\s*Loading(?:\\.\\.\\.|\u2026)\\s*<",
+      "target": 0,
+      "fix": "Use PageLoadingSkeleton or Skeleton."
+    },
+    {
+      "id": "BRAND-LOGO",
+      "req": "BRD-01",
+      "title": "The logo image is only referenced by BrandMark",
+      "regex": "orac-systems-logo",
+      "target": 0,
+      "fix": "Render <BrandMark size>.",
+      "exceptFiles": [
+        "src/components/ui/BrandMark.jsx"
+      ]
+    },
+    {
+      "id": "A11Y-IMGALT",
+      "req": "A11Y-02",
+      "title": "Every <img> has an alt attribute",
+      "regex": "<img\\s(?![^>]*\\balt=)[^>]*>",
+      "target": 0,
+      "fix": "Add alt text, or alt=\"\" for decoration."
+    },
+    {
+      "id": "TONE-LOCAL",
+      "req": "CON-04",
+      "title": "Status colours come from StatusBadge only",
+      "regex": "\\b(?:statusTone|TONES?|STATUS_MAP|toneClass(?:es)?|\\w+ToneMap)\\s*=",
+      "target": 0,
+      "fix": "Add the status to StatusBadge's map.",
+      "exceptFiles": [
+        "src/components/StatusBadge.jsx"
+      ]
+    }
+  ]
+}

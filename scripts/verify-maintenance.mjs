@@ -10,6 +10,7 @@ for (const file of files) {
   if ((await readFile(file, "utf8")).includes("Integrated Operations System")) throw new Error(`Stale ORAC-IOS name in ${file}`);
 }
 run("npm", ["test"]);
+run("node", ["scripts/ux-check.mjs"]);
 run("npm", ["run", "build"]);
 run("git", ["diff", "--check"]);
 console.log("ORAC-IOS frontend maintenance gate passed.");

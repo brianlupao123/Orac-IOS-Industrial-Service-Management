@@ -15,7 +15,17 @@
     "test:phase5-browser": "node scripts/phase5_browser_uat.mjs",
     "finalize:handover": "node scripts/finalize-handover.mjs",
     "finalize:local": "set ORAC_BASE_URL=http://localhost:5173&& node scripts/finalize-handover.mjs",
-    "maintain": "node scripts/verify-maintenance.mjs"
+    "maintain": "node scripts/verify-maintenance.mjs",
+    "ux:check": "node scripts/ux-check.mjs",
+    "ux:tokens": "node scripts/ux-tokens.mjs",
+    "ux:tokens:write": "node scripts/ux-tokens.mjs --write",
+    "ux:ratchet": "node scripts/ux-ratchet.mjs",
+    "ux:ratchet:report": "node scripts/ux-ratchet.mjs --report",
+    "ux:ratchet:update": "node scripts/ux-ratchet.mjs --update",
+    "ux:probe:prototype": "node scripts/ux-probe.mjs --target prototype",
+    "ux:probe:app": "node scripts/ux-probe.mjs --target app",
+    "ux:trace": "node scripts/ux-trace.mjs --embed docs/ux/ORAC_UI_PROTOTYPE.html",
+    "ux:export": "node scripts/orac-export.mjs --slim --with-tests"
   },
   "dependencies": {
     "react": "^18.3.1",

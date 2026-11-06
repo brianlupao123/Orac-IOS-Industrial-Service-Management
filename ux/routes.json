@@ -1,0 +1,63 @@
+{
+  "login": {
+    "emailLabel": "Email address",
+    "passwordLabel": "Password",
+    "submitName": "^sign in$"
+  },
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "width": 1024,
+      "height": 800
+    },
+    {
+      "width": 900,
+      "height": 800
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "roles": {
+    "admin": [
+      "/",
+      "/admin"
+    ],
+    "management": [
+      "/",
+      "/reports"
+    ],
+    "sales": [
+      "/",
+      "/quotations",
+      "/service-requests"
+    ],
+    "operations": [
+      "/",
+      "/inventory",
+      "/internal-requests"
+    ],
+    "supervisor": [
+      "/",
+      "/daily-timesheets"
+    ],
+    "technician": [
+      "/",
+      "/daily-timesheets"
+    ],
+    "finance": [
+      "/",
+      "/finance",
+      "/documents"
+    ],
+    "client": [
+      "/",
+      "/portal"
+    ]
+  },
+  "_note": "Routes are a starting list taken from the export's inventory; the agent must correct them from src/App.jsx (read only)."
+}
