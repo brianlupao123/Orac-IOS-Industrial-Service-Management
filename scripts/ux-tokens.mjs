@@ -96,11 +96,15 @@ for (const theme of ["light", "dark"]) {
   }
 }
 
-if (JSON_OUT) { console.log(JSON.stringify({ ok: !problems.length, ...report }, null, 1)); process.exit(problems.length && !WRITE ? 1 : 0); }
+if (JSON_OUT) { const hard = (spec.enforce && spec.enforce.parity) ? problems : problems.filter((x) => x.startsWith("contrast")); console.log(JSON.stringify({ ok: !hard.length, parityEnforced: !!(spec.enforce && spec.enforce.parity), ...report }, null, 1)); process.exit(hard.length && !WRITE ? 1 : 0); }
 const failedContrast = report.contrast.filter((c) => !c.pass).length;
 console.log(`ux-tokens: ${Object.keys(spec.colors).length} colour tokens x2 themes, ${Object.keys(spec.scale).length} scale tokens, ${report.contrast.length} contrast pairs (${failedContrast} failing).`);
 for (const [k, v] of Object.entries(report.files)) console.log(`  ${k}: ${v}`);
 if (WRITE) console.log("Wrote files. Re-run without --write to confirm; remaining items below are contrast failures only.");
-const left = WRITE ? problems.filter((x) => x.startsWith("contrast")) : problems;
+const parityOn = !!(spec.enforce && spec.enforce.parity);
+const isContrast = (x) => x.startsWith("contrast");
+const left = WRITE ? problems.filter(isContrast) : parityOn ? problems : problems.filter(isContrast);
+const notices = WRITE || parityOn ? [] : problems.filter((x) => !isContrast(x));
+if (notices.length) console.log(`\nNOTICE: ${notices.length} token difference(s) between ux/tokens.json and the files. Not enforced yet (enforce.parity is false). Phase 1 fixes these:\n` + notices.slice(0, 30).map((x) => "  . " + x).join("\n"));
 if (left.length) { console.log(`\n${left.length} problem(s):`); left.slice(0, 80).forEach((x) => console.log("  - " + x)); if (left.length > 80) console.log(`  ... ${left.length - 80} more`); process.exit(1); }
-console.log("OK: tokens agree and contrast passes.");
+console.log(notices.length ? "OK (parity not enforced): contrast passes; token differences listed above are for Phase 1." : "OK: tokens agree and contrast passes.");

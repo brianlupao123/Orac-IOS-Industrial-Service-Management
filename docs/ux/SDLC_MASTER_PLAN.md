@@ -42,10 +42,10 @@ Purpose: make the HTML prototype (`docs/ux/ORAC_UI_PROTOTYPE.html`) and the real
 | UXD-1 | Body and table text size | 16 px comfortable, 14 px compact only. Correct `STYLE_GUIDE.md` |
 | UXD-2 | Tile hierarchy | Label bold primary, count 28 px regular secondary |
 | UXD-3 | Page and card layering | Grey page, white cards (adds `--orac-page`, `--orac-surface-subtle`, row tokens). Changes light `--orac-surface` from `#f8fafc` to `#ffffff`. Needs owner confirmation before merging P1 |
-| UXD-4 | Currency | USD (`$`) through one `src/lib/formatMoney.js`. This replaces decision D5 in the earlier implementation guide, which assumed "R" from screenshots; the portal's own audit says USD-only |
+| UXD-4 | Currency | USD (`$`) through the existing `formatMoney` in `src/lib/format.js` (do not create a second formatter). Confirmed by the agent: no ZAR, KES, ZWL or "R" anywhere in `src/`. This replaces decision D5 in the earlier implementation guide, which assumed "R" from screenshots; the portal's own audit says USD-only |
 | UXD-5 | Guarded business pages | Stay frozen and stay in the baseline. At the end, the owner may approve a final wave per file in `ux/owner-approvals.json`. They hold most of the remaining inconsistency, so the project is not uniform until this is decided |
-| UXD-6 | Logo on PDFs | Approve the supplied logo as the one shared asset, for the backend owner to apply |
-| UXD-7 | Work lifecycle card on dashboards | Add only if every count already exists in the dashboard summary API; no new query |
+| UXD-6 | Logo on PDFs | DEFERRED (backend). `backend/src/pdfGenerator.js` draws text only, and the three print pages are guarded. Putting the logo on customer PDFs is a backend change, outside this programme. Record it as an owner request. The prototype's document sheets show the logo as the target look |
+| UXD-7 | Work lifecycle card on dashboards | DEFERRED. Only 4 of the 7 stage counts exist in `/summary` (`quotes`, `dispatches`, `worksheets`, `invoices`). Purchase orders, worksheet registers and settled would need new backend queries. Do not build in P1 to P9. Owner choice: keep it deferred (default) or build a 4-stage card |
 | UXD-8 | Density switch | No UI switch. Compact density is a `data-density` attribute only |
 | UXD-9 | Print pages | Exempt from the colour and inline-style rules (they are guarded and use print-specific values) |
 

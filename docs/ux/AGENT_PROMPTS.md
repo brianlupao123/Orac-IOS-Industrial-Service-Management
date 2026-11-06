@@ -16,7 +16,7 @@ Read both before doing anything. Work on ONE phase at a time, on its own git bra
 HARD RULES
 1. Presentation only. No change to behaviour, permissions, routes, API calls, data shapes, money or tax logic, or text meaning.
 2. Do NOT edit the guarded files listed in ux/rules.json under "guarded" unless ux/owner-approvals.json lists the file. If a phase seems to need one, stop and tell me.
-3. Do not weaken, delete or skip any existing test. If a test asserts a class string you must change, update that test in the same commit, keep its intent, and list it in your report.
+3. Do not weaken, delete or skip any existing test. Several tests pin class strings (see docs/ux/TEST_COUPLING.md). You may edit such a test only when the phase you are running deliberately replaces that class, and only by changing the expected class string to the new one. Keep the assertion's strictness: no wildcards such as `.*`, no removed assertions, no switch from match to doesNotMatch. Make the test change in the same commit as the source change. List every edited test in your report as: file, line, old string, new string, reason.
 4. Never lower a rule or raise a baseline to make a check pass. Fix the code instead.
 5. Do not install new dependencies. Do not run npm audit fix. Do not push, merge or deploy. Commit to the branch only.
 6. Never print secrets. Do not read .env files.

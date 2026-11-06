@@ -191,6 +191,7 @@ try {
     }
   } else {
     const base = opt("--url", "http://127.0.0.1:5176");
+    if (!/^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/.test(base) && process.env.ORAC_PROBE_ALLOW_REMOTE !== "1") { console.error(`REFUSED: ${base} is not a local address. The probe signs in; run it against a local or test backend only. Set ORAC_PROBE_ALLOW_REMOTE=1 only with the owner's written approval.`); process.exit(2); }
     const routes = readJson("ux/routes.json");
     const pw = process.env.ORAC_PROBE_PASSWORD;
     for (const [role, list] of Object.entries(routes.roles)) {
