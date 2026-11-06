@@ -8,7 +8,8 @@ import {
   BULK_DRAFT_KEY,
   parseDelimitedText,
   matchTechnician,
-  reconstructFailedText
+  reconstructFailedText,
+  validateImportBatch
 } from "../lib/timesheetBulkImportLogic.js";
 
 export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispatches, onImportComplete }) {
@@ -16,12 +17,13 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
   const [parsedRows, setParsedRows] = useState([]);
   const [technicians, setTechnicians] = useState([]);
   const [defaultDispatchId, setDefaultDispatchId] = useState("");
-  const [submitDirectly, setSubmitDirectly] = useState(false);
+  const [allowExternalContractors, setAllowExternalContractors] = useState(false);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState("");
   const [resultSummary, setResultSummary] = useState(null);
   const fileInputRef = useRef(null);
+  const clientRequestIdsRef = useRef({});
 
   // Initialize once when the modal opens: load cached draft, fetch active technicians,
   // and auto-select default dispatch ONLY if exactly one dispatch exists.
@@ -116,32 +118,10 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
   }
 
   const validatedRows = useMemo(() => {
-    return parsedRows.map((row) => {
-      const tech = matchTechnician(row, technicians);
-      const dispatchId = matchDispatch(row);
-      const totalH = row.normal + row.ot15 + row.ot20;
-
-      const warnings = [];
-      const errors = [...(row.parseErrors || [])];
-
-      if (!row.workerName) errors.push("Missing technician name");
-      if (row.jobRef && !dispatchId) errors.push(`Dispatch card "${row.jobRef}" not found`);
-      if (!row.jobRef && !dispatchId) errors.push("No default dispatch card selected");
-      if (totalH <= 0) errors.push("Zero hours logged");
-      if (totalH > 24) errors.push(`Total hours (${totalH}h) exceeds maximum 24h per day`);
-      if (!tech && row.workerName) warnings.push("Technician not found in active registry; will be entered as external contractor");
-
-      return {
-        ...row,
-        matchedTech: tech,
-        resolvedDispatchId: dispatchId,
-        totalHours: totalH,
-        warnings,
-        errors,
-        isValid: errors.length === 0
-      };
+    return validateImportBatch(parsedRows, technicians, dispatches, defaultDispatchId, {
+      allowExternalContractors
     });
-  }, [parsedRows, technicians, dispatches, defaultDispatchId]);
+  }, [parsedRows, technicians, dispatches, defaultDispatchId, allowExternalContractors]);
 
   const summary = useMemo(() => {
     const total = validatedRows.length;
@@ -177,6 +157,10 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
       setProgress({ current: i + 1, total: toImport.length });
 
       const trade = item.matchedTech?.trade || item.trade || "Unclassified";
+      const displayName = item.matchedTech?.name || (item.matchedTech ? `${item.matchedTech.first_name || ""} ${item.matchedTech.last_name || ""}`.trim() : item.workerName);
+
+      // Stable client_request_id across retries
+      const reqId = clientRequestIdsRef.current[item.rowId] || (clientRequestIdsRef.current[item.rowId] = newRequestId());
 
       const payload = {
         work_date: item.date,
@@ -186,13 +170,13 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
           ot_15: item.ot15,
           ot_20: item.ot20
         },
-        client_request_id: newRequestId(),
-        submit: submitDirectly
+        client_request_id: reqId,
+        submit: false
       };
 
-      if (item.matchedTech) {
+      if (item.matchedTech && !item.matchedTech.ambiguous) {
         payload.technician_id = item.matchedTech.id;
-        payload.worker_name = item.matchedTech.name;
+        payload.worker_name = displayName;
         payload.technician_trade = trade;
         payload.worker_category = trade;
         if (item.matchedTech.national_id) payload.national_id = item.matchedTech.national_id;
@@ -202,18 +186,6 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
         payload.worker_name = item.workerName;
         payload.technician_trade = trade;
         payload.worker_category = trade;
-      }
-
-      // If directly submitting, provide valid employee sign-off payload satisfying backend employeeSignoffMissing
-      if (submitDirectly) {
-        payload.signatures = {
-          employee: {
-            name: payload.worker_name,
-            date: item.date,
-            method: "on_device",
-            attest: true
-          }
-        };
       }
 
       try {
@@ -238,7 +210,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
       setRawText("");
       setParsedRows([]);
       if (onImportComplete) {
-        onImportComplete(`Successfully imported ${created} timesheet(s)${submitDirectly ? " and submitted for client acknowledgement" : " as drafts"}.`);
+        onImportComplete(`Successfully imported ${created} timesheet draft(s).`);
       }
     } else if (created > 0 && failed > 0) {
       // Partial failure: Retain ONLY failed rows to prevent duplicate re-imports on retry
@@ -264,7 +236,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
                 Field Operations & Time Tracking
               </p>
               <p className="text-sky-800 dark:text-sky-300">
-                Bulk timesheets record verified operational hours only. Commercial billing and payroll rates are managed centrally by Finance.
+                Bulk timesheets are imported as drafts, preserving maker-checker integrity. Each technician or field supervisor certifies their hours during regular on-device sign-off or paper submission. Commercial billing and payroll rates are managed centrally by Finance.
               </p>
             </div>
             <button
@@ -323,11 +295,11 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
             <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
-                checked={submitDirectly}
-                onChange={(e) => setSubmitDirectly(e.target.checked)}
+                checked={allowExternalContractors}
+                onChange={(e) => setAllowExternalContractors(e.target.checked)}
                 className="rounded border-gray-300 text-orac-blue focus:ring-orac-blue w-4 h-4"
               />
-              <span>Submit directly for Client Acknowledgement (bypass draft state)</span>
+              <span>Allow external contractor rows (unmatched names in registry)</span>
             </label>
           </div>
         </div>
@@ -480,7 +452,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
             onClick={handleImport}
             className="px-5 py-2 text-sm font-semibold text-white bg-orac-blue hover:bg-orac-blue/90 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-sm transition"
           >
-            {busy ? "Importing..." : `Import ${summary.valid} Valid Timesheet(s)`}
+            {busy ? "Importing..." : `Import ${summary.valid} Draft Timesheet(s)`}
           </button>
         </div>
       </div>

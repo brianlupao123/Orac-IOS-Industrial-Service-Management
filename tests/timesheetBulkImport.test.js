@@ -8,6 +8,7 @@ import {
   parseDelimitedText,
   matchTechnician,
   reconstructFailedText,
+  validateImportBatch,
   BULK_DRAFT_KEY
 } from "../src/lib/timesheetBulkImportLogic.js";
 import { technicianOptions } from "../src/lib/paperEntryLogic.js";
@@ -321,12 +322,13 @@ test("TimesheetBulkImportModal.jsx uses Unclassified instead of Fitter for missi
   assert.match(source, /"Unclassified"/, "Must use Unclassified as trade fallback");
 });
 
-// ─── Direct Submit Worker Sign-off ──────────────────────────────────────────
+// ─── Drafts-Only Import (Maker-Checker Sign-off Integrity) ───────────────────
 
-test("TimesheetBulkImportModal.jsx sends employee sign-off when submitDirectly is checked", () => {
+test("TimesheetBulkImportModal.jsx strictly creates drafts and never forges employee signatures", () => {
   const source = read("src/components/TimesheetBulkImportModal.jsx");
-  assert.match(source, /signatures.*employee/s, "Must include employee signature in payload when submitDirectly");
-  assert.match(source, /attest:\s*true/, "Must set attest: true for employee sign-off");
+  assert.doesNotMatch(source, /submitDirectly/, "Must not include submitDirectly state");
+  assert.doesNotMatch(source, /payload\.signatures\s*=\s*\{/, "Must not forge employee signatures");
+  assert.match(source, /submit:\s*false/, "Must explicitly create worksheets with submit: false");
 });
 
 // ─── Bulk Draft Key Cleared on Logout ───────────────────────────────────────
@@ -444,4 +446,101 @@ test("PaperEntryModal.jsx is rate-free", () => {
   const source = read("src/components/PaperEntryModal.jsx");
   assert.doesNotMatch(source, /hourly.?rate/i);
   assert.doesNotMatch(source, /wage/i);
+});
+
+// ─── External Auditor Edge Cases & Integrity Verification ───────────────────
+
+test("parseDelimitedText: detects and flags unclosed quotes at EOF", () => {
+  const text = '2026-11-05,Tapiwa Marufu,Boilermaker,DC-001,8,0,0,"Unclosed activity description';
+  const rows = parseDelimitedText(text);
+  assert.equal(rows.length, 1);
+  assert.match(rows[0].parseErrors[0], /Unclosed quote in CSV input starting on line 1/);
+});
+
+test("matchTechnician: normalizes whitespace in names", () => {
+  const techs = [
+    { id: "t1", name: "Tapiwa   Marufu", trade: "Boilermaker", is_active: true }
+  ];
+  const match = matchTechnician({ workerName: "  Tapiwa  Marufu  " }, techs);
+  assert.ok(match);
+  assert.equal(match.id, "t1");
+});
+
+test("matchTechnician: detects ambiguous duplicate names and returns ambiguous flag", () => {
+  const techs = [
+    { id: "t1", name: "John Moyo", national_id: "63-1111111-A-01", is_active: true },
+    { id: "t2", name: "John Moyo", national_id: "63-2222222-B-02", is_active: true }
+  ];
+  // Without National ID, matching is ambiguous
+  const ambiguousMatch = matchTechnician({ workerName: "John Moyo" }, techs);
+  assert.ok(ambiguousMatch.ambiguous);
+  assert.equal(ambiguousMatch.count, 2);
+
+  // With exact National ID, disambiguates cleanly
+  const exactMatch = matchTechnician({ workerName: "63-2222222-B-02" }, techs);
+  assert.equal(exactMatch.id, "t2");
+  assert.equal(exactMatch.ambiguous, undefined);
+});
+
+test("validateImportBatch: flags ambiguous technician as an error requiring National ID", () => {
+  const techs = [
+    { id: "t1", name: "John Moyo", national_id: "63-1111111-A-01", is_active: true },
+    { id: "t2", name: "John Moyo", national_id: "63-2222222-B-02", is_active: true }
+  ];
+  const dispatches = [{ id: "d1", dispatch_number: "DC-001" }];
+  const rows = [
+    { rowId: 1, date: "2026-11-05", isDateValid: true, workerName: "John Moyo", normal: 8, ot15: 0, ot20: 0, jobRef: "DC-001", parseErrors: [] }
+  ];
+  const validated = validateImportBatch(rows, techs, dispatches, "d1");
+  assert.equal(validated[0].isValid, false);
+  assert.match(validated[0].errors[0], /Multiple active technicians \(2\) named "John Moyo"/);
+});
+
+test("validateImportBatch: contractor gate blocks unmatched worker unless allowExternalContractors is true", () => {
+  const techs = [{ id: "t1", name: "Tapiwa Marufu", is_active: true }];
+  const dispatches = [{ id: "d1", dispatch_number: "DC-001" }];
+  const rows = [
+    { rowId: 1, date: "2026-11-05", isDateValid: true, workerName: "Unknown Worker", normal: 8, ot15: 0, ot20: 0, jobRef: "DC-001", parseErrors: [] }
+  ];
+
+  // Default: blocked with error
+  const blocked = validateImportBatch(rows, techs, dispatches, "d1", { allowExternalContractors: false });
+  assert.equal(blocked[0].isValid, false);
+  assert.match(blocked[0].errors[0], /Technician "Unknown Worker" not found in active registry/);
+
+  // Enabled: allowed with warning
+  const allowed = validateImportBatch(rows, techs, dispatches, "d1", { allowExternalContractors: true });
+  assert.equal(allowed[0].isValid, true);
+  assert.match(allowed[0].warnings[0], /importing as external contractor/);
+});
+
+test("validateImportBatch: flags intra-batch duplicate entries (same worker, date, dispatch)", () => {
+  const techs = [{ id: "t1", name: "Tapiwa Marufu", is_active: true }];
+  const dispatches = [{ id: "d1", dispatch_number: "DC-001" }];
+  const rows = [
+    { rowId: 1, date: "2026-11-05", isDateValid: true, workerName: "Tapiwa Marufu", normal: 8, ot15: 0, ot20: 0, jobRef: "DC-001", parseErrors: [] },
+    { rowId: 2, date: "2026-11-05", isDateValid: true, workerName: "Tapiwa Marufu", normal: 4, ot15: 0, ot20: 0, jobRef: "DC-001", parseErrors: [] }
+  ];
+  const validated = validateImportBatch(rows, techs, dispatches, "d1");
+  assert.equal(validated[0].isValid, true);
+  assert.equal(validated[1].isValid, false);
+  assert.match(validated[1].errors[0], /Duplicate entry in batch for "Tapiwa Marufu" on 2026-11-05 under this dispatch/);
+});
+
+test("validateImportBatch: flags cumulative daily hours exceeding 24h across batch rows", () => {
+  const techs = [{ id: "t1", name: "Tapiwa Marufu", is_active: true }];
+  const dispatches = [
+    { id: "d1", dispatch_number: "DC-001" },
+    { id: "d2", dispatch_number: "DC-002" }
+  ];
+  const rows = [
+    { rowId: 1, date: "2026-11-05", isDateValid: true, workerName: "Tapiwa Marufu", normal: 14, ot15: 0, ot20: 0, jobRef: "DC-001", parseErrors: [] },
+    { rowId: 2, date: "2026-11-05", isDateValid: true, workerName: "Tapiwa Marufu", normal: 12, ot15: 0, ot20: 0, jobRef: "DC-002", parseErrors: [] }
+  ];
+  const validated = validateImportBatch(rows, techs, dispatches, "");
+  // Total is 26h which exceeds 24h
+  assert.equal(validated[0].isValid, false);
+  assert.equal(validated[1].isValid, false);
+  assert.match(validated[0].errors[0], /Cumulative daily hours \(26h\) for "Tapiwa Marufu" on 2026-11-05 exceed 24h limit/);
+  assert.match(validated[1].errors[0], /Cumulative daily hours \(26h\) for "Tapiwa Marufu" on 2026-11-05 exceed 24h limit/);
 });

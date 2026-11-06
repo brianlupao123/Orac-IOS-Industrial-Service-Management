@@ -72,15 +72,24 @@ export function parseDelimitedText(text) {
   let currentField = "";
   let inQuotes = false;
   let recordStartIdx = 0;
+  let currentLine = 1;
+  let quoteStartLine = 1;
 
   for (let i = 0; i < clean.length; i++) {
     const char = clean[i];
+
+    if (char === "\n") {
+      currentLine++;
+    }
 
     if (char === '"') {
       if (inQuotes && clean[i + 1] === '"') {
         currentField += '"';
         i++; // skip escaped quote
       } else {
+        if (!inQuotes) {
+          quoteStartLine = currentLine;
+        }
         inQuotes = !inQuotes;
       }
     } else if (char === delimiter && !inQuotes) {
@@ -89,6 +98,7 @@ export function parseDelimitedText(text) {
     } else if ((char === "\n" || char === "\r") && !inQuotes) {
       if (char === "\r" && clean[i + 1] === "\n") {
         i++; // skip CRLF
+        currentLine++;
       }
       currentFields.push(currentField.trim());
       currentField = "";
@@ -111,7 +121,28 @@ export function parseDelimitedText(text) {
     rawRecords.push({ fields: currentFields, rawText: rawSlice });
   }
 
-  if (rawRecords.length === 0) return [];
+  const unclosedQuoteError = inQuotes ? `Unclosed quote in CSV input starting on line ${quoteStartLine}` : null;
+
+  if (rawRecords.length === 0) {
+    if (unclosedQuoteError) {
+      return [{
+        rowId: 1,
+        rawText: clean,
+        date: "",
+        isDateValid: false,
+        workerName: "",
+        trade: "",
+        jobRef: "",
+        normal: 0,
+        ot15: 0,
+        ot20: 0,
+        activity: "",
+        parseErrors: [unclosedQuoteError],
+        headerRawText: ""
+      }];
+    }
+    return [];
+  }
 
   // 3. Header Detection
   // Word boundary regex for known headers (avoids matching "motor" -> "ot")
@@ -177,6 +208,9 @@ export function parseDelimitedText(text) {
     if (!parsedNormal.ok) rowErrors.push(parsedNormal.error);
     if (!parsedOt15.ok) rowErrors.push(parsedOt15.error);
     if (!parsedOt20.ok) rowErrors.push(parsedOt20.error);
+    if (idx === dataRecords.length - 1 && unclosedQuoteError) {
+      rowErrors.push(unclosedQuoteError);
+    }
 
     return {
       rowId: idx + 1,
@@ -197,12 +231,13 @@ export function parseDelimitedText(text) {
 }
 
 // Exact matching for active technician profiles (no loose substring or trade fallback)
+// Normalized whitespace matching and ambiguous name detection
 export function matchTechnician(row, technicians) {
   if (!row.workerName) return null;
-  const cleanInput = row.workerName.trim().toLowerCase();
+  const cleanInput = row.workerName.trim().toLowerCase().replace(/\s+/g, " ");
   const activeTechs = (technicians || []).filter((t) => t.is_active !== false);
 
-  // 1. Match by exact national ID if supplied
+  // 1. Match by exact national ID if supplied (ignores dashes and spaces)
   const byId = activeTechs.find((t) => {
     if (!t.national_id) return false;
     const cleanId = t.national_id.replace(/[-\s]/g, "").toLowerCase();
@@ -211,14 +246,126 @@ export function matchTechnician(row, technicians) {
   if (byId) return byId;
 
   // 2. Match by exact normalized full name
-  const byName = activeTechs.find((t) => {
-    const full1 = (t.name || "").trim().toLowerCase();
-    const full2 = `${t.first_name || ""} ${t.last_name || ""}`.trim().toLowerCase();
-    return full1 === cleanInput || full2 === cleanInput;
+  const matches = activeTechs.filter((t) => {
+    const full1 = (t.name || "").trim().toLowerCase().replace(/\s+/g, " ");
+    const full2 = `${t.first_name || ""} ${t.last_name || ""}`.trim().toLowerCase().replace(/\s+/g, " ");
+    return (full1 && full1 === cleanInput) || (full2 && full2 === cleanInput);
   });
-  if (byName) return byName;
+
+  if (matches.length > 1) {
+    return { ambiguous: true, count: matches.length, matches };
+  }
+  if (matches.length === 1) {
+    return matches[0];
+  }
 
   return null;
+}
+
+// Comprehensive batch validator enforcing intra-batch integrity
+export function validateImportBatch(parsedRows, technicians, dispatches, defaultDispatchId, options = {}) {
+  const { allowExternalContractors = false } = options;
+  const seenEntries = new Map(); // workerKey|date|dispatchId -> rowId
+  const cumulativeHours = new Map(); // workerKey|date -> number
+
+  const prepped = (parsedRows || []).map((row) => {
+    const tech = matchTechnician(row, technicians);
+    let resolvedDispatchId = defaultDispatchId || "";
+    let dispatchFound = true;
+
+    if (row.jobRef) {
+      const refClean = row.jobRef.trim().toLowerCase();
+      const found = (dispatches || []).find((d) => {
+        const dNum = (d.dispatch_number || "").trim().toLowerCase();
+        const dId = (d.id || "").trim().toLowerCase();
+        return dNum === refClean || dId === refClean;
+      });
+      if (found) {
+        resolvedDispatchId = found.id;
+      } else {
+        resolvedDispatchId = "";
+        dispatchFound = false;
+      }
+    }
+
+    const totalHours = (row.normal || 0) + (row.ot15 || 0) + (row.ot20 || 0);
+    const workerKey = tech?.id || (row.workerName ? row.workerName.trim().toLowerCase().replace(/\s+/g, " ") : `row_${row.rowId}`);
+
+    return {
+      ...row,
+      matchedTech: tech,
+      resolvedDispatchId,
+      dispatchFound,
+      totalHours,
+      workerKey
+    };
+  });
+
+  // Accumulate daily hours per worker on each valid calendar date
+  for (const item of prepped) {
+    if (item.workerName && item.date && item.isDateValid) {
+      const dailyKey = `${item.workerKey}|${item.date}`;
+      cumulativeHours.set(dailyKey, (cumulativeHours.get(dailyKey) || 0) + item.totalHours);
+    }
+  }
+
+  return prepped.map((item) => {
+    const errors = [...(item.parseErrors || [])];
+    const warnings = [];
+
+    if (!item.workerName) {
+      errors.push("Missing technician name");
+    }
+
+    if (item.jobRef && !item.dispatchFound) {
+      errors.push(`Dispatch card "${item.jobRef}" not found`);
+    } else if (!item.resolvedDispatchId) {
+      errors.push("No default dispatch card selected");
+    }
+
+    if (item.totalHours <= 0) {
+      errors.push("Zero hours logged");
+    } else if (item.totalHours > 24) {
+      errors.push(`Total hours (${item.totalHours}h) exceeds maximum 24h per day`);
+    }
+
+    // Technician match checks
+    if (item.matchedTech?.ambiguous) {
+      errors.push(`Multiple active technicians (${item.matchedTech.count}) named "${item.workerName}". Provide National ID in CSV to disambiguate.`);
+    } else if (!item.matchedTech && item.workerName) {
+      if (!allowExternalContractors) {
+        errors.push(`Technician "${item.workerName}" not found in active registry. Enable "Allow external contractor rows" to import as contractor.`);
+      } else {
+        warnings.push(`Technician "${item.workerName}" not found in registry; importing as external contractor.`);
+      }
+    }
+
+    // Batch duplicate check: same worker, date, and dispatch
+    if (item.workerName && item.date && item.resolvedDispatchId) {
+      const entryKey = `${item.workerKey}|${item.date}|${item.resolvedDispatchId}`;
+      if (seenEntries.has(entryKey)) {
+        errors.push(`Duplicate entry in batch for "${item.workerName}" on ${item.date} under this dispatch (matches row ${seenEntries.get(entryKey)})`);
+      } else {
+        seenEntries.set(entryKey, item.rowId);
+      }
+    }
+
+    // Cumulative daily hours check across batch
+    if (item.workerName && item.date && item.isDateValid) {
+      const dailyKey = `${item.workerKey}|${item.date}`;
+      const dailyTotal = cumulativeHours.get(dailyKey) || 0;
+      if (dailyTotal > 24 && item.totalHours <= 24) {
+        errors.push(`Cumulative daily hours (${dailyTotal}h) for "${item.workerName}" on ${item.date} exceed 24h limit`);
+      }
+    }
+
+    return {
+      ...item,
+      errors,
+      warnings,
+      isValid: errors.length === 0
+    };
+  });
 }
 
 // Reconstruct raw text of failed rows after a partial failure
