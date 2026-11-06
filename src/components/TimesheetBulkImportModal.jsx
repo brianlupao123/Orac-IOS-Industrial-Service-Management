@@ -9,7 +9,8 @@ import {
   parseDelimitedText,
   matchTechnician,
   reconstructFailedText,
-  validateImportBatch
+  validateImportBatch,
+  computeRowFingerprint
 } from "../lib/timesheetBulkImportLogic.js";
 
 export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispatches, onImportComplete }) {
@@ -53,6 +54,9 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
 
   function handleTextChange(val) {
     setRawText(val);
+    if (!val || !val.trim()) {
+      clientRequestIdsRef.current = {};
+    }
     try {
       if (val) localStorage.setItem(BULK_DRAFT_KEY(user?.id), val);
       else localStorage.removeItem(BULK_DRAFT_KEY(user?.id));
@@ -65,12 +69,14 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
     setRawText("");
     setParsedRows([]);
     setResultSummary(null);
+    clientRequestIdsRef.current = {};
     try { localStorage.removeItem(BULK_DRAFT_KEY(user?.id)); } catch { /* ignore */ }
   }
 
   function handleFileUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    clientRequestIdsRef.current = {};
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = String(event.target.result || "");
@@ -83,12 +89,12 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
   function downloadSampleTemplate() {
     const defaultJob = dispatches?.[0]?.dispatch_number || "DC-2026-001";
     const sampleCsv = [
-      "Date,Technician Name,Trade,Dispatch Card,Normal Hours,1.5x OT,2.0x OT,Work Description",
-      `2026-11-05,Tapiwa Marufu,Boilermaker,${defaultJob},8.0,2.0,0.0,"Conveyor structure realignment and chute liner replacement"`,
-      `2026-11-05,Farai Ndlovu,Fitter,${defaultJob},8.0,1.5,0.0,"Slurry pump impeller overhaul and seal replacement"`,
-      `2026-11-05,Nyasha Moyo,Electrician,${defaultJob},8.0,0.0,2.0,"MCC substation transformer routine insulation testing"`,
-      `2026-11-06,Kudakwashe Chiwenga,Coded Welder,${defaultJob},8.0,3.0,0.0,"High-pressure piping spool fabrication and radiographic weld prep"`,
-      `2026-11-06,Simbarashe Dube,Rigger,${defaultJob},8.0,1.0,0.0,"Heavy mill motor rigging, alignment and secure placement"`
+      "Date,Technician Name,National ID,Trade,Dispatch Card,Normal Hours,1.5x OT,2.0x OT,Work Description",
+      `2026-11-05,Tapiwa Marufu,63-294819-B-42,Boilermaker,${defaultJob},8.0,2.0,0.0,"Conveyor structure realignment and chute liner replacement"`,
+      `2026-11-05,Farai Ndlovu,63-102938-K-19,Fitter,${defaultJob},8.0,1.5,0.0,"Slurry pump impeller overhaul and seal replacement"`,
+      `2026-11-05,Nyasha Moyo,63-582910-R-88,Electrician,${defaultJob},8.0,0.0,2.0,"MCC substation transformer routine insulation testing"`,
+      `2026-11-06,Kudakwashe Chiwenga,63-491029-P-33,Coded Welder,${defaultJob},8.0,3.0,0.0,"High-pressure piping spool fabrication and radiographic weld prep"`,
+      `2026-11-06,Simbarashe Dube,63-391028-M-04,Rigger,${defaultJob},8.0,1.0,0.0,"Heavy mill motor rigging, alignment and secure placement"`
     ].join("\n");
 
     const blob = new Blob([sampleCsv], { type: "text/csv;charset=utf-8;" });
@@ -159,8 +165,9 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
       const trade = item.matchedTech?.trade || item.trade || "Unclassified";
       const displayName = item.matchedTech?.name || (item.matchedTech ? `${item.matchedTech.first_name || ""} ${item.matchedTech.last_name || ""}`.trim() : item.workerName);
 
-      // Stable client_request_id across retries
-      const reqId = clientRequestIdsRef.current[item.rowId] || (clientRequestIdsRef.current[item.rowId] = newRequestId());
+      // Stable client_request_id derived from content fingerprint across retries
+      const fingerprint = computeRowFingerprint(item);
+      const reqId = clientRequestIdsRef.current[fingerprint] || (clientRequestIdsRef.current[fingerprint] = newRequestId());
 
       const payload = {
         work_date: item.date,
@@ -206,6 +213,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
     });
 
     if (created > 0 && failed === 0) {
+      clientRequestIdsRef.current = {};
       try { localStorage.removeItem(BULK_DRAFT_KEY(user?.id)); } catch { /* ignore */ }
       setRawText("");
       setParsedRows([]);

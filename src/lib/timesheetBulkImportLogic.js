@@ -146,7 +146,7 @@ export function parseDelimitedText(text) {
 
   // 3. Header Detection
   // Word boundary regex for known headers (avoids matching "motor" -> "ot")
-  const headerTokenRegex = /\b(date|technician|worker|artisan|trade|discipline|job|dispatch|normal|regular|hours|activity|description|overtime|ot15|ot20)\b/i;
+  const headerTokenRegex = /\b(date|technician|worker|artisan|national\s*id|natid|nationalid|id\s*number|id_number|idno|nat_id|trade|discipline|job|dispatch|normal|regular|hours|activity|description|overtime|ot15|ot20)\b/i;
 
   const firstRecord = rawRecords[0];
   const col0IsDate = parseAndValidateDate(firstRecord.fields[0] || "").valid;
@@ -181,6 +181,7 @@ export function parseDelimitedText(text) {
 
   const colDate = findCol(["date", "day"], 0);
   const colWorker = findCol(["technician", "worker", "artisan", "name"], 1);
+  const colNationalId = findCol(["national_id", "national id", "nationalid", "natid", "id number", "id_number", "idno", "nat_id"], -1);
   const colTrade = findCol(["trade", "discipline"], 2);
   const colJob = findCol(["job", "dispatch", "dc"], 3);
   const colNormal = findCol(["normal", "regular", "std", "basic", "hours"], 4);
@@ -194,6 +195,7 @@ export function parseDelimitedText(text) {
     const dateParsed = parseAndValidateDate(rawDate);
 
     const workerName = cols[colWorker] || "";
+    const nationalId = colNationalId >= 0 ? (cols[colNationalId] || "").trim() : "";
     const trade = cols[colTrade] || "";
     const jobRef = cols[colJob] || "";
 
@@ -218,6 +220,7 @@ export function parseDelimitedText(text) {
       date: dateParsed.valid ? dateParsed.date : rawDate,
       isDateValid: dateParsed.valid,
       workerName: workerName.trim(),
+      nationalId,
       trade: trade.trim(),
       jobRef: jobRef.trim(),
       normal: parsedNormal.hours,
@@ -231,21 +234,37 @@ export function parseDelimitedText(text) {
 }
 
 // Exact matching for active technician profiles (no loose substring or trade fallback)
-// Normalized whitespace matching and ambiguous name detection
+// Normalized whitespace matching and ambiguous name detection with National ID disambiguation
 export function matchTechnician(row, technicians) {
-  if (!row.workerName) return null;
-  const cleanInput = row.workerName.trim().toLowerCase().replace(/\s+/g, " ");
+  if (!row.workerName && !row.nationalId) return null;
   const activeTechs = (technicians || []).filter((t) => t.is_active !== false);
 
-  // 1. Match by exact national ID if supplied (ignores dashes and spaces)
-  const byId = activeTechs.find((t) => {
-    if (!t.national_id) return false;
-    const cleanId = t.national_id.replace(/[-\s]/g, "").toLowerCase();
-    return cleanId === cleanInput.replace(/[-\s]/g, "");
-  });
-  if (byId) return byId;
+  // 1. If explicit nationalId column was supplied, match by it first (takes precedence to disambiguate)
+  if (row.nationalId) {
+    const cleanNatCol = String(row.nationalId).trim().replace(/[-\s]/g, "").toLowerCase();
+    if (cleanNatCol) {
+      const byCol = activeTechs.find((t) => {
+        if (!t.national_id) return false;
+        const cleanTId = t.national_id.replace(/[-\s]/g, "").toLowerCase();
+        return cleanTId === cleanNatCol;
+      });
+      if (byCol) return byCol;
+    }
+  }
 
-  // 2. Match by exact normalized full name
+  const cleanInput = (row.workerName || "").trim().toLowerCase().replace(/\s+/g, " ");
+
+  // 2. Match by exact national ID typed in workerName if supplied (ignores dashes and spaces)
+  if (cleanInput) {
+    const byId = activeTechs.find((t) => {
+      if (!t.national_id) return false;
+      const cleanId = t.national_id.replace(/[-\s]/g, "").toLowerCase();
+      return cleanId === cleanInput.replace(/[-\s]/g, "");
+    });
+    if (byId) return byId;
+  }
+
+  // 3. Match by exact normalized full name
   const matches = activeTechs.filter((t) => {
     const full1 = (t.name || "").trim().toLowerCase().replace(/\s+/g, " ");
     const full2 = `${t.first_name || ""} ${t.last_name || ""}`.trim().toLowerCase().replace(/\s+/g, " ");
@@ -260,6 +279,20 @@ export function matchTechnician(row, technicians) {
   }
 
   return null;
+}
+
+// Compute a stable fingerprint from row contents for idempotency key tracking across partial retries
+export function computeRowFingerprint(item) {
+  if (!item) return "";
+  const worker = (item.matchedTech?.id || item.workerName || "").trim().toLowerCase().replace(/\s+/g, " ");
+  const natId = (item.nationalId || item.matchedTech?.national_id || "").trim().toLowerCase().replace(/[-\s]/g, "");
+  const date = (item.date || "").trim();
+  const dispatch = (item.resolvedDispatchId || item.jobRef || "").trim().toLowerCase();
+  const normal = Number(item.normal || 0).toFixed(2);
+  const ot15 = Number(item.ot15 || 0).toFixed(2);
+  const ot20 = Number(item.ot20 || 0).toFixed(2);
+  const activity = (item.activity || "").trim().toLowerCase().replace(/\s+/g, " ");
+  return `${worker}|${natId}|${date}|${dispatch}|${normal}|${ot15}|${ot20}|${activity}`;
 }
 
 // Comprehensive batch validator enforcing intra-batch integrity

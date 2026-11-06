@@ -9,6 +9,7 @@ import {
   matchTechnician,
   reconstructFailedText,
   validateImportBatch,
+  computeRowFingerprint,
   BULK_DRAFT_KEY
 } from "../src/lib/timesheetBulkImportLogic.js";
 import { technicianOptions } from "../src/lib/paperEntryLogic.js";
@@ -543,4 +544,97 @@ test("validateImportBatch: flags cumulative daily hours exceeding 24h across bat
   assert.equal(validated[1].isValid, false);
   assert.match(validated[0].errors[0], /Cumulative daily hours \(26h\) for "Tapiwa Marufu" on 2026-11-05 exceed 24h limit/);
   assert.match(validated[1].errors[0], /Cumulative daily hours \(26h\) for "Tapiwa Marufu" on 2026-11-05 exceed 24h limit/);
+});
+
+test("parseDelimitedText & matchTechnician: parses National ID column to disambiguate identical technician names", () => {
+  const techs = [
+    { id: "t_jm1", name: "John Moyo", national_id: "63-111111-A-01", trade: "Fitter", is_active: true },
+    { id: "t_jm2", name: "John Moyo", national_id: "63-222222-B-02", trade: "Electrician", is_active: true }
+  ];
+  const dispatches = [{ id: "d1", dispatch_number: "DC-001" }];
+
+  // 1. Without National ID column: duplicate John Moyo is blocked with ambiguous error
+  const csvWithoutNatId = [
+    "Date,Technician Name,Trade,Dispatch Card,Hours",
+    "2026-11-05,John Moyo,Fitter,DC-001,8.0"
+  ].join("\n");
+  const parsedWithout = parseDelimitedText(csvWithoutNatId);
+  const validatedWithout = validateImportBatch(parsedWithout, techs, dispatches, "d1");
+  assert.equal(validatedWithout[0].isValid, false);
+  assert.match(validatedWithout[0].errors[0], /Multiple active technicians \(2\) named "John Moyo"\. Provide National ID in CSV/);
+
+  // 2. With National ID column: parses column and resolves to John Moyo #1 directly
+  const csvWithNatId = [
+    "Date,Technician Name,National ID,Trade,Dispatch Card,Hours",
+    "2026-11-05,John Moyo,63-111111-A-01,Fitter,DC-001,8.0"
+  ].join("\n");
+  const parsedWith = parseDelimitedText(csvWithNatId);
+  assert.equal(parsedWith[0].nationalId, "63-111111-A-01");
+  const validatedWith = validateImportBatch(parsedWith, techs, dispatches, "d1");
+  assert.equal(validatedWith[0].isValid, true);
+  assert.equal(validatedWith[0].matchedTech?.id, "t_jm1");
+  assert.equal(validatedWith[0].matchedTech?.national_id, "63-111111-A-01");
+  assert.equal(validatedWith[0].errors.length, 0);
+
+  // 3. With National ID column pointing to John Moyo #2: resolves to #2
+  const csvWithNatId2 = [
+    "Date,Technician Name,National ID,Trade,Dispatch Card,Hours",
+    "2026-11-05,John Moyo,63-222222-B-02,Electrician,DC-001,8.0"
+  ].join("\n");
+  const parsedWith2 = parseDelimitedText(csvWithNatId2);
+  const validatedWith2 = validateImportBatch(parsedWith2, techs, dispatches, "d1");
+  assert.equal(validatedWith2[0].isValid, true);
+  assert.equal(validatedWith2[0].matchedTech?.id, "t_jm2");
+});
+
+test("idempotency retry safety: content fingerprint preserves exact request IDs for failed rows across reconstruct and retry", () => {
+  // Scenario: 3 rows (A, B, C). Rows A (#1) and C (#3) fail, Row B (#2) succeeds.
+  // Reconstructed text will contain Row A (#1) and Row C (#2).
+  // Row C must NOT inherit Row B's old request ID.
+  const initialText = [
+    "Date,Technician,Dispatch,Hours",
+    "2026-11-05,Tapiwa Marufu,DC-001,8.0",
+    "2026-11-05,Farai Ndlovu,DC-001,8.0",
+    "2026-11-05,Nyasha Moyo,DC-001,8.0"
+  ].join("\n");
+
+  const initialRows = parseDelimitedText(initialText);
+  assert.equal(initialRows.length, 3);
+
+  const idMap = {};
+  const getReqId = (item) => {
+    const fp = computeRowFingerprint(item);
+    if (!idMap[fp]) idMap[fp] = `req_${Math.random().toString(36).slice(2, 8)}`;
+    return idMap[fp];
+  };
+
+  // Initial import attempt for all 3 rows
+  const idA_initial = getReqId(initialRows[0]);
+  const idB_initial = getReqId(initialRows[1]);
+  const idC_initial = getReqId(initialRows[2]);
+
+  assert.notEqual(idA_initial, idB_initial);
+  assert.notEqual(idB_initial, idC_initial);
+  assert.notEqual(idA_initial, idC_initial);
+
+  // Partial failure: Row 1 (A) and Row 3 (C) fail; Row 2 (B) succeeds.
+  const failedIds = [1, 3];
+  const remainingText = reconstructFailedText(initialRows, failedIds);
+
+  // Re-parse the retained text (now 2 rows: position 1 is A, position 2 is C!)
+  const reParsed = parseDelimitedText(remainingText);
+  assert.equal(reParsed.length, 2);
+  assert.equal(reParsed[0].workerName, "Tapiwa Marufu"); // position 1
+  assert.equal(reParsed[1].workerName, "Nyasha Moyo");    // position 2 (was position 3!)
+
+  // Retry import: compute request IDs for the re-parsed rows
+  const idA_retry = getReqId(reParsed[0]);
+  const idC_retry = getReqId(reParsed[1]);
+
+  // Row A retained its exact original request ID
+  assert.equal(idA_retry, idA_initial);
+
+  // Crucial: Row C retained its own original request ID, and did NOT inherit Row B's old ID!
+  assert.equal(idC_retry, idC_initial);
+  assert.notEqual(idC_retry, idB_initial);
 });
