@@ -188,8 +188,8 @@ export default function PaperEntryModal({ isOpen, onClose, user, dispatches, wor
             <div className="flex flex-wrap items-center gap-3">
               <input ref={fileRef} id="pe-scan" type="file" accept="image/*" onChange={onScan} className="sr-only" />
               <input ref={cameraRef} id="pe-camera" type="file" accept="image/*" capture="environment" onChange={onScan} className="sr-only" />
-              <button type="button" onClick={() => fileRef.current?.click()} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-slate-200">Choose file</button>
-              <button type="button" onClick={() => cameraRef.current?.click()} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-slate-200">Take photo</button>
+              <button type="button" onClick={() => fileRef.current?.click()} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-orac-text-muted">Choose file</button>
+              <button type="button" onClick={() => cameraRef.current?.click()} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-orac-text-muted">Take photo</button>
               {scanBusy && <span role="status" className="text-xs text-gray-500">Preparing image...</span>}
               {form.signed_copy_image && !scanBusy && (
                 <span className="flex items-center gap-2 text-xs text-emerald-700">
@@ -293,7 +293,7 @@ export default function PaperEntryModal({ isOpen, onClose, user, dispatches, wor
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <button type="button" onClick={onClose} className="min-h-[44px] px-4 text-sm font-medium text-gray-600">Cancel</button>
-            <button type="submit" disabled={busy || scanBusy} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 text-sm font-semibold text-gray-700 disabled:opacity-50 dark:bg-transparent dark:text-slate-200">{busy ? "Saving..." : "Save as draft"}</button>
+            <button type="submit" disabled={busy || scanBusy} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 text-sm font-semibold text-gray-700 disabled:opacity-50 dark:bg-transparent dark:text-orac-text-muted">{busy ? "Saving..." : "Save as draft"}</button>
             <button type="button" disabled={busy || scanBusy} onClick={() => save(true)} className="min-h-[44px] rounded-lg bg-orac-blue px-5 text-sm font-semibold text-white disabled:opacity-50">Submit paper entry</button>
           </div>
         </div>

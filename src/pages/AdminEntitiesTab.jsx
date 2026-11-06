@@ -121,24 +121,24 @@ function ancestorsAboveParent(row) {
 
 function ParentContextCell({ row }) {
   const parent = immediateParentNode(row);
-  if (!parent) return <span className="text-gray-400">—</span>;
+  if (!parent) return <span className="text-orac-border-strong">—</span>;
   const ancestors = ancestorsAboveParent(row);
   return (
     <div>
       <div className={`text-sm ${row.parent_orphaned ? "text-red-600 font-medium" : "text-gray-700"}`}>
         {parent.name}
         {row.parent_orphaned && (
-          <span className="ml-2 inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50">
+          <span className="ml-2 inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50">
             Orphan link
           </span>
         )}
         {!row.parent_orphaned && parent.is_active === false && (
-          <span className="ml-2 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600 border border-gray-200 dark:bg-gray-800/60 dark:text-gray-300 dark:border-gray-700">
+          <span className="ml-2 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 border border-gray-200 dark:bg-gray-800/60 dark:text-orac-text-muted dark:border-gray-700">
             Parent inactive
           </span>
         )}
       </div>
-      {ancestors && <div className="text-xs text-gray-400">{ancestors}</div>}
+      {ancestors && <div className="text-xs text-orac-text-muted">{ancestors}</div>}
     </div>
   );
 }
@@ -266,7 +266,7 @@ export default function AdminEntitiesTab({ user }) {
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50/50">
             <h3 className="font-semibold text-orac-blue">Entities</h3>
-            <p className="mt-1 text-[11px] text-gray-400">
+            <p className="mt-1 text-xs text-orac-text-muted">
               Hierarchy: {HIERARCHY_CHAIN.join(" \u203a ")}.{" "}
               {canManageClients
                 ? "Clients are managed from the Client Directory tab."
@@ -305,7 +305,7 @@ export default function AdminEntitiesTab({ user }) {
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-orac-blue">{currentConfig.label}</h2>
                 <span
-                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
                     currentConfig.ownership === "orac"
                       ? "bg-sky-50 text-sky-700 border-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900/50"
                       : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50"
@@ -329,7 +329,7 @@ export default function AdminEntitiesTab({ user }) {
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           {loading ? (
-            <div className="p-12 text-center text-gray-400">Loading {currentConfig.label}...</div>
+            <div className="p-12 text-center text-orac-text-muted">Loading {currentConfig.label}...</div>
           ) : (
             <DataTable
               title=""
@@ -440,7 +440,7 @@ export default function AdminEntitiesTab({ user }) {
                 onChange={setParentId}
                 placeholder={`Select ${currentConfig.parentNoun}...`}
               />
-              <p className="mt-1 text-[11px] text-gray-400">
+              <p className="mt-1 text-xs text-orac-text-muted">
                 Only active {currentConfig.parentNoun}s are offered for a new link
                 {editingCurrentParentIsInactive
                   ? " — this record's current one is shown even though it is now inactive, so its history is not lost."
@@ -523,7 +523,7 @@ export default function AdminEntitiesTab({ user }) {
             <p className="text-sm text-gray-700">
               {!modal.item ? "New records start Active." : modal.item.is_active !== false ? "Active" : "Inactive"}
             </p>
-            <p className="mt-1 text-[11px] text-gray-400">
+            <p className="mt-1 text-xs text-orac-text-muted">
               {modal.item
                 ? "Change this with Disable / Enable in the table; that action is recorded in the audit log."
                 : "You can disable it later from the table; that action is recorded in the audit log."}

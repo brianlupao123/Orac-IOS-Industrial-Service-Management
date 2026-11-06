@@ -258,37 +258,37 @@ export default function AIAssistantPanel({ user }) {
                 <p className="text-xs font-semibold uppercase tracking-wide text-orac-blue">{user.role}</p>
               </div>
               <h2 id="assistant-title" className="mt-1 text-xl font-semibold text-orac-blue">ORAC guide</h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Role-scoped dashboard evidence and workflow guidance. Read-only and not generative AI: it explains and links, and never approves, sends or changes anything.</p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-orac-text-muted">Role-scoped dashboard evidence and workflow guidance. Read-only and not generative AI: it explains and links, and never approves, sends or changes anything.</p>
             </div>
-            <button type="button" onClick={() => setOpen(false)} className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Close</button>
+            <button type="button" onClick={() => setOpen(false)} className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-orac-text-muted dark:hover:bg-slate-800">Close</button>
           </div>
         </header>
 
         <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-700">
           <div className="grid gap-2 sm:grid-cols-2">
-            {copy.quick.map((action) => <button key={action.label} type="button" disabled={loading} onClick={() => runQuick(action)} className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-semibold text-slate-700 hover:border-orac-blue hover:bg-sky-50 disabled:opacity-60 dark:border-slate-700 dark:bg-transparent dark:text-slate-200 dark:hover:bg-sky-950/40">{action.label}</button>)}
+            {copy.quick.map((action) => <button key={action.label} type="button" disabled={loading} onClick={() => runQuick(action)} className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-semibold text-slate-700 hover:border-orac-blue hover:bg-sky-50 disabled:opacity-60 dark:border-slate-700 dark:bg-transparent dark:text-orac-text-muted dark:hover:bg-sky-950/40">{action.label}</button>)}
           </div>
           {config.workflow_topics?.length > 0 && <div className="mt-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Workflow guides for {user.role}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-orac-text-muted">Workflow guides for {user.role}</p>
             <ul className="mt-2 flex flex-wrap gap-2">
-              {config.workflow_topics.map((topic) => <li key={topic.id}><button type="button" disabled={loading} onClick={() => runGuide(topic)} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-left text-xs font-semibold text-slate-700 hover:border-orac-blue hover:bg-sky-50 disabled:opacity-60 dark:border-slate-700 dark:bg-transparent dark:text-slate-200 dark:hover:bg-sky-950/40">{topic.title}</button></li>)}
+              {config.workflow_topics.map((topic) => <li key={topic.id}><button type="button" disabled={loading} onClick={() => runGuide(topic)} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-left text-xs font-semibold text-slate-700 hover:border-orac-blue hover:bg-sky-50 disabled:opacity-60 dark:border-slate-700 dark:bg-transparent dark:text-orac-text-muted dark:hover:bg-sky-950/40">{topic.title}</button></li>)}
             </ul>
           </div>}
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-5">
-          {messages.length === 0 && <div className="rounded-lg border border-sky-100 bg-sky-50 p-4 text-sm leading-6 text-slate-700 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-slate-300"><p className="font-semibold text-slate-800 dark:text-slate-100">How can I help?</p><p className="mt-1">Ask where to do a task, what a status means, or what evidence is needed. I answer from reviewed ORAC guidance and evidence available to your role, and I cite the source. I cannot do the task for you.</p></div>}
+          {messages.length === 0 && <div className="rounded-lg border border-sky-100 bg-sky-50 p-4 text-sm leading-6 text-slate-700 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-orac-text-muted"><p className="font-semibold text-slate-800 dark:text-slate-100">How can I help?</p><p className="mt-1">Ask where to do a task, what a status means, or what evidence is needed. I answer from reviewed ORAC guidance and evidence available to your role, and I cite the source. I cannot do the task for you.</p></div>}
           <div className="mt-4 space-y-4" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation with the ORAC guide">
-            {messages.map((message) => <div key={message.id} className={message.sender === "user" ? "ml-auto max-w-[85%] rounded-2xl bg-orac-blue px-4 py-3 text-sm leading-6 text-white" : "mr-auto max-w-[92%] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200"}>
-              {message.sender === "assistant" && message.response?.label && <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{message.response.label}</p>}
+            {messages.map((message) => <div key={message.id} className={message.sender === "user" ? "ml-auto max-w-[85%] rounded-2xl bg-orac-blue px-4 py-3 text-sm leading-6 text-white" : "mr-auto max-w-[92%] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-orac-text-muted"}>
+              {message.sender === "assistant" && message.response?.label && <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-orac-text-muted">{message.response.label}</p>}
               <div className="flex items-start gap-2">
                 <p className="min-w-0 flex-1 whitespace-pre-line">{message.text}</p>
-                {message.sender === "assistant" && message.response?.requestId && <button type="button" onClick={() => flagResponse(message.response.requestId)} disabled={flagged.has(message.response.requestId)} className="shrink-0 rounded-md p-1 text-slate-500 hover:bg-white disabled:opacity-60 dark:text-slate-400 dark:hover:bg-slate-700" title="Flag this answer for review" aria-label="Flag this answer for review"><Icon path={ICONS.flag} className="h-4 w-4" /></button>}
+                {message.sender === "assistant" && message.response?.requestId && <button type="button" onClick={() => flagResponse(message.response.requestId)} disabled={flagged.has(message.response.requestId)} className="shrink-0 rounded-md p-1 text-slate-500 hover:bg-white disabled:opacity-60 dark:text-orac-border-strong dark:hover:bg-slate-700" title="Flag this answer for review" aria-label="Flag this answer for review"><Icon path={ICONS.flag} className="h-4 w-4" /></button>}
               </div>
               {message.response?.links?.filter((link) => canAccessRoute(user.role, link.path)).length > 0 && <div className="mt-3 flex flex-wrap gap-2">{message.response.links.filter((link) => canAccessRoute(user.role, link.path)).map((link) => <button key={`${message.id}-${link.id}`} type="button" onClick={() => openLink(link)} className="rounded-full bg-orac-blue px-3 py-1 text-xs font-semibold text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-orac-blue/40">Open {link.label}</button>)}</div>}
               {message.response?.evidenceRefs?.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{message.response.evidenceRefs.map((ref) => <button key={`${message.id}-${ref.metric}-${ref.targetId}`} type="button" onClick={() => focusEvidence(ref)} className="rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-semibold text-orac-blue hover:bg-sky-50 dark:border-sky-800/60 dark:bg-transparent dark:hover:bg-sky-950/40">Show evidence: {ref.label}</button>)}</div>}
             </div>)}
-            {loading && <div role="status" className="mr-auto max-w-sm rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">Checking ORAC guidance and your scoped evidence...</div>}
+            {loading && <div role="status" className="mr-auto max-w-sm rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-orac-text-muted">Checking ORAC guidance and your scoped evidence...</div>}
             <div ref={conversationEnd} />
           </div>
         </div>

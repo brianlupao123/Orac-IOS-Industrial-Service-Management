@@ -42,7 +42,7 @@ export function RestrictedState({
         </svg>
       </span>
       <h2 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
-      <p className="mt-1 max-w-md text-sm text-gray-600 dark:text-gray-400">{description}</p>
+      <p className="mt-1 max-w-md text-sm text-gray-600 dark:text-orac-text-muted">{description}</p>
     </div>
   );
 }
@@ -53,13 +53,13 @@ export function OfflineState({
 }) {
   return (
     <div data-evidence="page-offline-state" className="flex min-h-64 flex-col items-center justify-center px-6 py-16 text-center">
-      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500 border border-slate-200 shadow-sm dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">
+      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500 border border-slate-200 shadow-sm dark:bg-slate-800 dark:text-orac-border-strong dark:border-slate-700">
         <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M18.364 5.636a9 9 0 010 12.728M5.636 18.364a9 9 0 010-12.728M3 3l18 18" />
         </svg>
       </span>
       <h2 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
-      <p className="mt-1 max-w-md text-sm text-gray-600 dark:text-gray-400">{description}</p>
+      <p className="mt-1 max-w-md text-sm text-gray-600 dark:text-orac-text-muted">{description}</p>
     </div>
   );
 }
@@ -77,7 +77,7 @@ export function SessionExpiredState({
         </svg>
       </span>
       <h2 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
-      <p className="mt-1 max-w-md text-sm text-gray-600 dark:text-gray-400">{description}</p>
+      <p className="mt-1 max-w-md text-sm text-gray-600 dark:text-orac-text-muted">{description}</p>
       {onSignIn && (
         <button
           onClick={onSignIn}

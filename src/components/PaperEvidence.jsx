@@ -81,10 +81,10 @@ export function PaperEvidenceModal({ worksheet, onClose }) {
             <p className="text-xs text-gray-500">{file ? `${file.kind === "pdf" ? "PDF scan" : "Photo"}${size ? ` · ${size}` : ""}` : ""}</p>
             <div className="flex flex-wrap gap-2">
               {file?.kind === "image" && url && (
-                <button type="button" onClick={() => setZoom((z) => !z)} aria-pressed={zoom} className="min-h-[44px] rounded-lg border border-gray-300 px-4 text-sm font-semibold text-gray-700 dark:text-slate-200">{zoom ? "Fit to screen" : "Zoom in"}</button>
+                <button type="button" onClick={() => setZoom((z) => !z)} aria-pressed={zoom} className="min-h-[44px] rounded-lg border border-gray-300 px-4 text-sm font-semibold text-gray-700 dark:text-orac-text-muted">{zoom ? "Fit to screen" : "Zoom in"}</button>
               )}
-              {url && <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center rounded-lg border border-gray-300 px-4 text-sm font-semibold text-gray-700 dark:text-slate-200">Open</a>}
-              {url && <a href={url} download={fileName} className="inline-flex min-h-[44px] items-center rounded-lg border border-gray-300 px-4 text-sm font-semibold text-gray-700 dark:text-slate-200">Download</a>}
+              {url && <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center rounded-lg border border-gray-300 px-4 text-sm font-semibold text-gray-700 dark:text-orac-text-muted">Open</a>}
+              {url && <a href={url} download={fileName} className="inline-flex min-h-[44px] items-center rounded-lg border border-gray-300 px-4 text-sm font-semibold text-gray-700 dark:text-orac-text-muted">Download</a>}
               <button type="button" onClick={onClose} className="min-h-[44px] rounded-lg bg-orac-blue px-5 text-sm font-semibold text-white">Close</button>
             </div>
           </div>

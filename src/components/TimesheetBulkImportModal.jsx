@@ -284,7 +284,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
         {/* Dispatch & Entry Controls */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-800/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-xs font-semibold text-gray-700 dark:text-orac-text-muted mb-1">
               Fallback Dispatch Card (when omitted in CSV)
             </label>
             <SearchableSelect
@@ -300,7 +300,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
           </div>
 
           <div className="flex flex-col justify-end">
-            <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-300">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700 dark:text-orac-text-muted">
               <input
                 type="checkbox"
                 checked={allowExternalContractors}
@@ -315,7 +315,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
         {/* Input Textarea & File Upload */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+            <label className="block text-xs font-semibold text-gray-700 dark:text-orac-text-muted">
               Paste Spreadsheet Rows or CSV Text
             </label>
             <div className="flex items-center gap-2">
@@ -335,7 +335,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
               </button>
               {rawText && (
                 <>
-                  <span className="text-gray-300">|</span>
+                  <span className="text-orac-border-strong">|</span>
                   <button
                     type="button"
                     onClick={handleClear}
@@ -359,7 +359,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
         {/* Live Validation Table */}
         {validatedRows.length > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs font-medium text-gray-600 dark:text-gray-400">
+            <div className="flex items-center justify-between text-xs font-medium text-gray-600 dark:text-orac-text-muted">
               <span>
                 Parsed {summary.total} row(s) &bull; <strong className="text-emerald-700 dark:text-emerald-400">{summary.valid} valid</strong> &bull; <strong className={summary.invalid > 0 ? "text-red-700 dark:text-red-400" : ""}>{summary.invalid} invalid</strong> &bull; Total hours: <strong>{summary.totalHours.toFixed(1)}h</strong>
               </span>
@@ -367,7 +367,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
 
             <div className="max-h-60 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 sticky top-0">
+                <thead className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-orac-text-muted sticky top-0">
                   <tr>
                     <th className="p-2 border-b">Row</th>
                     <th className="p-2 border-b">Status</th>
@@ -386,11 +386,11 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
                       <td className="p-2 font-mono">{r.rowId}</td>
                       <td className="p-2">
                         {r.isValid ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
                             Ready
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200">
                             Error
                           </span>
                         )}
@@ -400,7 +400,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
                         <div className="font-medium text-gray-900 dark:text-gray-100">
                           {r.workerName}
                         </div>
-                        <div className="text-[11px] text-gray-500">
+                        <div className="text-xs text-gray-500">
                           {r.trade || r.matchedTech?.trade || "Unclassified"} {r.matchedTech && "(Technician)"}
                         </div>
                       </td>
@@ -431,7 +431,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
         {/* Progress Bar when busy */}
         {busy && (
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+            <div className="flex justify-between text-xs text-gray-600 dark:text-orac-text-muted">
               <span>Importing rows...</span>
               <span>{progress.current} / {progress.total}</span>
             </div>
@@ -450,7 +450,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
             type="button"
             disabled={busy}
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-orac-text-muted hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
           >
             Cancel
           </button>

@@ -336,7 +336,7 @@ export default function PortalLayout({ user, onLogout, children }) {
                           className={`flex h-11 items-center rounded-md px-3 text-sm font-semibold transition-colors ${
                             isActive
                               ? "bg-orac-navy text-white shadow-xs"
-                              : "text-slate-700 hover:bg-gray-100 hover:text-orac-slate dark:text-slate-300 dark:hover:bg-slate-800"
+                              : "text-slate-700 hover:bg-gray-100 hover:text-orac-slate dark:text-orac-text-muted dark:hover:bg-slate-800"
                           }`}
                         >
                           {item.label}

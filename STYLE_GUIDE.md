@@ -2,7 +2,7 @@
 
 **Tokens.** Colours come from the `orac-*` Tailwind tokens and `--orac-*` CSS variables in `src/index.css` (light and dark). Do not write raw hex colours in components. The logo cyan (#2FA2E3) is 2.8:1 on white: use it for fills and accents only, never for text.
 
-**Type.** Labels 13 px, body and form text 15 px, table text 14 px regular with tabular numerals. System font stack.
+**Type.** Labels, body and table text 16 px (UXD-1); compact density 14 px; counts 28 px regular weight secondary colour (UXD-2). System font stack.
 
 **Layout.** One shared page container (max 1440 px) set by `PortalLayout`. Pages must not add their own `max-w-*` / `mx-auto` / `p-6` wrapper.
 

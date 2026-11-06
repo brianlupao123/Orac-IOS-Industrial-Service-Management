@@ -222,7 +222,7 @@ export default function AdminPage({ user }) {
                     <td className="px-5 py-4 text-sm font-medium text-orac-blue">{u.name || "—"}</td>
                     <td className="px-5 py-4 text-sm text-gray-500">{u.email}</td>
                     <td className="px-5 py-4 text-sm">
-                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 border border-slate-200 dark:bg-slate-800/70 dark:text-slate-200 dark:border-slate-700">{u.role}</span>
+                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 border border-slate-200 dark:bg-slate-800/70 dark:text-orac-text-muted dark:border-slate-700">{u.role}</span>
                     </td>
                     <td className="px-5 py-4 text-sm">
                       <StatusBadge status={u.is_active ? "Active" : "Inactive"} />
@@ -243,7 +243,7 @@ export default function AdminPage({ user }) {
         {activeTab === "clients" && canManageClients && (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-orac-text-muted">
                 Top of the client-owned hierarchy: Client → Mine Site → Plant → Plant Section → Equipment Tag.
                 Manage mine sites, plants, plant sections and equipment tags under Entity Management.
               </p>
@@ -305,7 +305,7 @@ export default function AdminPage({ user }) {
               <div className="mb-6">
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold text-orac-blue">Company Identity</h2>
-                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold border bg-sky-50 text-sky-700 border-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900/50">
+                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border bg-sky-50 text-sky-700 border-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900/50">
                     ORAC-owned internal configuration
                   </span>
                 </div>

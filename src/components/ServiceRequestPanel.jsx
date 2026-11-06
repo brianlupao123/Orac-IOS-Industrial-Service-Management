@@ -90,7 +90,7 @@ export default function ServiceRequestPanel() {
 
       <div className="lg:col-span-2">
         {loading ? (
-          <div className="py-12 text-center text-gray-400">Loading your service requests...</div>
+          <div className="py-12 text-center text-orac-text-muted">Loading your service requests...</div>
         ) : loadError ? (
           <div className="space-y-3">
             <ErrorBanner message={loadError} />

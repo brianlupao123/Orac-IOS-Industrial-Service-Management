@@ -11,7 +11,7 @@ export default function ScopeTrail({ items = [] }) {
     <div className="mb-4 flex flex-wrap items-center gap-1.5 text-sm font-medium text-gray-500">
       {items.map((item, i) => (
         <React.Fragment key={i}>
-          {i > 0 && <span className="text-gray-400" aria-hidden="true">›</span>}
+          {i > 0 && <span className="text-orac-border-strong" aria-hidden="true">›</span>}
           <span className={item.active ? "font-semibold text-orac-slate" : ""}>{item.label || item.value}</span>
         </React.Fragment>
       ))}

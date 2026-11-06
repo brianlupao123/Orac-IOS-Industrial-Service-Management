@@ -59,10 +59,10 @@ export default function SearchableSelect({
         aria-controls={open ? listboxId : undefined}
         className="orac-control min-h-11 w-full flex items-center justify-between rounded border border-gray-300 px-3 py-2 text-base font-medium bg-white disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <span className={selected ? "text-orac-slate" : "text-gray-400"}>
+        <span className={selected ? "text-orac-slate" : "text-orac-border-strong"}>
           {selected ? selected.label : placeholder}
         </span>
-        <span className="text-gray-400 text-xs">▾</span>
+        <span className="text-orac-border-strong text-xs">▾</span>
       </button>
 
       {open && (
@@ -92,7 +92,7 @@ export default function SearchableSelect({
           />
           <div className="max-h-56 overflow-y-auto">
             {filtered.length === 0 && (
-              <p className="px-3 py-2 text-sm text-gray-400">{emptyLabel}</p>
+              <p className="px-3 py-2 text-sm text-orac-text-muted">{emptyLabel}</p>
             )}
             {filtered.map((o) => (
               <button
@@ -110,7 +110,7 @@ export default function SearchableSelect({
                 }`}
               >
                 {o.label}
-                {o.hint && <span className="block text-xs text-gray-400">{o.hint}</span>}
+                {o.hint && <span className="block text-xs text-orac-text-muted">{o.hint}</span>}
               </button>
             ))}
           </div>

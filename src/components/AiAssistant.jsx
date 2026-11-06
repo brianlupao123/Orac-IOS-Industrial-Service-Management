@@ -140,7 +140,7 @@ export default function AiAssistant({ user }) {
                 </svg>
               </button>
             </div>
-            <p className="mt-2 text-center text-[10px] text-gray-400">
+            <p className="mt-2 text-center text-xs text-orac-text-muted">
               AI can make mistakes. Verify critical data.
             </p>
           </form>
