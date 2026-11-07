@@ -192,7 +192,7 @@ export default function PortalLayout({ user, onLogout, children }) {
   }, [mobileMenuOpen]);
 
   return (
-    <div className="orac-app-shell flex min-h-screen flex-col bg-gray-50">
+    <div className="orac-app-shell flex min-h-screen flex-col bg-orac-page">
       {/* Keyboard/screen-reader users can jump straight past the repeated
           header and navigation into the page content. */}
       <a
