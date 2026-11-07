@@ -13,6 +13,7 @@
     "preview:uat": "vite preview --outDir dist-uat",
     "uat:local": "node scripts/uat-local.mjs --serve",
     "uat:audit": "node scripts/uat-local.mjs",
+    "uat:probe": "node scripts/uat-local.mjs --probe",
     "test:visual-audit": "node scripts/ui_visual_audit.mjs",
     "test:phase5-browser": "node scripts/phase5_browser_uat.mjs",
     "finalize:handover": "node scripts/finalize-handover.mjs",

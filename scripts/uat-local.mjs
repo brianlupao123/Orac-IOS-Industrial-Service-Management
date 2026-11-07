@@ -10,12 +10,13 @@ const BACKEND_DIR = process.env.ORAC_BACKEND_DIR || "C:\\Users\\BRIAN LUPAO\\Des
 const TEMP_DIR = path.resolve(ROOT, "../_uat-run");
 const PORT = 5176;
 const isServeOnly = process.argv.includes("--serve");
+const isProbe = process.argv.includes("--probe");
 
 console.log("[uat-local] Starting local UAT harness...");
 console.log(`[uat-local] Root: ${ROOT}`);
 console.log(`[uat-local] Backend source: ${BACKEND_DIR}`);
 console.log(`[uat-local] Temp copy: ${TEMP_DIR}`);
-console.log(`[uat-local] Mode: ${isServeOnly ? "serve (long-running)" : "audit (single-run)"}`);
+console.log(`[uat-local] Mode: ${isServeOnly ? "serve (long-running)" : isProbe ? "probe" : "audit (single-run)"}`);
 
 // 1. Verify backend source exists
 if (!fs.existsSync(BACKEND_DIR)) {
@@ -275,6 +276,32 @@ console.log(`[uat-local] Server is healthy and answering on http://127.0.0.1:${P
 
 if (isServeOnly) {
   console.log(`[uat-local] Ready! Server running at http://127.0.0.1:${PORT}. Press Ctrl+C to terminate.`);
+} else if (isProbe) {
+  let probeExitCode = 0;
+  try {
+    console.log(`[uat-local] Executing UX probe (node scripts/ux-probe.mjs --target app --url http://127.0.0.1:${PORT})...`);
+    execSync(`node scripts/ux-probe.mjs --target app --url http://127.0.0.1:${PORT}`, {
+      cwd: ROOT,
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        ORAC_PROBE_PASSWORD: auditPassword,
+        ORAC_PROBE_EMAIL_FINANCE: financeEmail,
+        ORAC_PROBE_EMAIL_ADMIN: adminEmail,
+        ORAC_PROBE_EMAIL_MANAGEMENT: managementEmail,
+        ORAC_PROBE_EMAIL_SALES: salesEmail,
+        ORAC_PROBE_EMAIL_OPERATIONS: operationsEmail,
+        ORAC_PROBE_EMAIL_SUPERVISOR: supervisorEmail,
+        ORAC_PROBE_EMAIL_TECHNICIAN: technicianEmail,
+        ORAC_PROBE_EMAIL_CLIENT: clientEmail
+      }
+    });
+  } catch (err) {
+    probeExitCode = err.status || 1;
+  } finally {
+    stopServer();
+    process.exit(probeExitCode);
+  }
 } else {
   let auditExitCode = 0;
   try {
