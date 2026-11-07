@@ -328,7 +328,7 @@ export default function InventoryPage({ user }) {
                         />
                         <span>
                           Allow this movement to take stock below zero.
-                          <span className="block text-gray-400">Only Admin or Operations accounts can use this; the server will reject it otherwise.</span>
+                          <span className="block text-orac-text-muted">Only Admin or Operations accounts can use this; the server will reject it otherwise.</span>
                         </span>
                       </label>
                     )}
@@ -381,7 +381,7 @@ export default function InventoryPage({ user }) {
                             {i.quantity_on_hand} {i.unit_of_measure}
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-sm tabular-nums text-gray-400">{i.reorder_level}</td>
+                        <td className="px-5 py-4 text-sm tabular-nums text-orac-text-muted">{i.reorder_level}</td>
                         <td className="px-5 py-4 text-sm">
                           {needsReorder ? (
                             <span data-evidence="inventory-reorder-badge" className="inline-block rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">Reorder now</span>
@@ -422,7 +422,7 @@ export default function InventoryPage({ user }) {
               Quantities are compared within one unit of measure.
             </p>
             {recon.loading ? (
-              <div className="py-8 text-center text-sm text-gray-400">Checking the ledger...</div>
+              <div className="py-8 text-center text-sm text-orac-text-muted">Checking the ledger...</div>
             ) : recon.error ? (
               <ErrorBanner message={recon.error} />
             ) : recon.data ? (
@@ -469,7 +469,7 @@ export default function InventoryPage({ user }) {
               )}
             </div>
             {loading ? (
-              <div className="py-12 text-center text-gray-400">Loading suppliers...</div>
+              <div className="py-12 text-center text-orac-text-muted">Loading suppliers...</div>
             ) : (
               <DataTable
                 title="Suppliers"
@@ -508,7 +508,7 @@ export default function InventoryPage({ user }) {
             <div><label className="mb-1 block text-sm font-semibold text-gray-700">Unit cost</label><input name="unit_cost" type="number" step="0.01" defaultValue={itemModal.data?.unit_cost || "0"} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="mb-1 block text-sm font-semibold text-gray-700">Starting quantity on hand</label><input name="quantity_on_hand" type="number" defaultValue={itemModal.data?.quantity_on_hand || "0"} disabled={!!itemModal.data} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-gray-50 focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 disabled:text-gray-400" /></div>
+            <div><label className="mb-1 block text-sm font-semibold text-gray-700">Starting quantity on hand</label><input name="quantity_on_hand" type="number" defaultValue={itemModal.data?.quantity_on_hand || "0"} disabled={!!itemModal.data} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-gray-50 focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20 disabled:text-orac-border-strong" /></div>
             <div><label className="mb-1 block text-sm font-semibold text-gray-700">Reorder level</label><input name="reorder_level" type="number" defaultValue={itemModal.data?.reorder_level || "0"} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" /></div>
           </div>
           <div>
@@ -546,7 +546,7 @@ export default function InventoryPage({ user }) {
       {/* Movement History Modal */}
       <Modal title={historyModal.item ? `Movement History — ${historyModal.item.item_code}` : "Movement History"} isOpen={historyModal.open} onClose={() => setHistoryModal({ open: false, item: null, movements: [], loading: false, error: "" })}>
         {historyModal.loading ? (
-          <div data-evidence="inventory-history-loading" className="py-8 text-center text-sm text-gray-400">Loading movement history...</div>
+          <div data-evidence="inventory-history-loading" className="py-8 text-center text-sm text-orac-text-muted">Loading movement history...</div>
         ) : historyModal.error ? (
           <ErrorBanner message={historyModal.error} />
         ) : historyModal.movements.length === 0 ? (
@@ -559,7 +559,7 @@ export default function InventoryPage({ user }) {
                   <span className={`font-semibold ${m.direction === "increase" ? "text-emerald-700" : "text-red-700"}`}>
                     {m.direction === "increase" ? "+" : "-"}{Math.abs(m.quantity)} {m.unit_of_measure || m.item_unit_of_measure}
                   </span>
-                  <span className="text-xs text-gray-400">{new Date(m.created_at).toLocaleString()}</span>
+                  <span className="text-xs text-orac-text-muted">{new Date(m.created_at).toLocaleString()}</span>
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
                   {m.quantity_before} → {m.quantity_after} {m.unit_of_measure || m.item_unit_of_measure} · {movementLabel(m)}

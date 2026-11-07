@@ -45,7 +45,7 @@ export default function LandingPage() {
       <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-6 lg:px-8">
         <a href="#top" className="flex items-center gap-3" aria-label="Orac-IOS home">
           <img src="/images/orac-systems-logo.png" alt="Orac Systems" className="h-11 w-11 rounded-full bg-white object-contain" />
-          <span><span className="block text-base font-bold text-slate-800">ORAC-IOS</span><span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Operations portal</span></span>
+          <span><span className="block text-base font-bold text-slate-800">ORAC-IOS</span><span className="block text-xs font-semibold uppercase tracking-wide text-slate-500">Operations portal</span></span>
         </a>
         <div className="flex items-center gap-3 sm:gap-5">
           <a className="hidden text-sm font-medium text-slate-600 hover:text-slate-950 sm:inline" href="https://oracsystems.co.zw" target="_blank" rel="noreferrer">Orac Systems</a>

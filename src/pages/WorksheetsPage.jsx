@@ -334,12 +334,12 @@ export default function WorksheetsPage({ user }) {
                   
                   <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500 mb-3">
                     <div className="flex items-center gap-1.5">
-                      <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <svg className="w-4 h-4 text-orac-border-strong" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       {hoursSummary(ws)}
                     </div>
                     {(ws.worker_name || ws.technician_name) && (
                       <div className="flex items-center gap-1.5">
-                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        <svg className="w-4 h-4 text-orac-border-strong" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                         {ws.worker_name || ws.technician_name}{ws.worker_type === "contractor" ? " (contractor)" : ""}
                       </div>
                     )}
@@ -410,7 +410,7 @@ export default function WorksheetsPage({ user }) {
                     placeholder="Enter review comments (required if returning)"
                     value={comment[ws.id] || ""}
                     onChange={(e) => setComment({ ...comment, [ws.id]: e.target.value })}
-                    className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm placeholder:text-gray-400 focus:border-orac-blue focus:outline-none focus:ring-4 focus:ring-orac-blue/10 transition-all shadow-sm"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm placeholder:text-orac-border-strong focus:border-orac-blue focus:outline-none focus:ring-4 focus:ring-orac-blue/10 transition-all shadow-sm"
                     rows={2}
                   />
                   <div className="mt-3 flex flex-wrap gap-3">

@@ -62,7 +62,7 @@ export default function ThemeToggle({ inMenu = false, className = "" }) {
           <Icon path={isDark ? ICONS.sun : ICONS.moon} className="h-4 w-4 text-gray-500 dark:text-gray-400" />
           <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
         </span>
-        <span className="text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500">
+        <span className="text-xs uppercase tracking-wider text-orac-text-muted dark:text-gray-500">
           {isDark ? "Dark" : "Light"}
         </span>
       </button>

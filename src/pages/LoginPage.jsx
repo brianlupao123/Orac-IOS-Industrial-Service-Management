@@ -36,7 +36,7 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
             <img src="/images/orac-systems-logo.png" alt="Orac Systems" className="h-12 w-12 rounded-full bg-white object-contain shadow-sm" />
             <div>
               <div className="text-xl font-bold tracking-tight text-orac-slate">ORAC-IOS</div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Industrial Service Management</div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-orac-text-muted">Industrial Service Management</div>
             </div>
           </div>
 
@@ -61,7 +61,7 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@company.com"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-orac-blue focus:outline-none focus:ring-4 focus:ring-orac-blue/10 transition-all"
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder:text-orac-border-strong focus:border-orac-blue focus:outline-none focus:ring-4 focus:ring-orac-blue/10 transition-all"
                 required
                 autoFocus
                 disabled={busy}
@@ -79,7 +79,7 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-orac-blue focus:outline-none focus:ring-4 focus:ring-orac-blue/10 transition-all"
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder:text-orac-border-strong focus:border-orac-blue focus:outline-none focus:ring-4 focus:ring-orac-blue/10 transition-all"
                 required
                 autoComplete="current-password"
                 disabled={busy}
@@ -127,7 +127,7 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
             </p>
           </form>
 
-          <p className="mt-6 text-center text-xs text-gray-400">
+          <p className="mt-6 text-center text-xs text-orac-text-muted">
             Orac-IOS &copy; {new Date().getFullYear()} &bull; Orac Systems
           </p>
         </div>

@@ -335,7 +335,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
               </button>
               {rawText && (
                 <>
-                  <span className="text-gray-300">|</span>
+                  <span className="text-orac-border-strong">|</span>
                   <button
                     type="button"
                     onClick={handleClear}
@@ -386,11 +386,11 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
                       <td className="p-2 font-mono">{r.rowId}</td>
                       <td className="p-2">
                         {r.isValid ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
                             Ready
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200">
                             Error
                           </span>
                         )}
@@ -400,7 +400,7 @@ export default function TimesheetBulkImportModal({ isOpen, onClose, user, dispat
                         <div className="font-medium text-gray-900 dark:text-gray-100">
                           {r.workerName}
                         </div>
-                        <div className="text-[11px] text-gray-500">
+                        <div className="text-xs text-gray-500">
                           {r.trade || r.matchedTech?.trade || "Unclassified"} {r.matchedTech && "(Technician)"}
                         </div>
                       </td>

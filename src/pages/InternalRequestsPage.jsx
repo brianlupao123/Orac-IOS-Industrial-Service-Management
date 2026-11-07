@@ -127,7 +127,7 @@ export default function InternalRequestsPage({ user }) {
       <div className="grid gap-6 lg:grid-cols-3">
         <section aria-label="Raise a request" className="lg:col-span-1">
           {optionsState.loading ? (
-            <div className="py-12 text-center text-gray-400">Loading request options...</div>
+            <div className="py-12 text-center text-orac-text-muted">Loading request options...</div>
           ) : optionsState.forbidden ? (
             <div data-evidence="internal-requests-read-only" className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
               New internal requests are not available to your role. Use the Team Inbox to review and respond to requests sent to your team.
@@ -160,7 +160,7 @@ export default function InternalRequestsPage({ user }) {
           {notice && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</p>}
 
           {list.loading ? (
-            <div className="py-12 text-center text-gray-400">{activeTab === "inbox" ? "Loading the team inbox..." : "Loading your requests..."}</div>
+            <div className="py-12 text-center text-orac-text-muted">{activeTab === "inbox" ? "Loading the team inbox..." : "Loading your requests..."}</div>
           ) : list.error ? (
             <div className="space-y-3">
               <div data-evidence={list.forbidden ? "forbidden-state" : undefined}><ErrorBanner message={list.error} /></div>

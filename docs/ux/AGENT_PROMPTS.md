@@ -20,8 +20,13 @@ HARD RULES
 4. Never lower a rule or raise a baseline to make a check pass. Fix the code instead.
 5. Do not install new dependencies. Do not run npm audit fix. Do not push, merge or deploy. Commit to the branch only.
 6. Never print secrets. Do not read .env files.
-7. Do not claim anything works until you have run it. Paste real command output in your report.
-8. If the prototype and the plan disagree, the prototype wins for appearance; ask me about anything else.
+7. SINGLE WRITER. While the UX programme runs, only this thread writes to branches named ux/*. Work in a dedicated git worktree (for example ../orac-ux) so other chats using the main folder cannot dirty it. Never use git stash, reset --hard, clean, checkout of other people's files, or force push. Never merge or rebase unless I say so.
+8. START OF EVERY PHASE: run `git status --short` (must be empty), `git rev-parse HEAD`, and `git log --oneline ux/p0-tooling..main` (tells me whether main moved). Paste all three at the top of your report. If the tree is dirty with changes you did not make, STOP and tell me; do not clean it.
+9. END OF EVERY PHASE: paste `git status --short` and `git diff --stat <phase start>..HEAD`. Files outside the phase's stated scope mean stop and report.
+10. PRESENTATION ONLY ON ux/* BRANCHES. These branches may change class names, markup wrappers, tokens, docs/ux and the UX tooling. Business logic (src/lib, models, API, validation, and tests of logic) never goes on a ux/* branch. If you find such a commit there, stop and report.
+11. NEVER DELETE A SIZE OR COLOUR CLASS WITHOUT A REPLACEMENT. Every changed class is listed in the report as old -> new.
+12. Do not claim anything works until you have run it. Paste real command output in your report.
+13. If the prototype and the plan disagree, the prototype wins for appearance; ask me about anything else.
 
 BEFORE YOU FINISH EVERY PHASE run, in this order, and paste the last lines of each:
    npm test
@@ -49,20 +54,44 @@ PHASE P0. Install the UX gate kit. Change NO file under src/.
 Acceptance: git diff --stat shows no file under src/ changed; ux:check fails ONLY on the token parity differences (print them); everything else passes.
 ```
 
-## P1 Tokens, contrast and quick fixes
+## P1a Quick fixes (no owner decision needed)
 
 ```
-PHASE P1. Branch ux/p1-tokens. Requires owner confirmation of UXD-3 (grey page, white cards). If I have not confirmed it, stop and ask.
-1. Run node scripts/ux-tokens.mjs --write. Review git diff of src/index.css and docs/ux/ORAC_UI_PROTOTYPE.html. Only token values and a marked UX-TOKENS block may change.
+PHASE P1a. Branch ux/p1a-quickfixes, created from main after ux/p0-tooling has been merged. Do not run ux-tokens --write in this phase. Do not change colours of surfaces or the page background.
+1. Fix the text-[10px] and text-[11px] uses (TYP-FLOOR): 12 px badges and captions become text-xs, anything else text-sm. Skip guarded files and list them.
+2. Replace text-gray-200/300/400 and text-slate-200/300/400 used as TEXT with text-orac-text-muted (COL-LOWCONTRAST). Where the class is on a decorative icon or a placeholder, keep the role but use text-orac-border-strong and say so. Skip guarded files and list them.
+3. Add alt text to any <img> without it (alt="" for decoration).
+4. Correct STYLE_GUIDE.md to: labels, body and table text 16 px (UXD-1); compact density 14 px; counts 28 px regular weight secondary colour (UXD-2). Keep every other sentence.
+5. Run npm test, npm run build and node scripts/ux-check.mjs. Then run node scripts/ux-ratchet.mjs --update (counts may only go down) and commit ux/baseline.json.
+Report: the ratchet table before and after; every file changed with the count of lines; every test edited (file, line, old, new, why); every guarded file skipped; any text-gray-400 you left and why.
+Acceptance: ux:check passes; 614 tests pass and 1 skipped (the parity test); TYP-FLOOR, COL-LOWCONTRAST and A11Y-IMGALT are 0 outside guarded files.
+```
+
+## P1a-2 Correction after the P1a review
+
+```
+PHASE P1a-2. Stay on branch ux/p1a-quickfixes. Two of my rules were wrong, so some P1a edits must be undone. This is my error, not yours.
+1. Overwrite these repo files with the attached copies and commit them first as "chore(ux): ratchet transfers; low-contrast rule ignores dark: variants": scripts/ux-ratchet.mjs, ux/rules.json, docs/ux/AGENT_PROMPTS.md, docs/ux/SDLC_MASTER_PLAN.md. Do not edit them by hand.
+2. REVERT every P1a change where the text you removed was a dark: variant, for example dark:text-slate-200, dark:text-slate-300, dark:text-gray-400, dark:hover:text-slate-300. In dark mode those light greys are correct, and the muted token is dimmer. Method: `git diff main..ux/p1a-quickfixes -U0`, find every removed line containing dark:(...:)*text-(gray|slate|zinc|neutral|stone)-(200|300|400), and restore only that dark: class. If a line also had a light-theme change you made, keep that part. Expect about 50 sites. Print the count and the file list.
+3. REVERT every change where the colour sat on a block that is dark in BOTH themes (bg-slate-9xx, bg-gray-9xx, bg-black, dark navy, dark gradients). The known case is src/pages/LandingPage.jsx footer (bg-slate-950 text-slate-300): restore text-slate-300. Search all your other edits for the same situation and list each one you restored and the background class that made you restore it.
+4. Keep the decorative-icon and placeholder changes (text-orac-border-strong) and the text-gray-400 on white surfaces changed to text-orac-text-muted.
+5. Run: node scripts/ux-ratchet.mjs (it must now pass: converting text-[Npx] to text-xs is an allowed transfer), then node scripts/ux-ratchet.mjs --update, npm test, npm run build, node scripts/ux-check.mjs, npm run maintain.
+6. Confirm the exact file names of the ux tests under tests/ (you wrote uxTokensParity.test.js; the kit has uxTokens.test.js). Say if you renamed anything.
+Report: ratchet table (before P1a, after P1a-2); the reverted lines grouped by file; the dark-background list from step 3; test counts; commit hashes.
+Acceptance: ratchet passes and baseline updated; 614 pass, 1 skipped, 0 fail; maintain passes; no dark: class changed from its original value.
+```
+
+## P1b Tokens and page background (needs the owner's yes on UXD-3)
+
+```
+PHASE P1b. Branch ux/p1b-tokens, created after P1a is merged. Requires my confirmation of UXD-3 (grey page, white cards). If I have not confirmed it, stop and ask.
+1. Run node scripts/ux-tokens.mjs --write. Review git diff of src/index.css and docs/ux/ORAC_UI_PROTOTYPE.html. Only token values and a marked UX-TOKENS block may change. The dark block is html[data-theme="dark"].
 2. Make the shell use the new page token: the app background (body and the PortalLayout wrapper) uses var(--orac-page); cards, header and panels keep --orac-surface; inputs keep --orac-canvas. Add Tailwind colour keys page, surface-subtle, row-hover, row-alt in tailwind.config.js mapped to the variables. Do not rename existing keys.
-3. Dark mode must look unchanged except for the new tokens. Run the visual audit if it can run (npm run test:visual-audit needs the local UAT server) and compare screenshots; if it cannot run, say so.
-4. Fix the 14 text-[10px]/text-[11px] uses: 12 px badges and captions become text-xs, anything else text-sm. Skip guarded files and list them.
-5. Replace text-gray-200/300/400 and text-slate-200/300/400 used as TEXT with text-orac-text-muted. Where the class is on a decorative icon or placeholder, keep the colour but use text-orac-border-strong and say so. Skip guarded files and list them.
-6. Add alt text to any <img> without it.
-7. Correct STYLE_GUIDE.md to: labels, body and table text 16 px (UXD-1); compact density 14 px; counts 28 px regular secondary colour (UXD-2). Keep every other sentence.
-8. Set "enforce": {"parity": true} in ux/tokens.json.
-9. Run node scripts/ux-ratchet.mjs --update (counts only go down) and commit ux/baseline.json.
-Acceptance: ux:check passes; TYP-FLOOR, COL-LOWCONTRAST, A11Y-IMGALT are 0 outside guarded files; 548 tests pass (report any you changed).
+3. --orac-table-font-size becomes 16px. DataTable is its only user and its header is pinned by tests/typographyReadability.test.js (text-sm). Update that assertion only if the header class changes, as the preamble rule 3 says.
+4. Dark mode must look unchanged except for the new tokens. Run the visual audit if it can run (npm run test:visual-audit needs the local UAT server) and compare screenshots; if it cannot run, say so.
+5. Set "enforce": {"parity": true} in ux/tokens.json. The parity test must now run and pass.
+6. Run node scripts/ux-ratchet.mjs --update and commit ux/baseline.json.
+Acceptance: ux:check passes with parity enforced; 615 tests pass, 0 skipped; build passes; screenshots at 1440, 1024 and 390 px attached for Dashboard, one table page and one form page, light and dark.
 ```
 
 ## P2 Type system

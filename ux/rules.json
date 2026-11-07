@@ -59,10 +59,10 @@
     {
       "id": "COL-LOWCONTRAST",
       "req": "A11Y-01",
-      "title": "No low-contrast greys for text",
-      "regex": "\\btext-(?:gray|slate|zinc|neutral|stone)-(?:200|300|400)\\b",
+      "title": "No low-contrast greys for text on light backgrounds",
+      "regex": "(?<!\\bdark:(?:[\\w-]+:)*)\\btext-(?:gray|slate|zinc|neutral|stone)-(?:200|300|400)\\b",
       "target": 0,
-      "fix": "Use text-orac-text-muted for secondary text."
+      "fix": "Use text-orac-text-muted for secondary text. Variants under dark: are not counted (light grey is correct on dark). Text on a permanently dark block (for example the Landing footer on bg-slate-950) keeps its light colour; leave it and note it."
     },
     {
       "id": "COL-RAW",
@@ -171,5 +171,18 @@
         "src/components/StatusBadge.jsx"
       ]
     }
-  ]
+  ],
+  "transfers": [
+    {
+      "from": "TYP-FLOOR",
+      "to": "TYP-XS",
+      "why": "text-[10px]/[11px] becomes text-xs (12 px floor). Worse violation traded for a milder one."
+    },
+    {
+      "from": "TYP-ARBITRARY",
+      "to": "TYP-XS",
+      "why": "text-[Npx] below 12 px becomes text-xs."
+    }
+  ],
+  "_transfers_note": "A file may add to the 'to' rule up to the amount it removed from the 'from' rule in the same file (the largest single decrease among the from rules, so overlapping rules are not double counted). Nothing else may rise."
 }

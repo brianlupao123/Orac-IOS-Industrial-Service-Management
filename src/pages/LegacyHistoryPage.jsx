@@ -36,7 +36,7 @@ export default function LegacyHistoryPage() {
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 text-left text-gray-600"><tr><th className="px-3 py-2">Date</th><th className="px-3 py-2">Worker</th><th className="px-3 py-2">Record</th><th className="px-3 py-2">Hours (N / 1.5 / 2.0)</th><th className="px-3 py-2">Status</th><th className="px-3 py-2">In a Worksheet?</th><th className="px-3 py-2"></th></tr></thead>
             <tbody className="divide-y divide-gray-100">
-              {shown.length === 0 && <tr><td colSpan={7} className="px-3 py-6 text-center text-gray-400">No earlier records.</td></tr>}
+              {shown.length === 0 && <tr><td colSpan={7} className="px-3 py-6 text-center text-orac-text-muted">No earlier records.</td></tr>}
               {shown.map((r) => (
                 <tr key={`${r.legacy_kind}-${r.record_id}-${r.row_index}`}>
                   <td className="px-3 py-2">{r.work_date || "-"}</td>
