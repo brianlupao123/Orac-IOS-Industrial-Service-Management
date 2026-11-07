@@ -20,8 +20,12 @@ export default {
           // dark-mode override bridge. Fixed brand shades above are kept
           // only for existing usages already covered by that bridge.
           canvas: "var(--orac-canvas)",
+          page: "var(--orac-page)",
           surface: "var(--orac-surface)",
+          "surface-subtle": "var(--orac-surface-subtle)",
           "surface-muted": "var(--orac-surface-muted)",
+          "row-hover": "var(--orac-row-hover)",
+          "row-alt": "var(--orac-row-alt)",
           "text-primary": "var(--orac-text-primary)",
           "text-secondary": "var(--orac-text-secondary)",
           "text-muted": "var(--orac-text-muted)",
