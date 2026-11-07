@@ -20,8 +20,11 @@ HARD RULES
 4. Never lower a rule or raise a baseline to make a check pass. Fix the code instead.
 5. Do not install new dependencies. Do not run npm audit fix. Do not push, merge or deploy. Commit to the branch only.
 6. Never print secrets. Do not read .env files.
-7. Do not claim anything works until you have run it. Paste real command output in your report.
-8. If the prototype and the plan disagree, the prototype wins for appearance; ask me about anything else.
+7. SINGLE WRITER. While the UX programme runs, only this thread writes to branches named ux/*. Work in a dedicated git worktree (for example ../orac-ux) so other chats using the main folder cannot dirty it. Never use git stash, reset --hard, clean, checkout of other people's files, or force push. Never merge or rebase unless I say so.
+8. START OF EVERY PHASE: run `git status --short` (must be empty), `git rev-parse HEAD`, and `git log --oneline ux/p0-tooling..main` (tells me whether main moved). Paste all three at the top of your report. If the tree is dirty with changes you did not make, STOP and tell me; do not clean it.
+9. END OF EVERY PHASE: paste `git status --short` and `git diff --stat <phase start>..HEAD`. Files outside the phase's stated scope mean stop and report.
+10. Do not claim anything works until you have run it. Paste real command output in your report.
+11. If the prototype and the plan disagree, the prototype wins for appearance; ask me about anything else.
 
 BEFORE YOU FINISH EVERY PHASE run, in this order, and paste the last lines of each:
    npm test
