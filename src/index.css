@@ -569,3 +569,12 @@ html[data-theme="dark"] .theme-toggle {
 /* Deep-linked record (Reports "Open"): visible focus so the person can see which record was opened. */
 [data-record-id]:focus { outline: 2px solid #00488C; outline-offset: 3px; border-radius: 0.5rem; }
 html[data-theme="dark"] [data-record-id]:focus { outline-color: #7CC4F0; }
+
+@media print {
+  html,
+  body,
+  .orac-app-shell {
+    background-color: #ffffff;
+  }
+}
+
