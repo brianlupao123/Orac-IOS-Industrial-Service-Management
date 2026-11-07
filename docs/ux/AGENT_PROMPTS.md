@@ -23,8 +23,10 @@ HARD RULES
 7. SINGLE WRITER. While the UX programme runs, only this thread writes to branches named ux/*. Work in a dedicated git worktree (for example ../orac-ux) so other chats using the main folder cannot dirty it. Never use git stash, reset --hard, clean, checkout of other people's files, or force push. Never merge or rebase unless I say so.
 8. START OF EVERY PHASE: run `git status --short` (must be empty), `git rev-parse HEAD`, and `git log --oneline ux/p0-tooling..main` (tells me whether main moved). Paste all three at the top of your report. If the tree is dirty with changes you did not make, STOP and tell me; do not clean it.
 9. END OF EVERY PHASE: paste `git status --short` and `git diff --stat <phase start>..HEAD`. Files outside the phase's stated scope mean stop and report.
-10. Do not claim anything works until you have run it. Paste real command output in your report.
-11. If the prototype and the plan disagree, the prototype wins for appearance; ask me about anything else.
+10. PRESENTATION ONLY ON ux/* BRANCHES. These branches may change class names, markup wrappers, tokens, docs/ux and the UX tooling. Business logic (src/lib, models, API, validation, and tests of logic) never goes on a ux/* branch. If you find such a commit there, stop and report.
+11. NEVER DELETE A SIZE OR COLOUR CLASS WITHOUT A REPLACEMENT. Every changed class is listed in the report as old -> new.
+12. Do not claim anything works until you have run it. Paste real command output in your report.
+13. If the prototype and the plan disagree, the prototype wins for appearance; ask me about anything else.
 
 BEFORE YOU FINISH EVERY PHASE run, in this order, and paste the last lines of each:
    npm test
