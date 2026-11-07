@@ -20,6 +20,10 @@ const guarded = new Set(cfg.guarded || []);
 const basePath = "ux/baseline.json";
 const baseline = fs.existsSync(path.join(ROOT, basePath)) ? readJson(basePath) : null;
 
+const transfers = cfg.transfers || [];
+// credit: how much rule `to` may rise in file f, earned by cutting a `from` rule in the same file
+const credit = (to, f, cur) => Math.max(0, ...transfers.filter((t) => t.to === to).map((t) => (baseline?.rules[t.from]?.files?.[f] || 0) - (cur[t.from] ? (cur[t.from].files[f] || 0) : (baseline?.rules[t.from]?.files?.[f] || 0))));
+
 const current = {}; // rule -> { total, files: {file: n}, lines: {file: [line,...]} }
 for (const r of cfg.rules) {
   if (only && r.id !== only) continue;
@@ -51,7 +55,7 @@ if (flag("--init") || flag("--update")) {
     const entry = { total: 0, files: {} };
     for (const [f, n] of Object.entries(cur.files)) {
       const prev = old?.files?.[f];
-      if (flag("--update") && old && (prev === undefined || n > prev)) {
+      if (flag("--update") && old && n > (prev ?? 0) + credit(r.id, f, current)) {
         console.error(`REFUSED: ${r.id} ${f} has ${n}, baseline allows ${prev ?? 0}. Fix it; the ratchet only goes down.`); process.exit(1);
       }
       entry.files[f] = n; entry.total += n;
@@ -72,7 +76,7 @@ for (const r of cfg.rules) {
   if (!base) { failures.push({ rule: r.id, msg: `rule ${r.id} has no baseline. Run --init on a clean tree or --update.` }); continue; }
   const touchedGuard = [];
   for (const [f, n] of Object.entries(cur.files)) {
-    const allowed = base.files[f] || 0;
+    const allowed = (base.files[f] || 0) + credit(r.id, f, current);
     if (n > allowed) failures.push({ rule: r.id, req: r.req, file: f, now: n, allowed, lines: cur.lines[f].slice(-(n - allowed)), fix: r.fix, guarded: guarded.has(f) });
   }
   for (const [f, n] of Object.entries(base.files)) if ((cur.files[f] || 0) < n) improved.push(`${r.id} ${f}: ${n} -> ${cur.files[f] || 0}`);

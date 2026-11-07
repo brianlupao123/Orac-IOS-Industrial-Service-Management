@@ -62,6 +62,20 @@ Report: the ratchet table before and after; every file changed with the count of
 Acceptance: ux:check passes; 614 tests pass and 1 skipped (the parity test); TYP-FLOOR, COL-LOWCONTRAST and A11Y-IMGALT are 0 outside guarded files.
 ```
 
+## P1a-2 Correction after the P1a review
+
+```
+PHASE P1a-2. Stay on branch ux/p1a-quickfixes. Two of my rules were wrong, so some P1a edits must be undone. This is my error, not yours.
+1. Overwrite these repo files with the attached copies and commit them first as "chore(ux): ratchet transfers; low-contrast rule ignores dark: variants": scripts/ux-ratchet.mjs, ux/rules.json, docs/ux/AGENT_PROMPTS.md, docs/ux/SDLC_MASTER_PLAN.md. Do not edit them by hand.
+2. REVERT every P1a change where the text you removed was a dark: variant, for example dark:text-slate-200, dark:text-slate-300, dark:text-gray-400, dark:hover:text-slate-300. In dark mode those light greys are correct, and the muted token is dimmer. Method: `git diff main..ux/p1a-quickfixes -U0`, find every removed line containing dark:(...:)*text-(gray|slate|zinc|neutral|stone)-(200|300|400), and restore only that dark: class. If a line also had a light-theme change you made, keep that part. Expect about 50 sites. Print the count and the file list.
+3. REVERT every change where the colour sat on a block that is dark in BOTH themes (bg-slate-9xx, bg-gray-9xx, bg-black, dark navy, dark gradients). The known case is src/pages/LandingPage.jsx footer (bg-slate-950 text-slate-300): restore text-slate-300. Search all your other edits for the same situation and list each one you restored and the background class that made you restore it.
+4. Keep the decorative-icon and placeholder changes (text-orac-border-strong) and the text-gray-400 on white surfaces changed to text-orac-text-muted.
+5. Run: node scripts/ux-ratchet.mjs (it must now pass: converting text-[Npx] to text-xs is an allowed transfer), then node scripts/ux-ratchet.mjs --update, npm test, npm run build, node scripts/ux-check.mjs, npm run maintain.
+6. Confirm the exact file names of the ux tests under tests/ (you wrote uxTokensParity.test.js; the kit has uxTokens.test.js). Say if you renamed anything.
+Report: ratchet table (before P1a, after P1a-2); the reverted lines grouped by file; the dark-background list from step 3; test counts; commit hashes.
+Acceptance: ratchet passes and baseline updated; 614 pass, 1 skipped, 0 fail; maintain passes; no dark: class changed from its original value.
+```
+
 ## P1b Tokens and page background (needs the owner's yes on UXD-3)
 
 ```

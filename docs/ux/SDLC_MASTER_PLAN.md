@@ -58,7 +58,7 @@ Each phase is one branch, one pull request, and must leave `npm run maintain` gr
 | Phase | Objective | Exit criteria |
 |---|---|---|
 | P0 Tooling and baseline | Install the kit, create the baseline, wire the gates, change no UI | `ux:check` passes; baseline committed; no `src/` file changed; guard passes |
-| P1 Tokens, contrast, quick fixes | `--write` tokens (after UXD-3 is confirmed); remove text under 12 px; remove low-contrast greys; fix `STYLE_GUIDE.md`; set `enforce.parity` to true | TYP-FLOOR, COL-LOWCONTRAST, A11Y-IMGALT at 0; tokens agree; 548 tests pass |
+| P1a Quick fixes (text floor, low-contrast text, alt, STYLE_GUIDE), then P1b Tokens and page background | `--write` tokens (after UXD-3 is confirmed); remove text under 12 px; remove low-contrast greys; fix `STYLE_GUIDE.md`; set `enforce.parity` to true | TYP-FLOOR, COL-LOWCONTRAST, A11Y-IMGALT at 0; tokens agree; 548 tests pass |
 | P2 Type system | Add semantic type classes to `tailwind.config.js` and the matching tokens | `text-ux-*` classes exist; nothing uses them yet except the new components |
 | P3 Shared components | Build Button, Field/Input/Select/Textarea, Panel, PageTitle, SectionTitle, SubTitle, Notice, Badge, BrandMark in `src/components/ui/`, each with `data-ux` | Source tests for each; no page changed |
 | P4 Migrate shared components | Move IconStatCard, StatCard, AttentionBand, DataTable, StatusBadge, PageStates, Modal, NotificationBell and assistant panels onto the primitives | TONE-LOCAL at 0; tile hierarchy rule passes; existing component tests updated deliberately |
@@ -91,3 +91,11 @@ Each phase is one branch, one pull request, and must leave `npm run maintain` gr
 - Attach the probe summary and before-and-after screenshots to each page wave.
 - Never lower a rule's strictness to pass. Fix the code, or record an owner decision.
 - Run `npm run maintain` before every commit.
+
+## Rule corrections log
+
+| ID | Date | Rule | Problem found | Correction |
+|---|---|---|---|---|
+| RC-1 | 6 Nov 2026 | COL-LOWCONTRAST | The regex matched `dark:text-slate-200` and similar. Light grey is correct on dark surfaces, so 50 of 96 matches were false positives, and P1a replaced them with a dimmer token. Text on permanently dark blocks (Landing footer) was also flagged. | Regex ignores any `dark:` variant. Permanently dark blocks keep their light text. P1a-2 reverts the affected edits. |
+| RC-2 | 6 Nov 2026 | TYP-FLOOR, TYP-ARBITRARY, TYP-XS | Converting `text-[11px]` to `text-xs` is the intended fix but raised TYP-XS, so the ratchet refused it. | `transfers` in ux/rules.json lets a file add to TYP-XS up to what it removed from TYP-FLOOR or TYP-ARBITRARY in the same file. Any other rise is still refused. |
+
