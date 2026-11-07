@@ -55,11 +55,11 @@ export default function ThemeToggle({ inMenu = false, className = "" }) {
         type="button"
         role="menuitem"
         onClick={toggleTheme}
-        className={`flex w-full items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-slate-100 dark:text-orac-text-muted dark:hover:bg-slate-800 rounded transition-colors ${className}`}
+        className={`flex w-full items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-slate-800 rounded transition-colors ${className}`}
         aria-label={label}
       >
         <span className="flex items-center gap-2">
-          <Icon path={isDark ? ICONS.sun : ICONS.moon} className="h-4 w-4 text-gray-500 dark:text-orac-border-strong" />
+          <Icon path={isDark ? ICONS.sun : ICONS.moon} className="h-4 w-4 text-gray-500 dark:text-gray-400" />
           <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
         </span>
         <span className="text-xs uppercase tracking-wider text-orac-text-muted dark:text-gray-500">

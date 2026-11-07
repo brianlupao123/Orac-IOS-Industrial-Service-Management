@@ -107,7 +107,7 @@ export default function KioskReviewPanel({ user }) {
       <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="Filter kiosk entries">
         {FILTERS.map(([key, label]) => (
           <button key={key} type="button" aria-pressed={status === key} onClick={() => setStatus(key)}
-            className={`min-h-[44px] rounded-full px-4 text-sm font-semibold ${status === key ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-orac-text-muted"}`}>{label}</button>
+            className={`min-h-[44px] rounded-full px-4 text-sm font-semibold ${status === key ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-200"}`}>{label}</button>
         ))}
       </div>
       {error && <p role="alert" className="mb-2 text-sm text-red-700">{error}</p>}
@@ -124,7 +124,7 @@ export default function KioskReviewPanel({ user }) {
                   <textarea id={`kc-${row.id}`} rows={2} value={comments[row.id] || ""} onChange={(e) => setComments({ ...comments, [row.id]: e.target.value })} className="w-full rounded-md border border-orac-border bg-white p-2 text-sm dark:bg-transparent" />
                   <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={() => decide(row, "approve")} className="min-h-[44px] rounded-lg bg-emerald-600 px-5 text-sm font-semibold text-white">Approve hours</button>
-                    <button type="button" onClick={() => decide(row, "reject")} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-orac-text-muted">Reject</button>
+                    <button type="button" onClick={() => decide(row, "reject")} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-slate-200">Reject</button>
                   </div>
                 </div>
               )}

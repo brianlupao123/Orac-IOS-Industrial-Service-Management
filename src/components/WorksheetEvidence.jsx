@@ -6,7 +6,7 @@ import { worksheetNextAction, worksheetStatusLabel, worksheetTone } from "../fie
 // evidence and the internal approval. Client acknowledgement and Supervisor
 // approval are shown as two separate facts.
 const TONE = {
-  slate: "bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-orac-text-muted",
+  slate: "bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-200",
   sky: "bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300",
   amber: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
   red: "bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300",

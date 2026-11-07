@@ -216,7 +216,7 @@ export default function WorksheetsPage({ user }) {
             <button
               type="button"
               onClick={() => setBulkImportOpen(true)}
-              className="min-h-11 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-transparent dark:text-orac-text-muted"
+              className="min-h-11 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-transparent dark:text-slate-200"
             >
               Bulk Import (CSV / Excel)
             </button>
@@ -233,7 +233,7 @@ export default function WorksheetsPage({ user }) {
           {canSubmit && (
             <button
               onClick={openCreate}
-              className={`min-h-11 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-sm transition-all hover:brightness-105 ${canPaperEntry ? "border border-gray-300 bg-white text-gray-700 dark:bg-transparent dark:text-orac-text-muted" : "bg-orac-blue text-white"}`}
+              className={`min-h-11 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-sm transition-all hover:brightness-105 ${canPaperEntry ? "border border-gray-300 bg-white text-gray-700 dark:bg-transparent dark:text-slate-200" : "bg-orac-blue text-white"}`}
             >
               + New Timesheet
             </button>
@@ -383,18 +383,18 @@ export default function WorksheetsPage({ user }) {
                     </button>
                   )}
                   {canEditWorksheet(user.role, ws) && (
-                    <button type="button" onClick={() => openEdit(ws)} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-orac-text-muted">Edit</button>
+                    <button type="button" onClick={() => openEdit(ws)} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-slate-200">Edit</button>
                   )}
                   {canReviseWorksheet(user.role, ws) && (
-                    <button type="button" onClick={() => { setReviseTarget(ws); setReviseReason(""); setReviseError(""); }} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-orac-text-muted">Revise (new draft)</button>
+                    <button type="button" onClick={() => { setReviseTarget(ws); setReviseReason(""); setReviseError(""); }} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-slate-200">Revise (new draft)</button>
                   )}
-                  <button type="button" onClick={() => downloadPdf(ws.id)} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-orac-text-muted">Download PDF</button>
+                  <button type="button" onClick={() => downloadPdf(ws.id)} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-slate-200">Download PDF</button>
                   {recordAnalysisVisible() && (
                     <button
                       type="button"
                       onClick={() => handleAnalysis(ws.id)}
                       disabled={analyzingId === ws.id}
-                      className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-orac-text-muted"
+                      className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 dark:bg-transparent dark:text-slate-200"
                     >
                       {analyzingId === ws.id ? "Analyzing..." : "Timesheet evidence analysis"}
                     </button>

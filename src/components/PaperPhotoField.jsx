@@ -8,7 +8,7 @@ import { formatBytes, isPdfDataUrl, preparePaperFile } from "../lib/paperPhoto.j
 // Two separate inputs on purpose: a file input with `capture` always opens the camera and never offers the
 // file picker, so a PDF could not be chosen from it. One button is the camera, the other is the picker.
 
-const btnCls = "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 disabled:opacity-50 dark:bg-transparent dark:text-orac-text-muted";
+const btnCls = "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 disabled:opacity-50 dark:bg-transparent dark:text-slate-200";
 
 export default function PaperPhotoField({ value, onChange, onError, hasExisting = false, disabled = false, idPrefix = "ts-paper" }) {
   const cameraRef = useRef(null);

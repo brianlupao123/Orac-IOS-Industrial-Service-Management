@@ -133,7 +133,7 @@ function ParentContextCell({ row }) {
           </span>
         )}
         {!row.parent_orphaned && parent.is_active === false && (
-          <span className="ml-2 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 border border-gray-200 dark:bg-gray-800/60 dark:text-orac-text-muted dark:border-gray-700">
+          <span className="ml-2 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 border border-gray-200 dark:bg-gray-800/60 dark:text-gray-300 dark:border-gray-700">
             Parent inactive
           </span>
         )}

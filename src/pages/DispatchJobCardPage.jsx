@@ -94,8 +94,8 @@ export default function DispatchJobCardPage({ user }) {
       <dl className="mt-4 grid gap-4 sm:grid-cols-2">
         <div><dt className="text-xs font-medium text-slate-500">Quotation</dt><dd className="mt-1 text-sm font-semibold text-orac-slate dark:text-slate-100">{workflow.quotation?.quote_number || workflow.quotation?.id || "Not linked"}{canQuote && <Link className="ml-2 text-orac-blue hover:underline" to={`/quotations?quote=${encodeURIComponent(workflow.quotation.id)}`}>Open</Link>}</dd></div>
         <div><dt className="text-xs font-medium text-slate-500">Purchase order</dt><dd className="mt-1 text-sm font-semibold text-orac-slate dark:text-slate-100">{workflow.purchase_order?.po_reference || workflow.purchase_order?.id || "Not linked"}{canFinance && <Link className="ml-2 text-orac-blue hover:underline" to={`/finance?po=${encodeURIComponent(workflow.purchase_order.id)}`}>Open</Link>}</dd></div>
-        <div><dt className="text-xs font-medium text-slate-500">Quotation status</dt><dd className="mt-1 text-sm text-slate-700 dark:text-orac-text-muted">{workflow.quotation?.status || "Not available"}</dd></div>
-        <div><dt className="text-xs font-medium text-slate-500">PO status</dt><dd className="mt-1 text-sm text-slate-700 dark:text-orac-text-muted">{workflow.purchase_order?.status || "Not available"}</dd></div>
+        <div><dt className="text-xs font-medium text-slate-500">Quotation status</dt><dd className="mt-1 text-sm text-slate-700 dark:text-slate-300">{workflow.quotation?.status || "Not available"}</dd></div>
+        <div><dt className="text-xs font-medium text-slate-500">PO status</dt><dd className="mt-1 text-sm text-slate-700 dark:text-slate-300">{workflow.purchase_order?.status || "Not available"}</dd></div>
       </dl>
     </section>
 
@@ -110,8 +110,8 @@ export default function DispatchJobCardPage({ user }) {
         <EvidenceMetric label="Tracked material records" value={evidence.material_usage?.tracked_item_count} />
         <EvidenceMetric label="Low stock signals" value={evidence.material_usage?.low_stock_count} />
       </div>
-      {assignment.assigned_supervisor && <p className="mt-5 text-sm text-slate-600 dark:text-orac-text-muted">Supervisor: <span className="font-semibold text-orac-slate dark:text-white">{assignment.assigned_supervisor.name || assignment.assigned_supervisor.id}</span></p>}
-      {Array.isArray(assignment.roster) && assignment.roster.length > 0 && <p className="mt-2 text-sm text-slate-600 dark:text-orac-text-muted">Assigned team: {assignment.roster.map((person) => person.name || person.id).join(", ")}</p>}
+      {assignment.assigned_supervisor && <p className="mt-5 text-sm text-slate-600 dark:text-slate-300">Supervisor: <span className="font-semibold text-orac-slate dark:text-white">{assignment.assigned_supervisor.name || assignment.assigned_supervisor.id}</span></p>}
+      {Array.isArray(assignment.roster) && assignment.roster.length > 0 && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Assigned team: {assignment.roster.map((person) => person.name || person.id).join(", ")}</p>}
     </section>
 
     <section aria-labelledby="job-card-exceptions" className="border-y border-slate-200 bg-white px-5 py-5 dark:border-slate-800 dark:bg-slate-900">

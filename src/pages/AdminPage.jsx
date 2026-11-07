@@ -222,7 +222,7 @@ export default function AdminPage({ user }) {
                     <td className="px-5 py-4 text-sm font-medium text-orac-blue">{u.name || "—"}</td>
                     <td className="px-5 py-4 text-sm text-gray-500">{u.email}</td>
                     <td className="px-5 py-4 text-sm">
-                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 border border-slate-200 dark:bg-slate-800/70 dark:text-orac-text-muted dark:border-slate-700">{u.role}</span>
+                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 border border-slate-200 dark:bg-slate-800/70 dark:text-slate-200 dark:border-slate-700">{u.role}</span>
                     </td>
                     <td className="px-5 py-4 text-sm">
                       <StatusBadge status={u.is_active ? "Active" : "Inactive"} />
