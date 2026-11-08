@@ -47,6 +47,16 @@ export default {
           "info-bg": "var(--orac-info-bg)",
           "info-border": "var(--orac-info-border)"
         }
+      },
+      fontSize: {
+        "ux-title": ["1.5rem", { lineHeight: "1.3", fontWeight: "700" }],
+        "ux-section": ["1.125rem", { lineHeight: "1.4", fontWeight: "600" }],
+        "ux-sub": ["1rem", { lineHeight: "1.5", fontWeight: "600" }],
+        "ux-label": ["1rem", { lineHeight: "1.5", fontWeight: "600" }],
+        "ux-body": ["1rem", { lineHeight: "1.5", fontWeight: "400" }],
+        "ux-secondary": ["0.875rem", { lineHeight: "1.45", fontWeight: "400" }],
+        "ux-caption": ["0.75rem", { lineHeight: "1.4", fontWeight: "500" }],
+        "ux-stat": ["1.75rem", { lineHeight: "1.2", fontWeight: "400" }]
       }
     }
   },
