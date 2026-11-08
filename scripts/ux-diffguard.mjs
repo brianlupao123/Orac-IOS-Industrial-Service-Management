@@ -19,7 +19,7 @@ const allow = fs.existsSync(allowPath) ? JSON.parse(fs.readFileSync(allowPath, "
 const allowed = (file, rule) => allow.some((a) => a.file === file && a.rule === rule);
 
 const LOGIC = [/^src\/(lib|api)\//, /(Model|Logic|Policy)\.js$/, /^src\/accessPolicy\.js$/, /^backend\//];
-const SIZE = /(?<![\w-])(?:[a-z0-9-]+:)*text-(?:xs|sm|base|lg|xl|[2-9]xl|\[[\d.]+(?:px|rem)\])(?![\w-])/g;
+const SIZE = /(?<![\w-])(?:[a-z0-9-]+:)*text-(?:xs|sm|base|lg|xl|[2-9]xl|\[[\d.]+(?:px|rem)\]|ux-(?:title|section|sub|label|body|secondary|caption|stat))(?![\w-])/g;
 const count = (s) => (s.match(SIZE) || []).length;
 const findings = [];
 
