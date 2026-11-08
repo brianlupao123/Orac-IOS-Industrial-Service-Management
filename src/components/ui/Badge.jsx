@@ -6,7 +6,7 @@ const BADGE_STYLES = {
   warning: "bg-orac-warning-bg text-orac-warning-text",
   danger: "bg-orac-danger-bg text-orac-danger-text",
   neutral: "bg-orac-surface-muted text-orac-text-secondary",
-  count: "bg-orac-danger-text text-white font-bold",
+  count: "bg-orac-danger-text text-orac-canvas font-bold",
 };
 
 export default function Badge({
@@ -36,7 +36,7 @@ export function CountBadge({ count, className = "", ...props }) {
     <span
       data-ux="badge"
       data-tone="count"
-      className={`inline-flex min-w-[1rem] items-center justify-center rounded-full bg-orac-danger-text px-1.5 py-0.5 text-ux-caption font-bold text-white ${className}`.trim()}
+      className={`inline-flex min-w-[1rem] items-center justify-center rounded-full bg-orac-danger-text px-1.5 py-0.5 text-ux-caption font-bold text-orac-canvas ${className}`.trim()}
       {...props}
     >
       {count}
