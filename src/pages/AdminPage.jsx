@@ -220,7 +220,7 @@ export default function AdminPage({ user }) {
                 renderRow={(u) => (
                   <tr key={u.id} className="transition-colors hover:bg-gray-50/80 group">
                     <td className="px-5 py-4 text-sm font-medium text-orac-blue">{u.name || "—"}</td>
-                    <td className="px-5 py-4 text-sm text-gray-500">{u.email}</td>
+                    <td className="px-5 py-4 text-sm text-orac-text-muted">{u.email}</td>
                     <td className="px-5 py-4 text-sm">
                       <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 border border-slate-200 dark:bg-slate-800/70 dark:text-slate-200 dark:border-slate-700">{u.role}</span>
                     </td>
@@ -231,7 +231,7 @@ export default function AdminPage({ user }) {
                       <button onClick={() => setUserModal({ open: true, data: u })} className="text-orac-blue font-medium hover:underline transition-colors opacity-70 group-hover:opacity-100 focus-visible:opacity-100">
                         Edit
                       </button>
-                      <button onClick={async()=>{if(!confirm((u.is_active?"Deactivate ":"Reactivate ")+u.email))return;try{u.is_active?await admin.deactivateEntity("users",u.id):await admin.reactivateEntity("users",u.id);load()}catch(e){alert(e.message)}}} className={`font-medium transition-colors opacity-70 group-hover:opacity-100 focus-visible:opacity-100 ${u.is_active?"text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300":"text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"}`}>{u.is_active?"Disable":"Enable"}</button>
+                      <button onClick={async()=>{if(!confirm((u.is_active?"Deactivate ":"Reactivate ")+u.email))return;try{u.is_active?await admin.deactivateEntity("users",u.id):await admin.reactivateEntity("users",u.id);load()}catch(e){alert(e.message)}}} className={`font-medium transition-colors opacity-70 group-hover:opacity-100 focus-visible:opacity-100 ${u.is_active?"text-orac-warning-text hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300":"text-orac-success-text hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"}`}>{u.is_active?"Disable":"Enable"}</button>
                     </td>
                   </tr>
                 )}

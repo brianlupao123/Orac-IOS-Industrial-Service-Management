@@ -377,7 +377,7 @@ export default function InventoryPage({ user }) {
                         <td className="px-5 py-4 text-sm font-medium text-orac-slate">{i.item_code}</td>
                         <td className="px-5 py-4 text-sm text-gray-600">{i.item_name}</td>
                         <td className="px-5 py-4 text-sm tabular-nums">
-                          <span className={needsReorder ? "font-bold text-red-600" : "font-medium text-gray-900"}>
+                          <span className={needsReorder ? "font-bold text-orac-danger-text" : "font-medium text-gray-900"}>
                             {i.quantity_on_hand} {i.unit_of_measure}
                           </span>
                         </td>
@@ -392,11 +392,11 @@ export default function InventoryPage({ user }) {
                               (on-hand, reorder level, and supplier lead time when one is
                               recorded) — never an invented lead time or reference. */}
                           {i.reorder_explanation && (
-                            <p data-evidence="inventory-reorder-explanation" className="mt-1 max-w-[220px] text-xs text-gray-500">{i.reorder_explanation}</p>
+                            <p data-evidence="inventory-reorder-explanation" className="mt-1 max-w-[220px] text-xs text-orac-text-muted">{i.reorder_explanation}</p>
                           )}
                         </td>
                         <td className="px-5 py-4 text-sm text-right whitespace-nowrap">
-                          <button onClick={() => openHistory(i)} className="mr-3 text-gray-500 font-medium hover:text-orac-navy opacity-70 group-hover:opacity-100 transition-all">
+                          <button onClick={() => openHistory(i)} className="mr-3 text-orac-text-muted font-medium hover:text-orac-navy opacity-70 group-hover:opacity-100 transition-all">
                             History
                           </button>
                           {canManage && (
