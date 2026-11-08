@@ -103,7 +103,9 @@
       "fix": "Use <Field> with <Input>, <Select> or <Textarea>.",
       "exceptFiles": [
         "src/components/ui/Field.jsx",
-        "src/components/ui/Input.jsx"
+        "src/components/ui/Input.jsx",
+        "src/components/ui/Select.jsx",
+        "src/components/ui/Textarea.jsx"
       ]
     },
     {
