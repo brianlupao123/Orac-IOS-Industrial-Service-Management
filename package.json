@@ -28,7 +28,8 @@
     "ux:probe:prototype": "node scripts/ux-probe.mjs --target prototype",
     "ux:probe:app": "node scripts/ux-probe.mjs --target app",
     "ux:trace": "node scripts/ux-trace.mjs --embed docs/ux/ORAC_UI_PROTOTYPE.html",
-    "ux:export": "node scripts/orac-export.mjs --slim --with-tests"
+    "ux:export": "node scripts/orac-export.mjs --slim --with-tests",
+    "ux:diffguard": "node scripts/ux-diffguard.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

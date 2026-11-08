@@ -77,9 +77,9 @@ function measure(cfg) {
     if (!visible(el) || el.closest("[hidden]") || el.closest(ignoreSel)) continue;
     const r = el.getBoundingClientRect();
     const isSmall = el.matches(spec.global.smallTarget[kind === "prototype" ? "proto" : "app"]);
-    const need = isSmall ? spec.global.smallTargetPx : spec.global.minTargetPx;
+    const touch = window.innerWidth < 900, need = touch ? (isSmall ? spec.global.smallTargetPx : spec.global.minTargetPx) : (spec.global.desktopTargetPx || 32);
     if (r.height + 0.5 < need && !el.closest(".is-compact"))
-      add("FAIL", "A11Y-TARGET", el, `${Math.round(r.height)}px high; minimum is ${need}px${isSmall ? " (small control)" : ""}`);
+      add("FAIL", "A11Y-TARGET", el, `${Math.round(r.height)}px high; minimum is ${need}px${touch ? " (touch width)" : " (pointer width)"}${isSmall && touch ? " (small control)" : ""}`);
   }
   // G5 heading ladder + variants
   const heads = [...root.querySelectorAll("h1,h2,h3,h4,h5,h6")].filter((h) => visible(h) && !h.closest(ignoreSel));

@@ -174,7 +174,7 @@ export default function ReportsPage({ user }) {
           <td className="px-5 py-3.5"><StatusBadge status={row.status} /></td>
           <td className="px-5 py-3.5">{row.scheduled_start || "-"}</td>
           <td className="px-5 py-3.5">{row.approved_worksheet_count ?? 0} of {row.worksheet_count ?? 0} approved</td>
-          <td className="px-5 py-3.5">{row.started_before_po ? <span data-evidence="dispatch-started-before-po" className="inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">Started before PO</span> : <span className="text-orac-border-strong">-</span>}</td>
+          <td className="px-5 py-3.5">{row.started_before_po ? <span data-evidence="dispatch-started-before-po" className="inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">Started before PO</span> : <span className="text-orac-text-muted">-</span>}</td>
         </tr>} />
       </div>;
     }
