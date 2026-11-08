@@ -48,6 +48,7 @@ export default function IconStatCard({ label, value, iconPath, tone = "neutral",
       {...(onClick ? { type: "button", onClick } : {})}
       id={evidenceTarget || undefined}
       data-evidence-target={evidenceTarget || undefined}
+      data-ux="stat-tile"
       className={`orac-metric-card w-full rounded-lg border p-4 sm:p-5 text-left ${styling.card} ${onClick ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/60" : ""}`}
     >
       {statusFirst ? (
@@ -56,10 +57,10 @@ export default function IconStatCard({ label, value, iconPath, tone = "neutral",
             <Icon path={iconPath} className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className={`text-sm font-semibold leading-snug ${styling.text}`}>{label}</p>
+            <p data-ux="stat-label" className={`text-sm font-semibold leading-snug ${styling.text}`}>{label}</p>
             {subtitle && <p className={`mt-0.5 text-xs leading-snug ${styling.label}`}>{subtitle}</p>}
           </div>
-          <span data-evidence="status-count" className={`shrink-0 rounded-full px-2.5 py-1 text-sm font-semibold tabular-nums ${styling.chip}`}>
+          <span data-evidence="status-count" data-ux="stat-count" className={`shrink-0 rounded-full px-2.5 py-1 text-sm font-semibold tabular-nums ${styling.chip}`}>
             {value}
             <span className="sr-only">{numericValue === 1 ? " record" : " records"}</span>
           </span>
@@ -70,8 +71,8 @@ export default function IconStatCard({ label, value, iconPath, tone = "neutral",
             <Icon path={iconPath} className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className={`text-lg font-bold leading-snug ${styling.text}`}>{label}</p>
-            <p className={`mt-1 text-2xl font-semibold tabular-nums sm:text-[28px] ${styling.label}`}>{value}</p>
+            <p data-ux="stat-label" className={`text-lg font-bold leading-snug ${styling.text}`}>{label}</p>
+            <p data-ux="stat-count" className={`mt-1 text-2xl font-semibold tabular-nums sm:text-[28px] ${styling.label}`}>{value}</p>
             {subtitle && <p className={`mt-1 text-sm leading-snug ${styling.label}`}>{subtitle}</p>}
           </div>
         </div>
@@ -81,8 +82,8 @@ export default function IconStatCard({ label, value, iconPath, tone = "neutral",
             <Icon path={iconPath} className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className={`text-xs font-semibold leading-tight ${styling.label}`}>{label}</p>
-            <p className={`mt-0.5 text-2xl font-bold tabular-nums sm:text-3xl ${styling.text}`}>{value}</p>
+            <p data-ux="stat-label" className={`text-xs font-semibold leading-tight ${styling.label}`}>{label}</p>
+            <p data-ux="stat-count" className={`mt-0.5 text-2xl font-bold tabular-nums sm:text-3xl ${styling.text}`}>{value}</p>
             {subtitle && <p className={`mt-0.5 text-xs truncate ${styling.label}`}>{subtitle}</p>}
           </div>
         </div>

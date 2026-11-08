@@ -23,19 +23,20 @@ export default function StatCard({ label, value, tone = "slate", icon, iconPath,
       {...(Component === "button" ? { type: "button" } : {})}
       href={href}
       onClick={onClick}
+      data-ux="stat-tile"
       className={`orac-metric-card rounded-xl border p-5 ${interactiveClasses} ${TONES[resolvedTone] || TONES.slate}`}
     >
       <div className="flex items-start justify-between">
         <div className="flex flex-col">
-          <div className="mb-1 text-lg font-bold leading-snug">{label}</div>
-          <div className="text-2xl font-semibold tabular-nums opacity-75 sm:text-[28px]">
+          <div data-ux="stat-label" className="mb-1 text-lg font-bold leading-snug text-orac-text-primary">{label}</div>
+          <div data-ux="stat-count" className={`text-2xl font-semibold tabular-nums opacity-75 sm:text-[28px] ${isZero ? "text-orac-text-muted" : "text-orac-text-secondary"}`}>
             {value === undefined || value === null ? (
               <span className="inline-block h-8 w-16 animate-pulse rounded bg-gray-200/50" />
             ) : (
               value
             )}
           </div>
-          {subtitle && <div className="mt-2 text-sm font-medium text-gray-600">{subtitle}</div>}
+          {subtitle && <div className="mt-2 text-sm font-medium text-orac-text-secondary">{subtitle}</div>}
         </div>
         {(iconPath || icon) && (
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/80 text-xl shadow-sm backdrop-blur-sm border border-black/5">

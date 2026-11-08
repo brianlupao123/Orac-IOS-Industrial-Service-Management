@@ -1,4 +1,5 @@
 import React from "react";
+import StatusBadge from "./StatusBadge.jsx";
 import { ErrorBanner } from "./PageStates.jsx";
 import {
   APPROVE_REGISTRATION_ACTION, REGISTRATION_APPROVAL_NOTICE, actionButtonsFor, describeHistoryEntry, describeRegistration,
@@ -34,7 +35,7 @@ export default function InternalRequestCard({ item, mode, open, detail, note, no
         </div>
         <div className="flex flex-wrap gap-2">
           <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${priorityTone(view.priority)}`}>{view.priority}</span>
-          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusTone(view.status)}`}>{view.status}</span>
+          <StatusBadge status={view.status} />
         </div>
       </div>
 
