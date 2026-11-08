@@ -61,7 +61,10 @@ export default function DataTable({
   renderActions,
   actionLabel = "Action",
   hideEmptyColumns = false, // Opt-in only to avoid hiding critical custom components or controls
+  density = "normal",
+  compact = false,
 }) {
+  const isCompact = compact || density === "compact";
   // Pre-render rows to inspect columns and apply consistent cell formatting
   const rawRows = rows.map((row, i) => (renderRow ? renderRow(row, i) : null));
 
@@ -113,7 +116,11 @@ export default function DataTable({
     .filter(({ idx }) => !hiddenColumns.has(idx));
 
   return (
-    <div className="orac-data-table overflow-hidden rounded-lg border border-gray-100 bg-white" style={{ fontSize: "var(--orac-table-font-size, 14px)" }}>
+    <div
+      data-ux="table"
+      className="orac-data-table overflow-hidden rounded-lg border border-gray-100 bg-white"
+      style={{ fontSize: isCompact ? "var(--orac-table-font-size-compact, 14px)" : "var(--orac-table-font-size, 16px)" }}
+    >
       {(title || action) && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-50 bg-gray-50/30 px-5 py-4">
           {title && (
@@ -144,14 +151,14 @@ export default function DataTable({
         </div>
       ) : (
         <div
-          className="orac-table-scroll overflow-x-auto"
+          className="orac-table-scroll overflow-x-auto shadow-[inset_6px_0_6px_-6px_rgba(15,23,42,0.12),inset_-6px_0_6px_-6px_rgba(15,23,42,0.12)]"
           role="region"
           aria-label={title ? `${title} table` : "Data table"}
           tabIndex={0}
         >
-          <table className="w-full text-sm">
+          <table className={`w-full ${isCompact ? "text-sm" : "text-base"}`}>
             <thead className="sticky top-0 z-10 bg-gray-50/50">
-              <tr className="border-b border-gray-100 text-left text-sm font-semibold text-gray-600">
+              <tr className="border-b border-gray-100 text-left text-ux-label font-semibold text-gray-600">
                 {visibleHeaders.map(({ col, idx, isNumeric }, i) => (
                   <th key={i} scope="col" className={`px-5 py-3.5 whitespace-nowrap ${isNumeric ? "text-right" : ""}`}>
                     {col}
@@ -202,7 +209,8 @@ export default function DataTable({
                   const tabularClass = isNumeric && !originalClassName.includes("tabular-nums")
                     ? " [font-variant-numeric:tabular-nums]"
                     : "";
-                  const combinedClass = `${originalClassName}${alignmentClass}${tabularClass}`.trim();
+                  const col0Class = visibleIdx === 0 ? " max-sm:whitespace-nowrap" : "";
+                  const combinedClass = `${originalClassName}${alignmentClass}${tabularClass}${col0Class}`.trim();
 
                   visibleCells.push(
                     React.cloneElement(cell, {
@@ -217,7 +225,7 @@ export default function DataTable({
                 return React.cloneElement(r, {
                   key: r.key || `row-${rowIdx}`,
                   children: renderActions
-                    ? [...visibleCells, <td key="row-action" data-label={actionLabel} className="px-5 py-3.5">{renderActions(rows[rowIdx], rowIdx)}</td>]
+                    ? [...visibleCells, <td key="row-action" data-label={actionLabel} className="px-5 py-3.5 whitespace-nowrap min-h-[44px] sm:min-h-0">{renderActions(rows[rowIdx], rowIdx)}</td>]
                     : visibleCells,
                 });
               })}
