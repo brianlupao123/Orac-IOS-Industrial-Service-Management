@@ -251,8 +251,9 @@ All primitives set explicit semantic tokens, scale typography via `text-ux-*`, a
   - `count`: number | string
   - `className`: string
 - **Contrast**:
-  - Uses `bg-orac-danger-text` with `text-white`
-  - In light theme (`#b91c1c` on `#ffffff`), contrast ratio is **6.47:1** (&ge; 4.5:1).
+  - Uses `bg-orac-danger-text` with `text-orac-canvas`
+  - In light theme (`#ffffff` on `#b91c1c`), contrast ratio is **6.47:1** (>= 4.5:1).
+  - In dark theme (`#0b0f19` on `#ff9aa8`), contrast ratio is **9.52:1** (>= 4.5:1).
 - **Usage Example**:
   ```jsx
   import Badge, { CountBadge } from "@/components/ui/Badge";
