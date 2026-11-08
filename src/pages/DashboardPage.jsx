@@ -498,7 +498,7 @@ export default function DashboardPage({ user }) {
               <tr key={d.id} className="transition-colors hover:bg-gray-50">
                 <td className="px-4 py-2.5 font-medium text-orac-slate">{d.dispatch_number || d.id}</td>
                 <td className="px-4 py-2.5"><StatusBadge status={d.status} /></td>
-                <td className="px-4 py-2.5 text-gray-500">{d.site_name || d.mine_site || "—"}</td>
+                <td className="px-4 py-2.5 text-orac-text-muted">{d.site_name || d.mine_site || "—"}</td>
               </tr>
             )}
           />
@@ -518,7 +518,7 @@ export default function DashboardPage({ user }) {
                 <td className="px-4 py-2.5 font-medium text-orac-slate">{ws.activity || "—"}</td>
                 <td className="px-4 py-2.5 tabular-nums">{ws.hours ?? "—"}</td>
                 <td className="px-4 py-2.5"><StatusBadge status={ws.status} /></td>
-                <td className="px-4 py-2.5 text-gray-500">{ws.technician_name || "—"}</td>
+                <td className="px-4 py-2.5 text-orac-text-muted">{ws.technician_name || "—"}</td>
               </tr>
             )}
           />

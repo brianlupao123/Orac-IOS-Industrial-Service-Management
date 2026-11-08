@@ -121,7 +121,7 @@ function ancestorsAboveParent(row) {
 
 function ParentContextCell({ row }) {
   const parent = immediateParentNode(row);
-  if (!parent) return <span className="text-orac-border-strong">—</span>;
+  if (!parent) return <span className="text-orac-text-muted">—</span>;
   const ancestors = ancestorsAboveParent(row);
   return (
     <div>
