@@ -14,6 +14,21 @@ import path from "node:path";
 import { chromium } from "playwright";
 import { ROOT, readJson } from "./ux-lib.mjs";
 
+// Wait until the page has really finished loading, so counts do not depend on timing:
+// network quiet, no loading markers or pulsing skeletons, and the page text stable for two reads in a row.
+async function settle(page) {
+  await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
+  await page.waitForFunction(() => !document.querySelector('[data-evidence*="loading"], [aria-busy="true"], .animate-pulse'), undefined, { timeout: 10000 }).catch(() => {});
+  await page.waitForFunction(() => !/(^|\n)\s*(Loading|Checking|Fetching)\b/i.test(document.body.innerText), undefined, { timeout: 10000 }).catch(() => {});
+  let last = -1, same = 0;
+  for (let i = 0; i < 24 && same < 2; i++) {
+    const n = await page.evaluate(() => document.body.innerText.length).catch(() => -1);
+    same = n === last ? same + 1 : 0; last = n;
+    await page.waitForTimeout(250);
+  }
+}
+
+
 const args = process.argv.slice(2);
 const opt = (k, d) => (args.includes(k) ? args[args.indexOf(k) + 1] : d);
 const target = opt("--target", "prototype");
@@ -208,8 +223,7 @@ try {
         await page.waitForURL((u) => !u.pathname.endsWith("/login"), { timeout: 15000 });
         for (const route of list) {
           await page.goto(`${base}${route}`, { waitUntil: "domcontentloaded" });
-          await page.waitForFunction(() => !document.querySelector('[data-evidence*="loading"]'), undefined, { timeout: 15000 }).catch(() => {});
-          await page.waitForTimeout(200);
+          await settle(page);
           const res = await page.evaluate(measure, { spec, kind: "app" });
           const extra = vp.width >= 1024 && theme === "light" ? await focusStops(page, spec.global.focusTabStops) : [];
           record({ theme, device: `${vp.width}px`, screen: "app", role, page: route }, res, extra);

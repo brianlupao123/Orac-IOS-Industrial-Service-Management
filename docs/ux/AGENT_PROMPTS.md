@@ -25,8 +25,9 @@ HARD RULES
 9. END OF EVERY PHASE: paste `git status --short` and `git diff --stat <phase start>..HEAD`. Files outside the phase's stated scope mean stop and report.
 10. PRESENTATION ONLY ON ux/* BRANCHES. These branches may change class names, markup wrappers, tokens, docs/ux and the UX tooling. Business logic (src/lib, models, API, validation, and tests of logic) never goes on a ux/* branch. If you find such a commit there, stop and report.
 11. NEVER DELETE A SIZE OR COLOUR CLASS WITHOUT A REPLACEMENT. Every changed class is listed in the report as old -> new.
-12. Do not claim anything works until you have run it. Paste real command output in your report.
-13. If the prototype and the plan disagree, the prototype wins for appearance; ask me about anything else.
+12. At the end of every phase run `npm run ux:diffguard`. It must report 0 findings. An exception needs an entry in ux/diffguard.allow.json with a reason, and I must approve it.
+7. Do not claim anything works until you have run it. Paste real command output in your report.
+8. If the prototype and the plan disagree, the prototype wins for appearance; ask me about anything else.
 
 BEFORE YOU FINISH EVERY PHASE run, in this order, and paste the last lines of each:
    npm test
@@ -94,11 +95,16 @@ PHASE P1b. Branch ux/p1b-tokens, created after P1a is merged. Requires my confir
 Acceptance: ux:check passes with parity enforced; 615 tests pass, 0 skipped; build passes; screenshots at 1440, 1024 and 390 px attached for Dashboard, one table page and one form page, light and dark.
 ```
 
-## P2 Type system
+## P2 Type system (folded into P3)
+
+The type scale is now step 0 of P3, because the type classes live inside the shared components. Do not run P2 on its own. Do not mass-convert text-sm anywhere.
+
+## P3 Type scale and shared components
 
 ```
-PHASE P2. Branch ux/p2-type.
-1. In tailwind.config.js extend theme.fontSize with these semantic entries (size, line height, weight together):
+PHASE P3. Branch ux/p3-components from main. This phase adds NEW files and one config change. It must not change any existing page or component, so nothing on screen changes.
+STEP 0. TYPE SCALE (was P2).
+ a. In tailwind.config.js extend theme.fontSize with these semantic entries (size, line height, weight together):
    ux-title [1.5rem, {lineHeight:'1.3', fontWeight:'700'}]
    ux-section [1.125rem, {lineHeight:'1.4', fontWeight:'600'}]
    ux-sub [1rem, {lineHeight:'1.5', fontWeight:'600'}]
@@ -107,27 +113,24 @@ PHASE P2. Branch ux/p2-type.
    ux-secondary [0.875rem, {lineHeight:'1.45', fontWeight:'400'}]
    ux-caption [0.75rem, {lineHeight:'1.4', fontWeight:'500'}]
    ux-stat [1.75rem, {lineHeight:'1.2', fontWeight:'400'}]
-   Keep the existing sizes. Do not set letter-spacing (index.css forces it to 0).
-2. Add a test tests/uxTypeScale.test.js that asserts each of the 8 keys exists in tailwind.config.js with the exact size above.
-3. Do not change any page or component in this phase.
-Acceptance: tests pass; no src/ change except tailwind.config.js and the new test.
-```
-
-## P3 Shared components
-
-```
-PHASE P3. Branch ux/p3-components. Create NEW files only under src/components/ui/. Do not change any existing component or page.
-Use docs/ux/PAGE_CONTENT_UNIFORMITY_PLAN.md and the prototype's Design system screen as the spec. Every component must be a plain function component with forwarded props, use only orac-* token classes and text-ux-* classes, and set the data-ux attribute shown.
- Button.jsx  data-ux="button" data-variant data-size. Variants primary, secondary, danger, ghost. Sizes md (min-h-[44px], px-5) and sm (min-h-[40px], px-4, data-size="sm"). Text text-ux-label bold. Border 2px. Primary: filled orac-accent-strong, white text, shadow-sm. Secondary: orac-accent border and text on orac-surface. States: hover, active (translate 1px), focus-visible ring, disabled (opacity 50, no pointer), loading (spinner, keeps width, aria-busy). Default type="button".
+   Keep the existing sizes. Do not set letter-spacing (index.css forces it to 0). The ladder must descend: title 24 > section 18 > sub 16 = label 16 > secondary 14 > caption 12.
+ b. Add tests/uxTypeScale.test.js asserting each of the 8 keys exists in tailwind.config.js with the exact size above. Commit as "feat(ux): semantic type scale".
+STEP 1. COMPONENTS under src/components/ui/, NEW files only.
+Use docs/ux/PAGE_CONTENT_UNIFORMITY_PLAN.md and the prototype's Design system screen as the spec. Every component is a plain function component with forwarded props (ref where it makes sense), uses only orac-* token classes and text-ux-* classes, and sets the data-ux attribute shown. Work in both themes: tokens only, no raw colours, no dark: overrides.
+ Button.jsx  data-ux="button" data-variant data-size. Variants primary, secondary, danger, ghost, link. Sizes md (min-h-[44px], px-5) and sm (min-h-[40px], px-4, data-size="sm"). Text text-ux-label. Border 2px. Primary: filled orac-accent-strong, white text, shadow-sm. Secondary: orac-accent border and text on orac-surface. States: hover, active (translate 1px), focus-visible ring, disabled (opacity 50, no pointer), loading (spinner, keeps width, aria-busy). Default type="button".
+   The "link" variant is for actions inside table rows (Edit, Disable, History). Text only, text-orac-accent, underline on hover, px-2. Its height must be at least 44px on screens under 900px wide and at least 32px from 900px up: min-h-[44px] min-[900px]:min-h-[32px], inline-flex items-center. The probe found 800 targets of 20px high, mostly these.
  Field.jsx   data-ux="label" on the label (text-ux-label), helper text (text-ux-secondary), error text with role="alert" and an icon, htmlFor/id wiring, required marker.
- Input.jsx, Select.jsx, Textarea.jsx  data-ux="input". min-h-[44px], text-ux-body, rounded-lg, border-orac-border-strong, bg-orac-canvas, visible focus ring, aria-invalid styling.
+ Input.jsx, Select.jsx, Textarea.jsx  data-ux="input". min-h-[44px] under 900px and min-h-[40px] from 900px up, text-ux-body, rounded-lg, border-orac-border-strong, bg-orac-canvas, visible focus ring, aria-invalid styling.
  Panel.jsx   data-ux="panel". rounded-xl, border-orac-border-default, bg-orac-surface, shadow, p-6; optional header slot.
- PageTitle.jsx (h1, data-ux="page-title", text-ux-title), SectionTitle.jsx (h2, data-ux="section-title", text-ux-section), SubTitle.jsx (h3, text-ux-sub).
+ PageTitle.jsx (h1, data-ux="page-title", text-ux-title), SectionTitle.jsx (h2, data-ux="section-title", text-ux-section), SubTitle.jsx (h3, data-ux="sub-title", text-ux-sub). Never render an h3 larger than an h2.
  Notice.jsx  variants error, warning, info, success from the status tokens; role="alert" for error, role="status" otherwise; icon plus text (never colour alone).
- Badge.jsx   data-ux="badge", text-ux-caption, rounded-full; tones from status tokens only.
+ Badge.jsx   data-ux="badge", text-ux-caption, rounded-full; tones from status tokens only. Add a CountBadge variant for the notification count: bg-orac-danger-text with white text must give at least 4.5:1 in both themes, or use bg-red-700 as P1d did; say which you chose and show the contrast.
  BrandMark.jsx data-ux="brandmark"; renders /images/orac-systems-logo.png in a white circle, object-contain; props size in {40,48,80}; alt "Orac Systems"; width and height attributes set.
-Add tests/uxPrimitives.test.js (source-string tests in the repository's existing style) asserting for each component: the data-ux attribute, the minimum heights, no raw colour classes (no bg-gray-*, text-slate-*, hex), and that Button defaults type="button".
-Acceptance: all new tests and old tests pass; ratchet totals unchanged (components must add zero violations; they are the allowed place for <button>, <input>: confirm exceptFiles in ux/rules.json lists Button.jsx, Field.jsx, Input.jsx and add Select.jsx and Textarea.jsx to CMP-INPUT, plus BrandMark.jsx to BRAND-LOGO, committed as a rules change with a note).
+STEP 2. TESTS AND RULES.
+ Add tests/uxPrimitives.test.js (source-string tests in the repository's existing style) asserting for each component: the data-ux attribute, the minimum heights, no raw colour classes (no bg-gray-*, text-slate-*, hex), that Button defaults type="button", and that the link variant has both min-h values.
+ In ux/rules.json add Select.jsx and Textarea.jsx to the CMP-INPUT exceptFiles and BrandMark.jsx to the BRAND-LOGO exceptFiles (Button.jsx, Field.jsx and Input.jsx are already listed). Commit as a rules change with a note: "primitives are the one allowed place for raw elements".
+STEP 3. A DEMO FOR ME. Add src/components/ui/_demo.md (not code) listing every component, its props and one usage example. Do not wire any component into a page.
+Acceptance: all new and old tests pass; npm run build passes; ratchet totals unchanged (components add zero violations); npm run ux:diffguard reports 0 findings; ux-check passes.
 ```
 
 ## P4 Migrate shared components
