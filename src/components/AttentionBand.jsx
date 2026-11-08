@@ -30,33 +30,33 @@ export default function AttentionBand({ items = [] }) {
     <div
       role="list"
       aria-label="Key metrics"
-      className={`grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-gray-200 bg-orac-border-default shadow-sm ${SM_COLS[n]} ${LG_COLS[n]}`}
+      className={`grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-orac-border-default bg-orac-border-default shadow-sm ${SM_COLS[n]} ${LG_COLS[n]}`}
     >
       {items.map((item, i) => (
         <div
           role="listitem"
           key={item.label || i}
           className={`flex items-center gap-3 px-5 py-4 ${
-            item.attention ? "border-l-4 border-amber-500 bg-amber-50 dark:bg-amber-950" : "bg-white"
+            item.attention ? "border-l-4 border-orac-warning-border bg-orac-warning-bg" : "bg-orac-surface"
           }`}
         >
           {item.iconPath && (
             <span
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${
                 item.attention
-                  ? "border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
-                  : "border-gray-200 bg-gray-50 text-orac-blue"
+                  ? "border-orac-warning-border bg-orac-warning-bg text-orac-warning-text"
+                  : "border-orac-border-default bg-orac-surface-muted text-orac-blue"
               }`}
             >
               <Icon path={item.iconPath} />
             </span>
           )}
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-gray-600">{item.label}</p>
-            <p className="mt-0.5 flex items-baseline gap-1.5 text-2xl font-semibold tabular-nums text-gray-900">
+            <p className="truncate text-ux-label font-semibold text-orac-text-secondary">{item.label}</p>
+            <p className="mt-0.5 flex items-baseline gap-1.5 text-ux-stat font-semibold tabular-nums text-orac-text-primary">
               {item.value}
               {item.attention && (
-                <span className="text-sm font-semibold text-amber-800 dark:text-amber-300">needs attention</span>
+                <span className="text-ux-caption font-semibold text-orac-warning-text">needs attention</span>
               )}
             </p>
           </div>
