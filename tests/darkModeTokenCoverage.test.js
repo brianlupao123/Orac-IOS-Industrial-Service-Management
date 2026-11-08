@@ -21,6 +21,7 @@ const INTENTIONALLY_UNMAPPED = new Set([
   "bg-slate-700",      // LandingPage CTA hover, always-dark button
   "bg-slate-800",      // LandingPage CTA hover, always-dark button
   "bg-slate-900",      // LandingPage CTA / footer, always-dark by design
+  "bg-red-700",        // NotificationBell unread badge, fixed-dark for >=4.5:1 in light and dark
   "border-slate-500",  // LandingPage decorative hover border, non-essential
   "border-slate-900",  // LandingPage decorative accent stripe, non-essential
   "text-white",        // always paired with a fixed-dark background
