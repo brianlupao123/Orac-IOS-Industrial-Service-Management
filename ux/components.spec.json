@@ -22,7 +22,9 @@
     "ignore": {
       "app": "[data-probe-ignore]",
       "proto": "[data-probe-ignore], .sheet"
-    }
+    },
+    "desktopTargetPx": 32,
+    "_target_note": "Touch widths (under 900 px) need 44 px (40 px for small controls). Pointer widths need 32 px. WCAG 2.2 AA (2.5.8) requires 24 px; 32 px is our comfort margin."
   },
   "components": {
     "button": {
