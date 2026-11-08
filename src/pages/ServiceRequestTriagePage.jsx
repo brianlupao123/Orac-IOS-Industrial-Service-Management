@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import StatusBadge from "../components/StatusBadge.jsx";
 import { serviceRequests, assistant } from "../api/client.js";
 import PageHeaderBanner from "../components/PageHeaderBanner.jsx";
 import { ICONS } from "../components/icons.jsx";
@@ -126,7 +127,7 @@ export default function ServiceRequestTriagePage() {
                     <h2 className="text-base font-semibold text-orac-slate">{item.title}</h2>
                     <p className="text-sm text-gray-600">{item.client_name || "Unknown client"}{item.created_by_name ? ` · requested by ${item.created_by_name}` : ""}</p>
                   </div>
-                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusTone(item.status)}`}>{statusLabel(item.status)}</span>
+                  <StatusBadge status={item.status} />
                 </div>
                 <p className="mt-3 whitespace-pre-wrap text-sm text-gray-800">{item.service_need}</p>
                 <dl className="mt-3 grid gap-x-6 gap-y-1 text-sm text-gray-600 sm:grid-cols-2 lg:grid-cols-4">
