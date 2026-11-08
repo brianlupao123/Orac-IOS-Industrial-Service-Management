@@ -29,14 +29,15 @@ export default function StatusSummary({ items, label = "Status summary", classNa
           <li
             key={item.key || item.label}
             data-evidence="status-summary-item"
+            data-ux="stat-tile"
             className="flex min-w-0 items-start justify-between gap-3 rounded-lg border border-orac-border-default bg-orac-surface px-4 py-3 shadow-sm"
             style={{ borderLeftWidth: "4px", borderLeftColor: TONE_VAR[item.tone] || TONE_VAR.neutral }}
           >
             <div className="min-w-0">
-              <p className="text-base font-semibold text-orac-text-primary">{item.label}</p>
+              <p data-ux="stat-label" className="text-base font-semibold text-orac-text-primary">{item.label}</p>
               {item.meaning && <p className="mt-0.5 text-sm text-orac-text-secondary">{item.meaning}</p>}
             </div>
-            <p className="shrink-0 rounded-full bg-orac-surface-muted px-3 py-1 text-sm font-semibold tabular-nums text-orac-text-primary">
+            <p data-ux="stat-count" className="shrink-0 rounded-full bg-orac-surface-muted px-3 py-1 text-sm font-semibold tabular-nums text-orac-text-primary">
               {item.count === undefined || item.count === null ? "-" : item.count}
               <span className="sr-only">{typeof item.count === "number" ? (item.count === 1 ? " record" : " records") : ""}</span>
             </p>
