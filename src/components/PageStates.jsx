@@ -1,8 +1,14 @@
 import React from "react";
 import { Icon } from "./icons.jsx";
+import Notice from "./ui/Notice.jsx";
+import Button from "./ui/Button.jsx";
 
 export function ErrorBanner({ message }) {
-  return <div data-evidence="page-error-state" className="flex gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300"><span className="mt-0.5 shrink-0 text-red-600 dark:text-red-400"><Icon path="M12 3 2 21h20L12 3Zm0 6v4m0 4h.01" /></span><p>{message}</p></div>;
+  return (
+    <Notice variant="error" data-evidence="page-error-state">
+      {message}
+    </Notice>
+  );
 }
 
 // Presentation-only loading placeholder. It preserves the visual footprint of
@@ -12,13 +18,13 @@ export function PageLoadingSkeleton({ rows = 3, label = "Loading content" }) {
   return (
     <div data-evidence="page-loading-skeleton" role="status" aria-label={label} className="space-y-4" aria-busy="true">
       <span className="sr-only">{label}</span>
-      <div className="h-28 animate-pulse rounded-xl border border-gray-200 bg-gray-50 dark:border-slate-800 dark:bg-slate-900" />
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <div className="h-28 animate-pulse rounded-xl border border-orac-border-default bg-orac-surface-muted" />
+      <div className="overflow-hidden rounded-xl border border-orac-border-default bg-orac-surface">
         {Array.from({ length: rows }, (_, index) => (
-          <div key={index} className="grid grid-cols-[minmax(0,2fr)_minmax(5rem,1fr)_minmax(5rem,1fr)] gap-4 border-b border-gray-100 px-5 py-5 last:border-b-0 dark:border-slate-800">
-            <span className="h-4 animate-pulse rounded bg-gray-100 dark:bg-slate-800" />
-            <span className="h-4 animate-pulse rounded bg-gray-100 dark:bg-slate-800" />
-            <span className="h-4 animate-pulse rounded bg-gray-100 dark:bg-slate-800" />
+          <div key={index} className="grid grid-cols-[minmax(0,2fr)_minmax(5rem,1fr)_minmax(5rem,1fr)] gap-4 border-b border-orac-border-default px-5 py-5 last:border-b-0">
+            <span className="h-4 animate-pulse rounded bg-orac-surface-muted" />
+            <span className="h-4 animate-pulse rounded bg-orac-surface-muted" />
+            <span className="h-4 animate-pulse rounded bg-orac-surface-muted" />
           </div>
         ))}
       </div>
@@ -27,7 +33,17 @@ export function PageLoadingSkeleton({ rows = 3, label = "Loading content" }) {
 }
 
 export function PageEmptyState({ iconPath, title, subtitle, compact = false }) {
-  return <div data-evidence="page-empty-state" className={`flex flex-col items-center justify-center px-6 text-center ${compact ? "min-h-24 py-5" : "min-h-48 py-12"}`}><span className={`flex items-center justify-center rounded-full bg-sky-50 text-orac-blue dark:bg-sky-950/40 ${compact ? "h-9 w-9" : "h-11 w-11"}`}><Icon path={iconPath} /></span><h2 className={`${compact ? "mt-2 text-sm" : "mt-4 text-base"} font-semibold text-orac-blue`}>{title}</h2>{subtitle && <p className="mt-1 max-w-md text-sm leading-6 text-gray-600">{subtitle}</p>}</div>;
+  return (
+    <div data-evidence="page-empty-state" className={`flex flex-col items-center justify-center px-6 text-center ${compact ? "min-h-24 py-5" : "min-h-48 py-12"}`}>
+      <span className={`flex items-center justify-center rounded-full bg-sky-50 text-orac-blue dark:bg-sky-950/40 dark:text-sky-300 ${compact ? "h-9 w-9" : "h-11 w-11"}`}>
+        <Icon path={iconPath} />
+      </span>
+      <h2 className={`${compact ? "mt-2 text-ux-label" : "mt-4 text-ux-section"} font-semibold text-orac-text-primary`}>
+        {title}
+      </h2>
+      {subtitle && <p className="mt-1 max-w-md text-ux-body text-orac-text-secondary">{subtitle}</p>}
+    </div>
+  );
 }
 
 export function RestrictedState({
@@ -41,8 +57,8 @@ export function RestrictedState({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
       </span>
-      <h2 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
-      <p className="mt-1 max-w-md text-sm text-gray-600 dark:text-gray-400">{description}</p>
+      <h2 className="mt-4 text-ux-section font-semibold text-orac-text-primary">{title}</h2>
+      <p className="mt-1 max-w-md text-ux-body text-orac-text-secondary">{description}</p>
     </div>
   );
 }
@@ -58,8 +74,8 @@ export function OfflineState({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M18.364 5.636a9 9 0 010 12.728M5.636 18.364a9 9 0 010-12.728M3 3l18 18" />
         </svg>
       </span>
-      <h2 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
-      <p className="mt-1 max-w-md text-sm text-gray-600 dark:text-gray-400">{description}</p>
+      <h2 className="mt-4 text-ux-section font-semibold text-orac-text-primary">{title}</h2>
+      <p className="mt-1 max-w-md text-ux-body text-orac-text-secondary">{description}</p>
     </div>
   );
 }
@@ -76,15 +92,14 @@ export function SessionExpiredState({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </span>
-      <h2 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
-      <p className="mt-1 max-w-md text-sm text-gray-600 dark:text-gray-400">{description}</p>
+      <h2 className="mt-4 text-ux-section font-semibold text-orac-text-primary">{title}</h2>
+      <p className="mt-1 max-w-md text-ux-body text-orac-text-secondary">{description}</p>
       {onSignIn && (
-        <button
-          onClick={onSignIn}
-          className="orac-control mt-4 inline-flex items-center rounded-lg bg-orac-navy px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orac-navy/90 transition-all focus:outline-none focus:ring-2 focus:ring-orac-blue/50"
-        >
-          Sign In
-        </button>
+        <div className="mt-4">
+          <Button variant="primary" onClick={onSignIn}>
+            Sign In
+          </Button>
+        </div>
       )}
     </div>
   );
