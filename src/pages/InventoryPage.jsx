@@ -224,7 +224,7 @@ export default function InventoryPage({ user }) {
           <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
             {/* Record Movement Form */}
             {canManage && (
-              <div className="lg:col-span-1">
+              <div className="min-w-0 lg:col-span-1">
                 <form onSubmit={handleMovement} className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm sticky top-6">
                   <h2 className="mb-5 text-sm font-semibold text-orac-slate">Record movement</h2>
                   <div className="space-y-4">
@@ -341,7 +341,7 @@ export default function InventoryPage({ user }) {
             )}
 
             {/* Stock List */}
-            <div className={canManage ? "lg:col-span-1" : "lg:col-span-2"}>
+            <div className={canManage ? "min-w-0 lg:col-span-1" : "min-w-0 lg:col-span-2"}>
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                   <input
