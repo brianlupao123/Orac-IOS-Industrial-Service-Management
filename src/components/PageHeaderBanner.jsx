@@ -18,7 +18,7 @@ export default function PageHeaderBanner({ eyebrow, title, subtitle, iconPath, a
             </span>
           )}
           <div className="min-w-0">
-            {eyebrow && <p className="text-ux-caption font-semibold text-orac-accent">{eyebrow}</p>}
+            {eyebrow && <p className="text-ux-secondary text-orac-text-secondary">{eyebrow}</p>}
             <PageTitle>{title}</PageTitle>
             {subtitle && <p className="mt-1 max-w-prose text-ux-body text-orac-text-secondary">{subtitle}</p>}
             {meta && meta.length > 0 && (
