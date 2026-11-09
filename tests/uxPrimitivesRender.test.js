@@ -232,7 +232,9 @@ test("Badge and CountBadge render data-ux=badge with valid classes", async () =>
   `);
 
   assert.ok(mod.badge.includes('data-ux="badge"'), "Badge has data-ux=badge");
-  assert.ok(mod.badge.includes("text-ux-caption"), "Badge has text-ux-caption");
+  assert.ok(mod.badge.includes("text-ux-secondary"), "Badge has text-ux-secondary");
+  assert.ok(mod.badge.includes("border-orac-success-border"), "Badge has tone border");
+  assert.ok(mod.badge.includes("h-1.5 w-1.5 rounded-full bg-current"), "Badge renders 6px dot");
   assert.ok(mod.badge.includes("rounded-full"), "Badge is rounded-full");
 
   assert.ok(mod.count.includes('data-ux="badge"'), "CountBadge has data-ux=badge");

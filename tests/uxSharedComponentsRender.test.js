@@ -77,6 +77,8 @@ test("StatusBadge renders data-ux=badge with unified status mappings", async () 
   assert.ok(mod.draft.includes(">Draft</span>"), "Draft text is rendered");
 
   assert.ok(mod.sent.includes('data-ux="badge"'), "Sent has data-ux=badge");
+  assert.ok(mod.sent.includes("border-orac-info-border"), "Sent has info border");
+  assert.ok(mod.sent.includes("h-1.5 w-1.5 rounded-full bg-current"), "Sent has 6px dot");
   assert.ok(mod.sent.includes(">Sent</span>"), "Sent text is rendered");
 
   assert.ok(mod.awaitingPo.includes('data-ux="badge"'), "Awaiting PO has data-ux=badge");
