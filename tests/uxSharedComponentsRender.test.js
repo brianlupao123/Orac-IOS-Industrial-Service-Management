@@ -108,6 +108,7 @@ test("TabNav renders 44px min-height tabs with active and inactive styling", asy
   assert.ok(mod.html.includes('aria-selected="true"'), "Active tab has aria-selected=true");
   assert.ok(mod.html.includes('aria-selected="false"'), "Inactive tab has aria-selected=false");
   assert.ok(mod.html.includes("text-ux-body"), "Tabs use text-ux-body");
+  assert.ok(mod.html.includes("border-b-[3px] border-orac-accent"), "Active tab has 3px accent underline");
 });
 
 test("StatCard renders tile hierarchy matching prototype", async () => {
