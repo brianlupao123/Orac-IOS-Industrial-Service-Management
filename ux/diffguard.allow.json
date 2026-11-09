@@ -1,0 +1,14 @@
+{
+  "allow": [
+    {
+      "file": "src/components/StatCard.jsx",
+      "rule": "SIZE-LOST",
+      "reason": "C4: text-xl icon replaced by explicit h-5 w-5 SVG sizing inside a 40px chip per prototype spec"
+    },
+    {
+      "file": "src/components/ui/Badge.jsx",
+      "rule": "SIZE-LOST",
+      "reason": "C3: text-ux-caption default replaced by text-ux-secondary (14px) per prototype spec; compact density still uses text-ux-caption"
+    }
+  ]
+}
