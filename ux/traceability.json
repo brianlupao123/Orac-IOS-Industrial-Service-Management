@@ -1,6 +1,6 @@
 {
-  "generated": "2026-11-08T10:55:18.170Z",
-  "commit": "7e98692",
+  "generated": "2026-11-09T08:43:40.665Z",
+  "commit": "fa4a069",
   "total": 38,
   "done": 6,
   "inProgress": 2,
@@ -20,7 +20,7 @@
   },
   "probes": {
     "prototype": null,
-    "app": "2026-11-08T10-03-19-162Z"
+    "app": "2026-11-09T08-12-19-599Z"
   },
   "rows": [
     {
@@ -124,7 +124,7 @@
           "kind": "ratchet",
           "ref": "TYP-XS",
           "s": "OPEN",
-          "d": "302 now (baseline 304); 59 in guarded files"
+          "d": "262 now (baseline 262); 59 in guarded files"
         }
       ],
       "overall": "NOT STARTED"
@@ -148,7 +148,7 @@
           "kind": "ratchet",
           "ref": "TYP-SM",
           "s": "OPEN",
-          "d": "791 now (baseline 804); 127 in guarded files"
+          "d": "596 now (baseline 596); 127 in guarded files"
         }
       ],
       "overall": "NOT STARTED"
@@ -330,13 +330,13 @@
           "kind": "ratchet",
           "ref": "CMP-BUTTON",
           "s": "OPEN",
-          "d": "273 now (baseline 275); 74 in guarded files"
+          "d": "238 now (baseline 238); 74 in guarded files"
         },
         {
           "kind": "probe",
           "ref": "CMP-button",
-          "s": "NOT RUN",
-          "d": "prototype: not run; portal: pass"
+          "s": "OPEN",
+          "d": "prototype: not run; portal: [object Object] findings"
         }
       ],
       "overall": "NOT STARTED"
@@ -766,7 +766,7 @@
           "kind": "ratchet",
           "ref": "COL-RAW",
           "s": "OPEN",
-          "d": "2195 now (baseline 2255); 395 in guarded files"
+          "d": "1768 now (baseline 1768); 395 in guarded files"
         }
       ],
       "overall": "NOT STARTED"
@@ -914,7 +914,7 @@
           "kind": "ratchet",
           "ref": "BRAND-LOGO",
           "s": "OPEN",
-          "d": "3 now (baseline 3); 0 in guarded files"
+          "d": "2 now (baseline 2); 0 in guarded files"
         },
         {
           "kind": "probe",
