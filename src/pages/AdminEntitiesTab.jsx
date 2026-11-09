@@ -6,6 +6,10 @@ import Modal from "../components/Modal.jsx";
 import ScopeTrail from "../components/ScopeTrail.jsx";
 import SearchableSelect from "../components/SearchableSelect.jsx";
 import { ErrorBanner } from "../components/PageStates.jsx";
+import { PageLoadingSkeleton } from "../components/PageStates.jsx";
+import Button from "../components/ui/Button.jsx";
+import Badge from "../components/ui/Badge.jsx";
+import { formatMoney } from "../lib/format.js";
 
 // The full master-data chain this tab surfaces. Client sits at the top but
 // is managed from the separate Client Directory tab (Admin > Clients), so
@@ -125,20 +129,20 @@ function ParentContextCell({ row }) {
   const ancestors = ancestorsAboveParent(row);
   return (
     <div>
-      <div className={`text-sm ${row.parent_orphaned ? "text-red-600 font-medium" : "text-gray-700"}`}>
+      <div className={`text-ux-body ${row.parent_orphaned ? "text-orac-danger-text font-medium" : "text-orac-text-primary"}`}>
         {parent.name}
         {row.parent_orphaned && (
-          <span className="ml-2 inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50">
-            Orphan link
+          <span className="ml-2">
+            <Badge tone="danger">Orphan link</Badge>
           </span>
         )}
         {!row.parent_orphaned && parent.is_active === false && (
-          <span className="ml-2 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 border border-gray-200 dark:bg-gray-800/60 dark:text-gray-300 dark:border-gray-700">
-            Parent inactive
+          <span className="ml-2">
+            <Badge tone="neutral">Parent inactive</Badge>
           </span>
         )}
       </div>
-      {ancestors && <div className="text-xs text-orac-text-muted">{ancestors}</div>}
+      {ancestors && <div className="text-ux-caption text-orac-text-muted">{ancestors}</div>}
     </div>
   );
 }
@@ -263,26 +267,26 @@ export default function AdminEntitiesTab({ user }) {
     <div className="flex flex-col md:flex-row gap-6 animate-in fade-in">
       {/* Side Menu */}
       <div className="w-full md:w-64 flex-shrink-0">
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-100 bg-gray-50/50">
-            <h3 className="font-semibold text-orac-blue">Entities</h3>
-            <p className="mt-1 text-xs text-orac-text-muted">
+        <div className="bg-orac-surface border border-orac-border-default rounded-xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-orac-border-default bg-orac-surface-muted">
+            <h3 className="text-ux-section font-semibold text-orac-text-primary">Entities</h3>
+            <p className="mt-1 text-ux-caption text-orac-text-muted">
               Hierarchy: {HIERARCHY_CHAIN.join(" \u203a ")}.{" "}
               {canManageClients
                 ? "Clients are managed from the Client Directory tab."
                 : "Clients are managed by Admin or Management."}
             </p>
           </div>
-          <div className="flex flex-col p-2">
+          <div className="flex flex-col p-2 space-y-1">
             {visibleEntities.map(ent => (
               <button
                 key={ent.key}
                 onClick={() => setActiveEntity(ent.key)}
                 aria-current={activeEntity === ent.key ? "page" : undefined}
-                className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`text-left px-4 py-2.5 rounded-lg text-ux-label font-medium transition-colors ${
                   activeEntity === ent.key 
-                    ? "bg-orac-blue/10 text-orac-blue" 
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "bg-orac-accent/10 text-orac-accent font-semibold" 
+                    : "text-orac-text-secondary hover:bg-orac-row-hover hover:text-orac-text-primary"
                 }`}
               >
                 {ent.label}
@@ -294,7 +298,7 @@ export default function AdminEntitiesTab({ user }) {
 
       {/* Main Content */}
       <div className="flex-1 space-y-4">
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-3">
+        <div className="bg-orac-surface p-6 rounded-xl shadow-sm border border-orac-border-default space-y-4">
           {currentConfig.key !== "catalog_items" && (
             <ScopeTrail
               items={HIERARCHY_CHAIN.map((label) => ({ label, active: label === currentConfig.singular }))}
@@ -303,33 +307,28 @@ export default function AdminEntitiesTab({ user }) {
           <div className="flex justify-between items-center gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-orac-blue">{currentConfig.label}</h2>
-                <span
-                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
-                    currentConfig.ownership === "orac"
-                      ? "bg-sky-50 text-sky-700 border-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900/50"
-                      : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50"
-                  }`}
-                >
+                <h2 className="text-ux-section font-semibold text-orac-text-primary">{currentConfig.label}</h2>
+                <Badge tone={currentConfig.ownership === "orac" ? "info" : "success"}>
                   {OWNERSHIP_LABEL[currentConfig.ownership]}
-                </span>
+                </Badge>
               </div>
-              <p className="text-sm text-gray-500">{currentConfig.purpose}</p>
+              <p className="mt-1 text-ux-body text-orac-text-secondary">{currentConfig.purpose}</p>
             </div>
-            <button
+            <Button
               onClick={() => setModal({ open: true, item: null })}
-              className="px-4 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md hover:bg-slate-700 transition-all whitespace-nowrap"
+              variant="primary"
+              className="whitespace-nowrap"
             >
-              + Add New
-            </button>
+              + Add new
+            </Button>
           </div>
         </div>
 
         {error && <ErrorBanner message={error} />}
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="rounded-xl shadow-sm border border-orac-border-default overflow-hidden">
           {loading ? (
-            <div className="p-12 text-center text-orac-text-muted">Loading {currentConfig.label}...</div>
+            <PageLoadingSkeleton label={`Loading ${currentConfig.label}`} />
           ) : (
             <DataTable
               title=""
@@ -337,77 +336,88 @@ export default function AdminEntitiesTab({ user }) {
               rows={data}
               emptyText={`No ${currentConfig.label.toLowerCase()} found.`}
               renderRow={(row) => (
-                <tr key={row.id} className="transition-colors hover:bg-gray-50/80 group">
+                <tr key={row.id} className="transition-colors hover:bg-orac-row-hover group">
                   {/* Common Render logic, dynamically handled based on entity */}
                   {activeEntity === "mine_sites" && (
                     <>
-                      <td className="px-5 py-4 text-sm font-medium text-orac-blue">{row.name}</td>
-                      <td className="px-5 py-4"><ParentContextCell row={row} /></td>
-                      <td className="px-5 py-4 text-sm text-gray-500">{row.location || "—"}</td>
+                      <td className="px-6 py-4">
+                        <a onClick={() => setModal({ open: true, item: row })} className="cursor-pointer text-ux-body font-semibold text-orac-text-primary hover:underline hover:text-orac-accent">{row.name}</a>
+                      </td>
+                      <td className="px-6 py-4"><ParentContextCell row={row} /></td>
+                      <td className="px-6 py-4 text-ux-body text-orac-text-secondary">{row.location || "—"}</td>
                     </>
                   )}
                   {activeEntity === "plants" && (
                     <>
-                      <td className="px-5 py-4 text-sm font-medium text-orac-blue">{row.name}</td>
-                      <td className="px-5 py-4"><ParentContextCell row={row} /></td>
+                      <td className="px-6 py-4">
+                        <a onClick={() => setModal({ open: true, item: row })} className="cursor-pointer text-ux-body font-semibold text-orac-text-primary hover:underline hover:text-orac-accent">{row.name}</a>
+                      </td>
+                      <td className="px-6 py-4"><ParentContextCell row={row} /></td>
                     </>
                   )}
                   {activeEntity === "plant_sections" && (
                     <>
-                      <td className="px-5 py-4 text-sm font-medium text-orac-blue">{row.name}</td>
-                      <td className="px-5 py-4"><ParentContextCell row={row} /></td>
+                      <td className="px-6 py-4">
+                        <a onClick={() => setModal({ open: true, item: row })} className="cursor-pointer text-ux-body font-semibold text-orac-text-primary hover:underline hover:text-orac-accent">{row.name}</a>
+                      </td>
+                      <td className="px-6 py-4"><ParentContextCell row={row} /></td>
                     </>
                   )}
                   {activeEntity === "equipment_tags" && (
                     <>
-                      <td className="px-5 py-4 text-sm font-medium text-orac-blue">{row.tag_code}</td>
-                      <td className="px-5 py-4 text-sm text-gray-500">{row.equipment_name}</td>
-                      <td className="px-5 py-4"><ParentContextCell row={row} /></td>
+                      <td className="px-6 py-4">
+                        <a onClick={() => setModal({ open: true, item: row })} className="cursor-pointer text-ux-body font-semibold text-orac-text-primary hover:underline hover:text-orac-accent">{row.tag_code}</a>
+                      </td>
+                      <td className="px-6 py-4 text-ux-body text-orac-text-secondary">{row.equipment_name}</td>
+                      <td className="px-6 py-4"><ParentContextCell row={row} /></td>
                     </>
                   )}
                   {activeEntity === "catalog_items" && (
                     <>
-                      {/* FIX: backend/schema field names are item_code and
-                          item_name (see schemas.js AdminCreateCatalogItemSchema
-                          and curatedDemoData.js), not part_number/description. */}
-                      <td className="px-5 py-4 text-sm font-medium text-orac-blue">{row.item_code}</td>
-                      <td className="px-5 py-4 text-sm text-gray-500">{row.item_name}</td>
-                      <td className="px-5 py-4 text-sm text-gray-500">${row.unit_price}</td>
+                      <td className="px-6 py-4">
+                        <a onClick={() => setModal({ open: true, item: row })} className="cursor-pointer text-ux-body font-semibold text-orac-text-primary hover:underline hover:text-orac-accent">{row.item_code}</a>
+                      </td>
+                      <td className="px-6 py-4 text-ux-body text-orac-text-secondary">{row.item_name}</td>
+                      <td className="px-6 py-4 text-ux-body tabular-nums text-orac-text-primary font-semibold">{formatMoney(row.unit_price)}</td>
                     </>
                   )}
 
-                  <td className="px-5 py-4 text-sm">
+                  <td className="px-6 py-4">
                     <StatusBadge status={row.is_active !== false ? "Active" : "Inactive"} />
                   </td>
-                  <td className="px-5 py-4 text-sm text-right space-x-3">
-                    <button
-                      onClick={() => setModal({ open: true, item: row })}
-                      className="text-orac-blue font-medium hover:underline transition-colors opacity-70 group-hover:opacity-100 group-focus-within:opacity-100"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={async () => {
-                        const isActive = row.is_active !== false;
-                        const effect = isActive
-                          ? statusEffectNote(currentConfig)
-                          : "It becomes available for new links again.";
-                        if (!confirm(`${isActive ? "Deactivate" : "Reactivate"} this record?${effect ? `\n\n${effect}` : ""}`)) return;
-                        try {
-                          if (isActive) {
-                            await admin.deactivateEntity(activeEntity, row.id);
-                          } else {
-                            await admin.reactivateEntity(activeEntity, row.id);
-                          }
-                          loadData(activeEntity);
-                        } catch (err) { alert("Error: " + err.message); }
-                      }}
-                      className={`font-medium transition-colors opacity-70 group-hover:opacity-100 group-focus-within:opacity-100 ${
-                        row.is_active !== false ? "text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300" : "text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
-                      }`}
-                    >
-                      {row.is_active !== false ? "Disable" : "Enable"}
-                    </button>
+                  <td className="px-6 py-4 text-right whitespace-nowrap">
+                    <div className="inline-flex items-center gap-2 opacity-70 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                      <Button
+                        variant="link"
+                        onClick={() => setModal({ open: true, item: row })}
+                        className="font-bold text-orac-accent"
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="link"
+                        onClick={async () => {
+                          const isActive = row.is_active !== false;
+                          const effect = isActive
+                            ? statusEffectNote(currentConfig)
+                            : "It becomes available for new links again.";
+                          if (!confirm(`${isActive ? "Deactivate" : "Reactivate"} this record?${effect ? `\n\n${effect}` : ""}`)) return;
+                          try {
+                            if (isActive) {
+                              await admin.deactivateEntity(activeEntity, row.id);
+                            } else {
+                              await admin.reactivateEntity(activeEntity, row.id);
+                            }
+                            loadData(activeEntity);
+                          } catch (err) { alert("Error: " + err.message); }
+                        }}
+                        className={`font-bold ${
+                          row.is_active !== false ? "text-orac-warning-text hover:text-amber-800" : "text-orac-success-text hover:text-green-800"
+                        }`}
+                      >
+                        {row.is_active !== false ? "Disable" : "Enable"}
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -430,7 +440,7 @@ export default function AdminEntitiesTab({ user }) {
               <ScopeTrail
                 items={(selectedParent?.hierarchy_path || []).map((n) => ({ label: n.name }))}
               />
-              <label className="mb-1 block text-sm font-semibold text-gray-700">
+              <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">
                 {currentConfig.parentLabel}
               </label>
               <SearchableSelect
@@ -440,7 +450,7 @@ export default function AdminEntitiesTab({ user }) {
                 onChange={setParentId}
                 placeholder={`Select ${currentConfig.parentNoun}...`}
               />
-              <p className="mt-1 text-xs text-orac-text-muted">
+              <p className="mt-1 text-ux-caption text-orac-text-muted">
                 Only active {currentConfig.parentNoun}s are offered for a new link
                 {editingCurrentParentIsInactive
                   ? " — this record's current one is shown even though it is now inactive, so its history is not lost."
@@ -459,55 +469,55 @@ export default function AdminEntitiesTab({ user }) {
           {activeEntity === "catalog_items" ? (
             <>
               <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700">Item Code</label>
-                <input name="item_code" defaultValue={modal.item?.item_code || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+                <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Item Code</label>
+                <input name="item_code" defaultValue={modal.item?.item_code || ""} required className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700">Item Name</label>
-                <input name="item_name" defaultValue={modal.item?.item_name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+                <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Item Name</label>
+                <input name="item_name" defaultValue={modal.item?.item_name || ""} required className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700">Unit Price</label>
-                <input name="unit_price" type="number" step="0.01" defaultValue={modal.item?.unit_price || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+                <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Unit Price</label>
+                <input name="unit_price" type="number" step="0.01" defaultValue={modal.item?.unit_price || ""} required className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
               </div>
             </>
           ) : activeEntity !== "equipment_tags" ? (
             <div>
-              <label className="mb-1 block text-sm font-semibold text-gray-700">Name</label>
-              <input name="name" defaultValue={modal.item?.name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+              <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Name</label>
+              <input name="name" defaultValue={modal.item?.name || ""} required className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
             </div>
           ) : null}
 
           {activeEntity === "mine_sites" && (
             <div>
-              <label className="mb-1 block text-sm font-semibold text-gray-700">Location</label>
-              <input name="location" defaultValue={modal.item?.location || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+              <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Location</label>
+              <input name="location" defaultValue={modal.item?.location || ""} className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
             </div>
           )}
 
           {activeEntity === "plants" && (
             <div>
-              <label className="mb-1 block text-sm font-semibold text-gray-700">Plant Code</label>
-              <input name="plant_code" defaultValue={modal.item?.plant_code || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+              <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Plant Code</label>
+              <input name="plant_code" defaultValue={modal.item?.plant_code || ""} required className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
             </div>
           )}
 
           {activeEntity === "plant_sections" && (
             <div>
-              <label className="mb-1 block text-sm font-semibold text-gray-700">Section Code</label>
-              <input name="section_code" defaultValue={modal.item?.section_code || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+              <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Section Code</label>
+              <input name="section_code" defaultValue={modal.item?.section_code || ""} required className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
             </div>
           )}
 
           {activeEntity === "equipment_tags" && (
             <>
               <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700">Tag Code</label>
-                <input name="tag_code" defaultValue={modal.item?.tag_code || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+                <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Tag Code</label>
+                <input name="tag_code" defaultValue={modal.item?.tag_code || ""} required className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700">Equipment Name</label>
-                <input name="equipment_name" defaultValue={modal.item?.equipment_name || ""} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orac-blue focus:ring-2 focus:ring-orac-blue/20" />
+                <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Equipment Name</label>
+                <input name="equipment_name" defaultValue={modal.item?.equipment_name || ""} required className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
               </div>
             </>
           )}
@@ -519,11 +529,11 @@ export default function AdminEntitiesTab({ user }) {
               action (deactivateEntity/reactivateEntity, which records who and
               when), so the form now says so instead of offering a dead control. */}
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Status</label>
-            <p className="text-sm text-gray-700">
+            <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Status</label>
+            <p className="text-ux-body text-orac-text-primary">
               {!modal.item ? "New records start Active." : modal.item.is_active !== false ? "Active" : "Inactive"}
             </p>
-            <p className="mt-1 text-xs text-orac-text-muted">
+            <p className="mt-1 text-ux-caption text-orac-text-muted">
               {modal.item
                 ? "Change this with Disable / Enable in the table; that action is recorded in the audit log."
                 : "You can disable it later from the table; that action is recorded in the audit log."}
@@ -532,8 +542,8 @@ export default function AdminEntitiesTab({ user }) {
           </div>
 
           <div className="pt-4 flex justify-end gap-3">
-            <button type="button" onClick={() => setModal({ open: false, item: null })} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
-            <button type="submit" className="px-5 py-2 bg-orac-slate text-white text-sm font-medium rounded-lg hover:bg-slate-800 shadow-sm">Save</button>
+            <Button variant="secondary" onClick={() => setModal({ open: false, item: null })}>Cancel</Button>
+            <Button type="submit" variant="primary">Save</Button>
           </div>
         </form>
       </Modal>

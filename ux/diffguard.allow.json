@@ -19,6 +19,11 @@
       "file": "src/pages/InventoryPage.jsx",
       "rule": "SIZE-LOST",
       "reason": "B2: table cells and reorder badge replaced raw text-sm with Badge primitive and semantic text-ux-body / text-ux-secondary"
+    },
+    {
+      "file": "src/pages/AdminPage.jsx",
+      "rule": "SIZE-LOST",
+      "reason": "B3: table cells replaced raw text-sm with text-ux-body semantic token and Button/Badge primitives"
     }
   ]
 }
