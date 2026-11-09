@@ -26,5 +26,5 @@ test("shared data tables use readable untracked labels and compact corners", () 
   const table = read("src/components/DataTable.jsx");
   assert.match(table, /rounded-lg/);
   assert.doesNotMatch(table, /rounded-xl|tracking-|uppercase/);
-  assert.match(table, /text-left text-ux-label font-semibold text-gray-600/);
+  assert.match(table, /text-left text-ux-secondary font-semibold text-orac-text-secondary/);
 });

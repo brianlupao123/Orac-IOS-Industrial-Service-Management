@@ -118,16 +118,16 @@ export default function DataTable({
   return (
     <div
       data-ux="table"
-      className="orac-data-table overflow-hidden rounded-lg border border-gray-100 bg-white"
+      className="orac-data-table overflow-hidden rounded-lg border border-orac-border-default bg-orac-surface"
       style={{ fontSize: isCompact ? "var(--orac-table-font-size-compact, 14px)" : "var(--orac-table-font-size, 16px)" }}
     >
       {(title || action) && (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-50 bg-gray-50/30 px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-orac-border-default bg-orac-surface-subtle px-5 py-4">
           {title && (
-            <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
+            <h3 className="flex items-center gap-2 text-base font-semibold text-orac-text-primary">
               {title}
               {count !== undefined && (
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">{count}</span>
+                <span className="rounded-full bg-orac-surface-muted px-2 py-0.5 text-xs font-semibold text-orac-text-secondary">{count}</span>
               )}
             </h3>
           )}
@@ -138,16 +138,16 @@ export default function DataTable({
           filtering logic stays with the page/role that owns the data, this
           component only provides a consistent bar to put it in. */}
       {toolbar && (
-        <div className="flex flex-wrap items-center gap-3 border-b border-gray-50 bg-white px-5 py-3">
+        <div className="flex flex-wrap items-center gap-3 border-b border-orac-border-default bg-orac-surface px-5 py-3">
           {toolbar}
         </div>
       )}
       {rows.length === 0 ? (
         <div data-evidence="table-empty-state" className={emptyStateClassName}>
-          <div className="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center text-orac-border-strong mb-3">
+          <div className="h-10 w-10 rounded-full bg-orac-surface-muted flex items-center justify-center text-orac-border-strong mb-3">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
           </div>
-          <p className="text-sm text-gray-500 font-medium">{emptyText}</p>
+          <p className="text-sm text-orac-text-muted font-medium">{emptyText}</p>
         </div>
       ) : (
         <div
@@ -156,21 +156,19 @@ export default function DataTable({
           aria-label={title ? `${title} table` : "Data table"}
           tabIndex={0}
         >
-          <table className={`w-full ${isCompact ? "text-sm" : "text-base"}`}>
-            <thead className="sticky top-0 z-10 bg-gray-50/50">
-              <tr className="border-b border-gray-100 text-left text-ux-label font-semibold text-gray-600">
+          <table className={`w-full max-sm:block sm:table ${isCompact ? "text-sm" : "text-base"}`}>
+            <thead className="sticky top-0 z-10 bg-orac-surface-muted max-sm:sr-only sm:table-header-group">
+              <tr className="border-b border-orac-border-default text-left text-ux-secondary font-semibold text-orac-text-secondary">
                 {visibleHeaders.map(({ col, idx, isNumeric }, i) => (
-                  <th key={i} scope="col" className={`px-5 py-3.5 whitespace-nowrap ${isNumeric ? "text-right" : ""}`}>
+                  <th key={i} scope="col" className={`px-6 py-3 whitespace-nowrap ${isNumeric ? "text-right" : ""}`}>
                     {col}
                   </th>
                 ))}
-                {renderActions && <th scope="col" className="px-5 py-3.5 whitespace-nowrap">{actionLabel}</th>}
+                {renderActions && <th scope="col" className="px-6 py-3 whitespace-nowrap">{actionLabel}</th>}
               </tr>
             </thead>
-            {/* Zebra striping on even rows is a scanning aid for dense operational
-                tables (Cloudscape/USWDS table guidance); it is layered on top of
-                whatever hover/selection classes each row already sets. */}
-            <tbody className="bg-white [&>tr:not(:first-child)]:border-t [&>tr:not(:first-child)]:border-orac-border-default [&>tr:nth-child(even)]:bg-orac-surface-muted">
+            {/* White rows with a 1px border; hover tint row scanning aid; no zebra striping (matches mock). */}
+            <tbody className="bg-orac-surface max-sm:block sm:table-row-group sm:[&>tr:not(:first-child)]:border-t sm:[&>tr:not(:first-child)]:border-orac-border-default [&>tr:hover]:bg-orac-row-hover">
               {rawRows.map((r, rowIdx) => {
                 if (!React.isValidElement(r)) return r;
 
@@ -210,7 +208,8 @@ export default function DataTable({
                     ? " [font-variant-numeric:tabular-nums]"
                     : "";
                   const col0Class = visibleIdx === 0 ? " max-sm:whitespace-nowrap" : "";
-                  const combinedClass = `${originalClassName}${alignmentClass}${tabularClass}${col0Class}`.trim();
+                  const mobileCellClass = " max-sm:block max-sm:w-full max-sm:py-1 max-sm:px-0";
+                  const combinedClass = `${originalClassName}${alignmentClass}${tabularClass}${col0Class}${mobileCellClass}`.trim();
 
                   visibleCells.push(
                     React.cloneElement(cell, {
@@ -222,10 +221,18 @@ export default function DataTable({
                   visibleIdx++;
                 }
 
+                const origRowClass = r.props?.className || "";
+                const isDangerRow = /\b(bg-red|danger|is-danger)\b/.test(origRowClass);
+                const dangerRowClass = isDangerRow
+                  ? " !bg-orac-danger-bg shadow-[inset_3px_0_0_var(--orac-danger-border)]"
+                  : "";
+                const combinedRowClass = `${origRowClass}${dangerRowClass} max-sm:block max-sm:border-b max-sm:border-orac-border-default max-sm:p-4`.trim();
+
                 return React.cloneElement(r, {
                   key: r.key || `row-${rowIdx}`,
+                  className: combinedRowClass,
                   children: renderActions
-                    ? [...visibleCells, <td key="row-action" data-label={actionLabel} className="px-5 py-3.5 whitespace-nowrap min-h-[44px] sm:min-h-0">{renderActions(rows[rowIdx], rowIdx)}</td>]
+                    ? [...visibleCells, <td key="row-action" data-label={actionLabel} className="px-6 py-3 whitespace-nowrap min-h-[44px] sm:min-h-0 max-sm:block max-sm:w-full max-sm:py-1 max-sm:px-0">{renderActions(rows[rowIdx], rowIdx)}</td>]
                     : visibleCells,
                 });
               })}

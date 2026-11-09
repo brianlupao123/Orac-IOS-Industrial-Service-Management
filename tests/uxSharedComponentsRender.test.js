@@ -54,7 +54,7 @@ test("DataTable renders data-ux=table with 16px body, 14px compact, and responsi
 
   assert.ok(mod.normal.includes('data-ux="table"'), "DataTable has data-ux=table");
   assert.ok(mod.normal.includes("var(--orac-table-font-size, 16px)"), "DataTable default body has 16px font-size");
-  assert.ok(mod.normal.includes("text-ux-label"), "DataTable header has text-ux-label");
+  assert.ok(mod.normal.includes("text-ux-secondary font-semibold text-orac-text-secondary"), "DataTable header has 14px/600 secondary text");
   assert.ok(mod.normal.includes("max-sm:whitespace-nowrap"), "First column does not wrap on mobile");
 
   assert.ok(mod.compact.includes("var(--orac-table-font-size-compact, 14px)"), "DataTable compact body has 14px font-size");

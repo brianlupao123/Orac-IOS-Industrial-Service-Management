@@ -196,8 +196,8 @@ test("DataTable applies numeric alignment consistently when NO columns are hidde
 
   const html = mod.default();
   // Headers
-  assert.ok(html.includes('class="px-5 py-3.5 whitespace-nowrap text-right">Total Amount'), "Total Amount header must be text-right");
-  assert.ok(html.includes('class="px-5 py-3.5 whitespace-nowrap text-right">Hours'), "Hours header must be text-right");
+  assert.ok(html.includes('class="px-6 py-3 whitespace-nowrap text-right">Total Amount'), "Total Amount header must be text-right");
+  assert.ok(html.includes('class="px-6 py-3 whitespace-nowrap text-right">Hours'), "Hours header must be text-right");
   // Body cells must receive text-right, tabular-nums, and data-label
   assert.ok(html.includes('data-label="Total Amount"'), "Cell must receive data-label");
   assert.ok(html.includes("text-right"), "Body cells in numeric columns must receive text-right");
