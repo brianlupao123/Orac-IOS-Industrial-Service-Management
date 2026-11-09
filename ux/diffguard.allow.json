@@ -14,6 +14,11 @@
       "file": "src/pages/DashboardPage.jsx",
       "rule": "SIZE-LOST",
       "reason": "B1: raw button with text-xs replaced by Button primitive which provides semantic sizing"
+    },
+    {
+      "file": "src/pages/InventoryPage.jsx",
+      "rule": "SIZE-LOST",
+      "reason": "B2: table cells and reorder badge replaced raw text-sm with Badge primitive and semantic text-ux-body / text-ux-secondary"
     }
   ]
 }
