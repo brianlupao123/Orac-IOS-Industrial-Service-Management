@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../api/client.js";
 import SessionExpiredBanner from "../components/SessionExpiredBanner.jsx";
+import BrandMark from "../components/ui/BrandMark.jsx";
+import Button from "../components/ui/Button.jsx";
 
 export default function LoginPage({ onLogin, sessionExpired = false }) {
   const navigate = useNavigate();
@@ -29,27 +31,27 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-orac-slate font-sans selection:bg-orac-blue/20">
+    <div className="min-h-screen bg-orac-canvas text-orac-text-primary font-sans selection:bg-orac-accent/20">
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center px-6 py-12 sm:px-12">
         <div className="w-full max-w-[420px] mx-auto">
           <div className="mb-10 flex items-center gap-3">
-            <img src="/images/orac-systems-logo.png" alt="Orac Systems" className="h-12 w-12 rounded-full bg-white object-contain shadow-sm" />
+            <BrandMark size={48} />
             <div>
-              <div className="text-xl font-bold tracking-tight text-orac-slate">ORAC-IOS</div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-orac-text-muted">Industrial Service Management</div>
+              <div className="text-ux-title font-bold tracking-tight text-orac-text-primary">ORAC-IOS</div>
+              <div className="text-ux-caption font-semibold uppercase tracking-wider text-orac-accent">Industrial Service Management</div>
             </div>
           </div>
 
           <div className="mb-8">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-2">Sign in to your account</h1>
-            <p className="text-sm text-gray-500">Enter your credentials to access the portal.</p>
+            <h1 className="text-ux-title font-bold tracking-tight text-orac-text-primary mb-2">Sign in to your account</h1>
+            <p className="text-ux-body text-orac-text-secondary">Enter your credentials to access the portal.</p>
           </div>
 
           {sessionExpired && <div data-evidence="session-expired-state" className="mb-6"><SessionExpiredBanner /></div>}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="login-email" className="mb-2 block text-sm font-semibold text-gray-700">
+              <label htmlFor="login-email" className="mb-2 block text-ux-label font-semibold text-orac-text-primary">
                 Email address
               </label>
               <input
@@ -61,7 +63,7 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@company.com"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder:text-orac-border-strong focus:border-orac-blue focus:outline-none focus:ring-4 focus:ring-orac-blue/10 transition-all"
+                className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-3 text-ux-body text-orac-text-primary placeholder:text-orac-text-muted focus:border-orac-accent focus:outline-none focus:ring-4 focus:ring-orac-focus-ring/10 transition-all"
                 required
                 autoFocus
                 disabled={busy}
@@ -69,7 +71,7 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
             </div>
 
             <div>
-              <label htmlFor="login-password" className="mb-2 block text-sm font-semibold text-gray-700">
+              <label htmlFor="login-password" className="mb-2 block text-ux-label font-semibold text-orac-text-primary">
                 Password
               </label>
               <input
@@ -79,7 +81,7 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder:text-orac-border-strong focus:border-orac-blue focus:outline-none focus:ring-4 focus:ring-orac-blue/10 transition-all"
+                className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-3 text-ux-body text-orac-text-primary placeholder:text-orac-text-muted focus:border-orac-accent focus:outline-none focus:ring-4 focus:ring-orac-focus-ring/10 transition-all"
                 required
                 autoComplete="current-password"
                 disabled={busy}
@@ -87,25 +89,26 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
             </div>
 
             {error && (
-              <div className="rounded-lg bg-red-50/80 border border-red-100 px-4 py-3 text-sm text-red-600">
+              <div className="rounded-lg bg-orac-danger-surface border border-orac-danger-border px-4 py-3 text-ux-body text-orac-danger-text">
                 {error}
               </div>
             )}
 
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-ux-body">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="rounded border-gray-300 text-orac-blue focus:ring-orac-blue/20" />
-                <span className="text-gray-600">Remember me</span>
+                <input type="checkbox" className="rounded border-orac-border-strong text-orac-accent focus:ring-orac-accent/20" />
+                <span className="text-orac-text-secondary">Remember me</span>
               </label>
-              <Link to="/forgot-password" className="font-medium text-orac-blue hover:text-orac-blue/80 transition-colors">
+              <Link to="/forgot-password" className="font-medium text-orac-accent hover:text-orac-accent/80 transition-colors">
                 Forgot password?
               </Link>
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={busy}
-              className="w-full rounded-lg bg-gray-900 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center"
+              variant="primary"
+              className="w-full py-3 flex justify-center"
             >
               {busy ? (
                 <span className="flex items-center justify-center gap-2">
@@ -118,16 +121,16 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
               ) : (
                 "Sign in"
               )}
-            </button>
-            <p className="text-center text-xs text-gray-500 mt-5">
+            </Button>
+            <p className="text-center text-ux-caption text-orac-text-muted mt-5">
               Need an account?{" "}
-              <Link to="/request-access" className="text-orac-blue hover:underline font-medium">
+              <Link to="/request-access" className="text-orac-accent hover:underline font-medium">
                 Request access
               </Link>
             </p>
           </form>
 
-          <p className="mt-6 text-center text-xs text-orac-text-muted">
+          <p className="mt-6 text-center text-ux-caption text-orac-text-muted">
             Orac-IOS &copy; {new Date().getFullYear()} &bull; Orac Systems
           </p>
         </div>

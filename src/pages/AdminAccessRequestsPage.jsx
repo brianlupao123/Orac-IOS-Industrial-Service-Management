@@ -4,6 +4,8 @@ import SearchableSelect from "../components/SearchableSelect.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import DataTable from "../components/DataTable.jsx";
 import { ErrorBanner } from "../components/PageStates.jsx";
+import Button from "../components/ui/Button.jsx";
+import Badge from "../components/ui/Badge.jsx";
 
 const ALL_ROLES = [
   "Admin", "Management", "Sales", "Finance",
@@ -119,47 +121,47 @@ export default function AdminAccessRequestsPage({ focusId = null }) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold text-orac-blue">Access requests</h1>
+        <h1 className="text-ux-title font-bold text-orac-accent">Access requests</h1>
         {pending.length > 0 && (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+          <Badge tone="warning">
             {pending.length} awaiting review
-          </span>
+          </Badge>
         )}
       </div>
 
-      {status === "loading" && <p role="status" className="text-sm text-gray-600">Loading access requests&hellip;</p>}
+      {status === "loading" && <p role="status" className="text-ux-body text-orac-text-secondary">Loading access requests&hellip;</p>}
       {status === "error" && (
         <div className="space-y-3">
           <ErrorBanner message={error} />
-          <button type="button" onClick={load} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-semibold text-orac-blue hover:bg-gray-50">Try again</button>
+          <Button type="button" variant="secondary" onClick={load}>Try again</Button>
         </div>
       )}
       {actionError && <div role="alert"><ErrorBanner message={actionError} /></div>}
       {focusMissing && (
-        <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+        <p role="status" className="rounded-lg border border-orac-warning-border bg-orac-warning-surface px-4 py-3 text-ux-body text-orac-warning-text">
           The access request from that notification is no longer in the list. It may already have been decided. Everything still open is shown below.
         </p>
       )}
 
       {handoff && (
-        <section aria-labelledby="handoff-title" className="rounded-lg border border-sky-300 bg-sky-50 p-4 dark:border-sky-800 dark:bg-sky-950/30">
-          <h2 id="handoff-title" className="text-base font-semibold text-orac-blue">One-time setup link for {handoff.email}</h2>
-          <p className="mt-1 text-sm text-gray-700">
+        <section aria-labelledby="handoff-title" className="rounded-xl border border-orac-info-border bg-orac-info-surface p-6">
+          <h2 id="handoff-title" className="text-ux-section font-semibold text-orac-text-primary">One-time setup link for {handoff.email}</h2>
+          <p className="mt-1 text-ux-body text-orac-text-secondary">
             Shown only now. Give it to {handoff.email} through a channel you trust. It works once and expires at {new Date(handoff.expiresAt).toLocaleTimeString()}. If it is lost or expires, issue a new one; the old one stops working.
           </p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <input readOnly aria-label="One-time setup link" value={handoff.url} onFocus={(e) => e.target.select()} className="min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-xs text-gray-800" />
-            <button type="button" onClick={copyLink} className="rounded-md bg-orac-blue px-4 py-2 text-sm font-semibold text-white hover:opacity-90">{copied ? "Copied" : "Copy link"}</button>
-            <button type="button" onClick={() => { setHandoff(null); setCopied(false); }} className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-orac-blue hover:bg-gray-50">Done, hide link</button>
+            <input readOnly aria-label="One-time setup link" value={handoff.url} onFocus={(e) => e.target.select()} className="min-w-0 min-h-[44px] flex-1 rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 font-mono text-ux-caption text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
+            <Button type="button" variant="primary" onClick={copyLink}>{copied ? "Copied" : "Copy link"}</Button>
+            <Button type="button" variant="secondary" onClick={() => { setHandoff(null); setCopied(false); }}>Done, hide link</Button>
           </div>
         </section>
       )}
 
       {status === "ready" && (
         <>
-          <section className="rounded-lg border border-gray-200 bg-white p-5" aria-labelledby="pending-title">
-            <h2 id="pending-title" className="mb-4 text-base font-semibold text-orac-blue">Pending ({pending.length})</h2>
-            {pending.length === 0 && <p className="text-sm text-gray-600">Nothing waiting on review.</p>}
+          <section className="rounded-xl border border-orac-border-default bg-orac-surface p-6" aria-labelledby="pending-title">
+            <h2 id="pending-title" className="mb-4 text-ux-section font-semibold text-orac-text-primary">Pending ({pending.length})</h2>
+            {pending.length === 0 && <p className="text-ux-body text-orac-text-secondary">Nothing waiting on review.</p>}
             <div className="space-y-3">
               {pending.map((r) => {
                 const chosen = decision[r.id] || {};
@@ -172,40 +174,40 @@ export default function AdminAccessRequestsPage({ focusId = null }) {
                     key={r.id}
                     ref={isFocus ? focusRef : null}
                     tabIndex={isFocus ? -1 : undefined}
-                    className={`rounded-lg border-l-4 border-amber-500 border-y border-r border-gray-200 bg-amber-50/50 p-4 dark:bg-amber-950/20 ${isFocus ? "ring-2 ring-orac-blue" : ""}`}
+                    className={`rounded-xl border-l-4 border-orac-warning-border border-y border-r border-orac-border-default bg-orac-warning-surface p-5 ${isFocus ? "ring-2 ring-orac-accent" : ""}`}
                   >
-                    <p className="font-semibold text-orac-blue">{r.name}</p>
-                    <p className="text-sm text-gray-700">{r.email}</p>
-                    <p className="mt-1 text-sm text-gray-600">Requested: {r.requested_role} &middot; {new Date(r.created_at).toLocaleString()}</p>
-                    {r.reason && <p className="mt-2 text-sm italic text-gray-700">&ldquo;{r.reason}&rdquo;</p>}
+                    <p className="text-ux-section font-semibold text-orac-text-primary">{r.name}</p>
+                    <p className="text-ux-body text-orac-text-secondary">{r.email}</p>
+                    <p className="mt-1 text-ux-caption text-orac-text-muted">Requested: {r.requested_role} &middot; {new Date(r.created_at).toLocaleString()}</p>
+                    {r.reason && <p className="mt-2 text-ux-body italic text-orac-text-secondary">&ldquo;{r.reason}&rdquo;</p>}
 
                     <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div>
-                        <label className="mb-1 block text-sm font-semibold text-gray-700">Assign actual role</label>
+                        <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Assign actual role</label>
                         <SearchableSelect ariaLabel="Assign actual role" options={roleOptions} value={effectiveRole} onChange={(v) => patch(r.id, { role: v })} />
                       </div>
                       {effectiveRole === "Client Viewer" && (
                         <div>
-                          <label className="mb-1 block text-sm font-semibold text-gray-700">Client (required)</label>
+                          <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Client (required)</label>
                           <SearchableSelect ariaLabel="Client required" options={clientOptions} value={chosen.client_id} onChange={(v) => patch(r.id, { client_id: v })} placeholder="Select client..." />
                         </div>
                       )}
                     </div>
 
                     <div className="mt-3">
-                      <label htmlFor={`reason-${r.id}`} className="mb-1 block text-sm font-semibold text-gray-700">Reason if rejecting (optional)</label>
-                      <input id={`reason-${r.id}`} maxLength={500} value={chosen.reason || ""} onChange={(e) => patch(r.id, { reason: e.target.value })} className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                      <label htmlFor={`reason-${r.id}`} className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Reason if rejecting (optional)</label>
+                      <input id={`reason-${r.id}`} maxLength={500} value={chosen.reason || ""} onChange={(e) => patch(r.id, { reason: e.target.value })} className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
                     </div>
 
                     <div className="mt-4 flex flex-wrap gap-3">
-                      <button type="button" disabled={busy || needsClient} onClick={() => handleApprove(r)} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50">
+                      <Button type="button" variant="primary" disabled={busy || needsClient} onClick={() => handleApprove(r)} className="bg-emerald-600 hover:bg-emerald-700">
                         {busy ? "Working…" : `Approve as ${effectiveRole}`}
-                      </button>
-                      <button type="button" disabled={busy} onClick={() => handleReject(r)} className="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40">
+                      </Button>
+                      <Button type="button" variant="danger" disabled={busy} onClick={() => handleReject(r)}>
                         Reject
-                      </button>
+                      </Button>
                     </div>
-                    {needsClient && <p className="mt-2 text-xs text-gray-600">Choose the client this person represents before approving.</p>}
+                    {needsClient && <p className="mt-2 text-ux-caption text-orac-warning-text">Choose the client this person represents before approving.</p>}
                   </div>
                 );
               })}
@@ -213,7 +215,7 @@ export default function AdminAccessRequestsPage({ focusId = null }) {
           </section>
 
           <section aria-labelledby="history-title">
-            <h2 id="history-title" className="mb-3 text-base font-semibold text-orac-blue">History</h2>
+            <h2 id="history-title" className="mb-3 text-ux-section font-semibold text-orac-text-primary">History</h2>
             <DataTable
               title=""
               count={resolved.length}
@@ -221,17 +223,17 @@ export default function AdminAccessRequestsPage({ focusId = null }) {
               rows={resolved}
               emptyText="No decided requests yet."
               renderRow={(r) => (
-                <tr key={r.id} ref={r.id === focusId ? focusRef : null} tabIndex={r.id === focusId ? -1 : undefined} className={`hover:bg-gray-50/80 ${r.id === focusId ? "ring-2 ring-inset ring-orac-blue" : ""}`}>
-                  <td className="px-5 py-3.5 text-sm font-medium text-gray-900">{r.name}</td>
-                  <td className="px-5 py-3.5 text-sm text-gray-600">{r.email}</td>
-                  <td className="px-5 py-3.5 text-sm text-gray-600">{r.requested_role}</td>
-                  <td className="px-5 py-3.5 text-sm"><StatusBadge status={r.status} /></td>
-                  <td className="px-5 py-3.5 text-sm">
+                <tr key={r.id} ref={r.id === focusId ? focusRef : null} tabIndex={r.id === focusId ? -1 : undefined} className={`transition-colors hover:bg-orac-row-hover ${r.id === focusId ? "ring-2 ring-inset ring-orac-accent" : ""}`}>
+                  <td className="px-6 py-4 text-ux-body font-semibold text-orac-text-primary">{r.name}</td>
+                  <td className="px-6 py-4 text-ux-body text-orac-text-secondary">{r.email}</td>
+                  <td className="px-6 py-4 text-ux-body text-orac-text-secondary">{r.requested_role}</td>
+                  <td className="px-6 py-4"><StatusBadge status={r.status} /></td>
+                  <td className="px-6 py-4">
                     {r.status === "Approved" ? (
-                      <button type="button" disabled={busyId === r.id} onClick={() => handleIssueLink(r)} className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-orac-blue hover:bg-gray-50 disabled:opacity-50">
+                      <Button type="button" variant="secondary" size="sm" disabled={busyId === r.id} onClick={() => handleIssueLink(r)}>
                         {busyId === r.id ? "Working…" : "Issue setup link"}
-                      </button>
-                    ) : <span className="text-gray-500">&mdash;</span>}
+                      </Button>
+                    ) : <span className="text-orac-text-muted">&mdash;</span>}
                   </td>
                 </tr>
               )}

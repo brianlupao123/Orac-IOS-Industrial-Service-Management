@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { invoices } from "../api/client.js";
 import { formatAmount } from "../quoteModel.js";
+import { formatMoney } from "../lib/format.js";
 
 const button = "min-h-[42px] rounded-md border px-3 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50";
 const field = "mt-1 min-h-[42px] w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-xs";
@@ -53,7 +54,7 @@ export default function InvoiceSettlementPanel({ invoice, user, onChanged }) {
   }
 
   return <section className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:p-5" aria-label={`Invoice settlement for ${invoice.invoice_number || invoice.id}`}>
-    <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase text-slate-500">Issued invoice</p><h3 className="mt-1 text-base font-semibold text-slate-900">{invoice.invoice_number || invoice.id}</h3><p className="mt-1 text-sm text-slate-600">Issued {formatAmount(invoice.total_amount)} · {invoice.status || "sent"}</p></div><button type="button" className={`${button} border-slate-300 bg-white text-slate-700 hover:border-orac-blue hover:text-orac-blue`} disabled={busy} onClick={load}>{data ? "Refresh settlement" : "View settlement"}</button></div>
+    <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase text-slate-500">Issued invoice</p><h3 className="mt-1 text-base font-semibold text-slate-900">{invoice.invoice_number || invoice.id}</h3><p className="mt-1 text-sm text-slate-600">Issued {formatMoney(invoice.total_amount)} · {invoice.status || "sent"}</p></div><button type="button" className={`${button} border-slate-300 bg-white text-slate-700 hover:border-orac-blue hover:text-orac-blue`} disabled={busy} onClick={load}>{data ? "Refresh settlement" : "View settlement"}</button></div>
     {error && <p role="alert" className="mt-3 border-l-4 border-red-500 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
     {notice && <p role="status" className="mt-3 border-l-4 border-emerald-500 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{notice}</p>}
     {isSales && data && (
