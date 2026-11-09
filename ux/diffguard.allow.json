@@ -9,6 +9,11 @@
       "file": "src/components/ui/Badge.jsx",
       "rule": "SIZE-LOST",
       "reason": "C3: text-ux-caption default replaced by text-ux-secondary (14px) per prototype spec; compact density still uses text-ux-caption"
+    },
+    {
+      "file": "src/pages/DashboardPage.jsx",
+      "rule": "SIZE-LOST",
+      "reason": "B1: raw button with text-xs replaced by Button primitive which provides semantic sizing"
     }
   ]
 }
