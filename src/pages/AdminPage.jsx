@@ -16,14 +16,17 @@ import { TECHNICIAN_TRADES } from "../constants/trades.js";
 
 function SearchField({ label, value, onChange, placeholder }) {
   return (
-    <label className="block w-full max-w-sm">
+    <label className="relative block w-full max-w-sm">
       <span className="sr-only">{label}</span>
+      <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-orac-text-muted" aria-hidden="true">
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" strokeLinecap="round" /></svg>
+      </span>
       <input
         type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-orac-border-strong bg-orac-surface px-3 py-2 text-sm text-orac-text-primary focus:border-orac-blue focus:outline-none focus:ring-2 focus:ring-orac-blue/20"
+        className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas pl-9 pr-3.5 py-2 text-ux-body text-orac-text-primary placeholder:text-orac-text-muted focus:border-orac-accent focus:outline-none focus:ring-2 focus:ring-orac-focus-ring/30"
       />
     </label>
   );

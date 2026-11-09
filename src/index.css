@@ -177,6 +177,13 @@ body {
 .orac-data-table { box-shadow: var(--orac-shadow-card); }
 .orac-data-table thead { background-color: var(--orac-surface); }
 .orac-data-table th { color: var(--orac-text-secondary); }
+@media (max-width: 639px) {
+  .orac-data-table td[data-label]:not([data-label=""]):not(:first-child)::before {
+    content: attr(data-label) ": ";
+    color: var(--orac-text-muted);
+    font-weight: 400;
+  }
+}
 .orac-table-scroll { overscroll-behavior-inline: contain; }
 .orac-tab-nav { scrollbar-width: thin; scrollbar-color: var(--orac-border-strong) transparent; }
 /* On compact screens the guide stays above the labelled tab bar rather than

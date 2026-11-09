@@ -8,7 +8,7 @@ export default function PageTitle({
   return (
     <h1
       data-ux="page-title"
-      className={`text-ux-title text-orac-text-primary ${className}`.trim()}
+      className={`text-ux-title text-orac-accent ${className}`.trim()}
       {...props}
     >
       {children}

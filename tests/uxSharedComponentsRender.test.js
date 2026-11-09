@@ -54,7 +54,7 @@ test("DataTable renders data-ux=table with 16px body, 14px compact, and responsi
 
   assert.ok(mod.normal.includes('data-ux="table"'), "DataTable has data-ux=table");
   assert.ok(mod.normal.includes("var(--orac-table-font-size, 16px)"), "DataTable default body has 16px font-size");
-  assert.ok(mod.normal.includes("text-ux-label"), "DataTable header has text-ux-label");
+  assert.ok(mod.normal.includes("text-ux-secondary font-semibold text-orac-text-secondary"), "DataTable header has 14px/600 secondary text");
   assert.ok(mod.normal.includes("max-sm:whitespace-nowrap"), "First column does not wrap on mobile");
 
   assert.ok(mod.compact.includes("var(--orac-table-font-size-compact, 14px)"), "DataTable compact body has 14px font-size");
@@ -77,6 +77,8 @@ test("StatusBadge renders data-ux=badge with unified status mappings", async () 
   assert.ok(mod.draft.includes(">Draft</span>"), "Draft text is rendered");
 
   assert.ok(mod.sent.includes('data-ux="badge"'), "Sent has data-ux=badge");
+  assert.ok(mod.sent.includes("border-orac-info-border"), "Sent has info border");
+  assert.ok(mod.sent.includes("h-1.5 w-1.5 rounded-full bg-current"), "Sent has 6px dot");
   assert.ok(mod.sent.includes(">Sent</span>"), "Sent text is rendered");
 
   assert.ok(mod.awaitingPo.includes('data-ux="badge"'), "Awaiting PO has data-ux=badge");
@@ -108,6 +110,7 @@ test("TabNav renders 44px min-height tabs with active and inactive styling", asy
   assert.ok(mod.html.includes('aria-selected="true"'), "Active tab has aria-selected=true");
   assert.ok(mod.html.includes('aria-selected="false"'), "Inactive tab has aria-selected=false");
   assert.ok(mod.html.includes("text-ux-body"), "Tabs use text-ux-body");
+  assert.ok(mod.html.includes("border-b-[3px] border-orac-accent"), "Active tab has 3px accent underline");
 });
 
 test("StatCard renders tile hierarchy matching prototype", async () => {

@@ -91,7 +91,6 @@ export default function StatusBadge({ status, className = "" }) {
   return (
     <Badge
       tone={tone}
-      size="sm"
       className={`font-semibold ${className}`.trim()}
       style={{ fontVariantNumeric: "var(--orac-table-font-variant, tabular-nums)" }}
     >

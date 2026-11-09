@@ -57,7 +57,7 @@ test("DataTable exposes scope=col headers, a toolbar slot, a count badge and row
   assert.match(src, /<th key=\{i\} scope="col"/);
   assert.match(src, /toolbar/);
   assert.match(src, /count !== undefined/);
-  assert.match(src, /nth-child\(even\)/);
+  assert.match(src, /\[&>tr:hover\]:bg-orac-row-hover/);
 });
 
 test("Modal is size-aware, keeps md default, labels its close button and scrolls internally", () => {

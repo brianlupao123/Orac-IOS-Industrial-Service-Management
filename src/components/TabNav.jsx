@@ -41,7 +41,7 @@ export default function TabNav({ tabs, activeId, onChange, label = "Sections" })
       role="tablist"
       aria-label={label}
       data-ux="tab-nav"
-      className="orac-tab-nav flex w-full gap-1 overflow-x-auto rounded-lg border border-orac-border-default bg-orac-surface-muted p-1 shadow-[inset_6px_0_6px_-6px_rgba(15,23,42,0.12),inset_-6px_0_6px_-6px_rgba(15,23,42,0.12)]"
+      className="orac-tab-nav flex w-full gap-1 overflow-x-auto border-b border-orac-border-default shadow-[inset_6px_0_6px_-6px_rgba(15,23,42,0.12),inset_-6px_0_6px_-6px_rgba(15,23,42,0.12)]"
     >
       {tabs.map((tab, idx) => {
         const selected = tab.id === activeId;
@@ -56,10 +56,10 @@ export default function TabNav({ tabs, activeId, onChange, label = "Sections" })
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(tab.id)}
             onKeyDown={(e) => handleKeyDown(e, idx)}
-            className={`orac-control min-h-[44px] whitespace-nowrap rounded-md px-4 text-ux-body font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-focus-ring ${
+            className={`orac-control min-h-[44px] whitespace-nowrap px-4 py-2.5 text-ux-body font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-focus-ring ${
               selected
-                ? "bg-orac-surface text-orac-primary-text shadow-sm ring-1 ring-orac-border-strong"
-                : "text-orac-text-secondary hover:bg-orac-surface/70 hover:text-orac-text-primary"
+                ? "border-b-[3px] border-orac-accent text-orac-primary-text"
+                : "border-b-[3px] border-transparent text-orac-text-secondary hover:text-orac-text-primary"
             }`}
           >
             {tab.label}

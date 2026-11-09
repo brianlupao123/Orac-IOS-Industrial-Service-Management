@@ -1,7 +1,7 @@
 import React from "react";
 
 const BASE_STYLES =
-  "border-2 font-semibold text-ux-label transition-colors " +
+  "border-2 font-bold text-ux-label transition-colors " +
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-focus-ring focus-visible:ring-offset-2 " +
   "active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed";
 
@@ -19,7 +19,7 @@ const VARIANTS = {
 };
 
 const SIZES = {
-  md: "min-h-[44px] px-5 rounded-lg inline-flex items-center justify-center",
+  md: "min-h-[44px] px-[22px] rounded-lg inline-flex items-center justify-center",
   sm: "min-h-[40px] px-4 rounded-lg inline-flex items-center justify-center",
 };
 
