@@ -12,6 +12,7 @@ import WorksheetsPage from "./pages/WorksheetsPage.jsx";
 import InventoryPage from "./pages/InventoryPage.jsx";
 import ReportsPage from "./pages/ReportsPage.jsx";
 import AdminPage from "./pages/AdminPage.jsx";
+import ImporterPage from "./pages/ImporterPage.jsx";
 import ClientPortalPage from "./pages/ClientPortalPage.jsx";
 import ServiceRequestTriagePage from "./pages/ServiceRequestTriagePage.jsx";
 import QuotationsPage from "./pages/QuotationsPage.jsx";
@@ -119,6 +120,7 @@ export default function App() {
         <Route path="/operational-data" element={<GuardedRoute user={user} path="/operational-data"><OperationalDataPage user={user} /></GuardedRoute>} />
         <Route path="/documents" element={<GuardedRoute user={user} path="/documents"><DocumentsPage user={user} /></GuardedRoute>} />
         <Route path="/admin" element={<GuardedRoute user={user} path="/admin"><AdminPage user={user} /></GuardedRoute>} />
+        <Route path="/imports" element={<GuardedRoute user={user} path="/imports"><ImporterPage user={user} /></GuardedRoute>} />
         <Route path="*" element={<AccessDeniedPage />} />
           </Routes>
         </PortalLayout>

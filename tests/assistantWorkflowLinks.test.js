@@ -13,6 +13,8 @@ const ALL_ROLES = Object.values(ROLES);
 // The same table is asserted by the backend test "assistant destinations match
 // the shared route contract" (tests/aiWorkflowAssistant.test.js). The backend
 // assistant may only link to these paths for these roles. Change both together.
+// Routes that are not assistant destinations (the Guide does not link to them). Needs owner approval.
+const ASSISTANT_EXEMPT_ROUTES = ["/imports"];
 const ROUTE_CONTRACT = {
   "/": ALL_ROLES,
   "/portal": ["Client Viewer"],
@@ -43,7 +45,7 @@ test("assistant link contract matches the real frontend route policy for every r
     }
   }
   for (const route of Object.keys(ROUTE_ACCESS)) {
-    assert.ok(Object.hasOwn(ROUTE_CONTRACT, route), `route ${route} exists in ROUTE_ACCESS but not in the assistant link contract`);
+    assert.ok(Object.hasOwn(ROUTE_CONTRACT, route) || ASSISTANT_EXEMPT_ROUTES.includes(route), `route ${route} exists in ROUTE_ACCESS but not in the assistant link contract`);
   }
 });
 

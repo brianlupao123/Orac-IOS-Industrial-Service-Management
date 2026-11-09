@@ -1,4 +1,8 @@
 {
   "_about": "Owner approvals for editing guarded files. Add {file, by, date, reason, ref}.",
-  "approvals": []
+  "approvals": [
+    { "file": "src/App.jsx", "by": "Project owner via Codex chat", "date": "2026-11-09", "reason": "Authorised integration of the V1 importer; adds the guarded /imports route for Admin and Management.", "ref": "Owner request: make use of all important files and merge all needed" },
+    { "file": "src/accessPolicy.js", "by": "Project owner via Codex chat", "date": "2026-11-09", "reason": "Authorised integration of the V1 importer; adds Admin and Management route and navigation policy.", "ref": "Owner request: make use of all important files and merge all needed" },
+    { "file": "src/api/client.js", "by": "Project owner via Codex chat", "date": "2026-11-09", "reason": "Authorised integration of the V1 importer; adds importer calls through the existing shared API helper.", "ref": "Owner request: make use of all important files and merge all needed" }
+  ]
 }

@@ -871,3 +871,14 @@ export const timesheetWorkflow = {
   approveOverride(id) { return request(`/variance-overrides/${encodeURIComponent(id)}/approve`, { method: "POST", body: "{}" }); },
   resolvePostInvoice(id, note) { return request(`/field_worksheets/${encodeURIComponent(id)}/resolve-post-invoice`, { method: "POST", body: JSON.stringify({ note }) }); }
 };
+
+// Bulk import of Clients and Catalog items from CSV text (see src/pages/ImporterPage.jsx).
+// Every call goes through the shared request helper and the same { success, data } contract.
+// template returns { filename, csv_content }: the CSV header row for that entity.
+export const imports = {
+  preview(entity, csvContent) { return request(`/imports/${encodeURIComponent(entity)}/preview`, { method: "POST", body: JSON.stringify({ csv_content: csvContent }) }); },
+  commit(entity, body) { return request(`/imports/${encodeURIComponent(entity)}/commit`, { method: "POST", body: JSON.stringify(body) }); },
+  list() { return request("/imports"); },
+  get(id) { return request(`/imports/${encodeURIComponent(id)}`); },
+  template(entity) { return request(`/imports/${encodeURIComponent(entity)}/template`); }
+};

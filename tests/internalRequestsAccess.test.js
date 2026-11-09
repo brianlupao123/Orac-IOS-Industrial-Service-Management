@@ -51,7 +51,9 @@ test("adding the route did not widen or narrow any pre-existing route", () => {
   assert.equal(canAccessRoute(ROLES.SALES, "/finance"), false, "Sales must not reach Finance PO/invoice actions");
   assert.equal(canAccessRoute(ROLES.CLIENT_VIEWER, "/finance"), false);
   assert.equal(canAccessRoute(ROLES.FINANCE, "/quotations"), false, "Finance must not draft/send quotes");
-  assert.deepEqual(Object.keys(ROUTE_ACCESS).sort(), [...Object.keys(expected), "/reports", "/job-cards", "/invoice-readiness", "/operational-data", "/documents", "/quotations", "/finance", "/daily-timesheets", "/contractor-logs", "/monthly-worksheets", "/legacy-history", ROUTE].sort());
+  assert.deepEqual(Object.keys(ROUTE_ACCESS).sort(), [...Object.keys(expected), "/reports", "/job-cards", "/invoice-readiness", "/operational-data", "/documents", "/quotations", "/finance", "/daily-timesheets", "/contractor-logs", "/monthly-worksheets", "/legacy-history", "/imports", ROUTE].sort());
+  // Bulk Clients/Catalog import: exactly the backend manageClients/manageCatalog roles, nothing wider.
+  assert.deepEqual([...ROUTE_ACCESS["/imports"]].sort(), ["Admin", "Management"].sort());
   assert.deepEqual([...ROUTE_ACCESS["/job-cards"]].sort(), ["Admin", "Management", "Operations", "Supervisor", "Technician", "Sales"].sort());
   assert.deepEqual([...ROUTE_ACCESS["/invoice-readiness"]].sort(), ["Admin", "Management", "Finance", "Sales"].sort());
   assert.equal(canAccessRoute(ROLES.SALES, "/inventory"), true);

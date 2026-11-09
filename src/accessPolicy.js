@@ -57,6 +57,9 @@ export const ROUTE_ACCESS = Object.freeze({
   "/operational-data": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE],
   "/documents": [...operationalRoles, ROLES.TECHNICIAN, ROLES.SALES, ROLES.FINANCE, ROLES.CLIENT_VIEWER],
   "/admin": [ROLES.ADMIN, ROLES.MANAGEMENT, ROLES.OPERATIONS],
+  // Bulk import of Clients and Catalog items. Mirrors the backend manageClients / manageCatalog permissions
+  // (Admin and Management); the server enforces them on every call.
+  "/imports": [ROLES.ADMIN, ROLES.MANAGEMENT],
   "/kiosk": F.kioskHidden ? [ROLES.ADMIN] : operationalRoles,
   // Mirrors the backend viewContracts policy. Supervisor is excluded because
   // contracts have no supervisor-assignment relation to scope against, and a
@@ -80,7 +83,8 @@ export const NAV_ITEMS = Object.freeze([
   { path: "/reports", label: "Reports" },
   { path: "/operational-data", label: "Operational Data" },
   { path: "/documents", label: "Documents" },
-  { path: "/admin", label: "Administration" }
+  { path: "/admin", label: "Administration" },
+  { path: "/imports", label: "Data Import" }
 ]);
 
 // Navigation is grouped for scanning only. ROUTE_ACCESS remains the source of
@@ -90,7 +94,7 @@ export const NAV_GROUPS = Object.freeze([
   {
     id: "workspace",
     label: "Workspace",
-    paths: ["/", "/operational-data", "/documents", "/admin", "/job-cards", "/invoice-readiness"]
+    paths: ["/", "/operational-data", "/documents", "/admin", "/imports", "/job-cards", "/invoice-readiness"]
   },
   {
     id: "commercial",
