@@ -238,36 +238,40 @@ export function parseDelimitedText(text) {
 export function matchTechnician(row, technicians) {
   if (!row.workerName && !row.nationalId) return null;
   const activeTechs = (technicians || []).filter((t) => t.is_active !== false);
+  const normalizeName = (value) => String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+  const normalizeNationalId = (value) => String(value || "").replace(/[-\s]/g, "").toLowerCase();
+  const cleanInput = normalizeName(row.workerName);
 
-  // 1. If explicit nationalId column was supplied, match by it first (takes precedence to disambiguate)
+  const matchByNationalId = (value) => {
+    const cleanId = normalizeNationalId(value);
+    if (!cleanId) return null;
+    const matches = activeTechs.filter((tech) => tech.national_id && normalizeNationalId(tech.national_id) === cleanId);
+    if (matches.length > 1) return { ambiguous: true, count: matches.length, matches, identityError: "National ID matches multiple active technicians. Resolve the registry duplicate before import." };
+    return matches[0] || null;
+  };
+
+  // An explicit ID is authoritative. Never fall back to a matching name when it disagrees.
   if (row.nationalId) {
-    const cleanNatCol = String(row.nationalId).trim().replace(/[-\s]/g, "").toLowerCase();
-    if (cleanNatCol) {
-      const byCol = activeTechs.find((t) => {
-        if (!t.national_id) return false;
-        const cleanTId = t.national_id.replace(/[-\s]/g, "").toLowerCase();
-        return cleanTId === cleanNatCol;
-      });
-      if (byCol) return byCol;
+    const byId = matchByNationalId(row.nationalId);
+    if (!byId) return { identityError: "National ID does not match an active technician. Correct the ID or resolve the worker in the registry before import." };
+    if (byId.ambiguous) return byId;
+    const knownNames = [byId.name, `${byId.first_name || ""} ${byId.last_name || ""}`].map(normalizeName).filter(Boolean);
+    if (cleanInput && normalizeNationalId(row.workerName) !== normalizeNationalId(row.nationalId) && knownNames.length && !knownNames.includes(cleanInput)) {
+      return { identityError: "Technician name and National ID identify different people. Correct the row before import." };
     }
+    return byId;
   }
 
-  const cleanInput = (row.workerName || "").trim().toLowerCase().replace(/\s+/g, " ");
-
-  // 2. Match by exact national ID typed in workerName if supplied (ignores dashes and spaces)
+  // An ID in the name column is also matched uniquely before any name lookup.
   if (cleanInput) {
-    const byId = activeTechs.find((t) => {
-      if (!t.national_id) return false;
-      const cleanId = t.national_id.replace(/[-\s]/g, "").toLowerCase();
-      return cleanId === cleanInput.replace(/[-\s]/g, "");
-    });
+    const byId = matchByNationalId(cleanInput);
     if (byId) return byId;
   }
 
-  // 3. Match by exact normalized full name
+  // Name-only matching is allowed only when exactly one active technician has that name.
   const matches = activeTechs.filter((t) => {
-    const full1 = (t.name || "").trim().toLowerCase().replace(/\s+/g, " ");
-    const full2 = `${t.first_name || ""} ${t.last_name || ""}`.trim().toLowerCase().replace(/\s+/g, " ");
+    const full1 = normalizeName(t.name);
+    const full2 = normalizeName(`${t.first_name || ""} ${t.last_name || ""}`);
     return (full1 && full1 === cleanInput) || (full2 && full2 === cleanInput);
   });
 
@@ -363,7 +367,9 @@ export function validateImportBatch(parsedRows, technicians, dispatches, default
     }
 
     // Technician match checks
-    if (item.matchedTech?.ambiguous) {
+    if (item.matchedTech?.identityError) {
+      errors.push(item.matchedTech.identityError);
+    } else if (item.matchedTech?.ambiguous) {
       errors.push(`Multiple active technicians (${item.matchedTech.count}) named "${item.workerName}". Provide National ID in CSV to disambiguate.`);
     } else if (!item.matchedTech && item.workerName) {
       if (!allowExternalContractors) {
