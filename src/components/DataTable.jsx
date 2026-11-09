@@ -124,7 +124,7 @@ export default function DataTable({
       {(title || action) && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-orac-border-default bg-orac-surface-subtle px-5 py-4">
           {title && (
-            <h3 className="flex items-center gap-2 text-base font-semibold text-orac-text-primary">
+            <h3 className="flex items-center gap-2 text-ux-section text-orac-text-primary">
               {title}
               {count !== undefined && (
                 <span className="rounded-full bg-orac-surface-muted px-2 py-0.5 text-xs font-semibold text-orac-text-secondary">{count}</span>
