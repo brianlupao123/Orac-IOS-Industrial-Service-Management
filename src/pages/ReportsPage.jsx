@@ -18,8 +18,8 @@ const REPORT_TABS = [
   { key: "po-compliance", label: "PO Compliance", roles: ["Admin", "Management", "Finance", "Operations"] },
   { key: "dispatch", label: "Dispatch", roles: ["Admin", "Management", "Operations", "Supervisor"] },
   { key: "worksheets", label: "Timesheets", roles: ["Admin", "Management", "Operations", "Supervisor"] },
-  { key: "invoice-ready", label: "Invoice Ready", roles: ["Admin", "Management", "Finance"] },
-  { key: "variance", label: "Variance", roles: ["Admin", "Management", "Finance", "Operations", "Supervisor"] },
+  { key: "invoice-ready", label: "Invoice Ready", roles: ["Admin", "Management", "Finance", "Sales"] },
+  { key: "variance", label: "Variance", roles: ["Admin", "Management", "Finance", "Operations"] },
   { key: "technician-payroll", label: "Technician Payroll", roles: ["Admin", "Management", "Finance"] }
 ];
 const PAYROLL_TAB = "technician-payroll";
@@ -104,7 +104,11 @@ export default function ReportsPage({ user }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `orac-report-${active}-${new Date().toISOString().split("T")[0]}.csv`;
+    // Use business-day date for filename. Timezone is configurable; default
+    // Africa/Harare (CAT, UTC+2) pending confirmed accounting-timezone source.
+    const BUSINESS_TZ = "Africa/Harare";
+    const bizDate = new Intl.DateTimeFormat("sv-SE", { timeZone: BUSINESS_TZ }).format(new Date());
+    a.download = `orac-report-${active}-${bizDate}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }

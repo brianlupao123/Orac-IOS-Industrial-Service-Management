@@ -20,3 +20,12 @@ evidence/phase5-browser-uat/
 evidence/ui-visual-audit/
 
 dist-uat/
+
+# SSR build artefacts (Vite / node adapter)
+.orac-ssr-*/
+
+# Local evidence captures — may contain role-scoped screenshots.
+evidence/
+
+# One-off capture helpers
+scripts/capture-entry-now.mjs

@@ -6,7 +6,7 @@ import http from "node:http";
 import { createRequire } from "node:module";
 
 const ROOT = process.cwd();
-const BACKEND_DIR = process.env.ORAC_BACKEND_DIR || "C:\\Users\\BRIAN LUPAO\\Desktop\\ffims-asset-register\\two-concept-packet-backend-20261005-235259";
+const BACKEND_DIR = process.env.ORAC_BACKEND_DIR || path.resolve(ROOT, "../../1-backend/two-concept-packet-backend-20261005-235259");
 const TEMP_DIR = path.resolve(ROOT, "../_uat-run");
 const PORT = 5176;
 const isServeOnly = process.argv.includes("--serve");
