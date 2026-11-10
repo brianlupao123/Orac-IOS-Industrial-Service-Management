@@ -5,6 +5,7 @@ import NotificationBell from "../components/NotificationBell.jsx";
 import ThemeToggle, { applyStoredTheme } from "../components/ThemeToggle.jsx";
 import OfflineOutboxBar from "../components/OfflineOutboxBar.jsx";
 import { visibleNavigationGroups } from "../accessPolicy.js";
+import BrandMark from "../components/ui/BrandMark.jsx";
 
 /**
  * Production portal layout shell.
@@ -223,18 +224,8 @@ export default function PortalLayout({ user, onLogout, children }) {
               )}
             </button>
 
-            {/* Inline SVG — 6-toothed gear logo mark */}
-            <svg viewBox="0 0 48 48" className="h-10 w-10 shrink-0" aria-hidden="true">
-              <circle cx="24" cy="24" r="20" fill="#00488C"/>
-              <circle cx="24" cy="24" r="10" fill="none" stroke="#2FA2E3" strokeWidth="3"/>
-              {/* 6 gear teeth */}
-              {[0, 60, 120, 180, 240, 300].map((angle) => (
-                <rect key={angle} x="22" y="2" width="4" height="8" rx="1.5" fill="#2FA2E3"
-                  transform={`rotate(${angle} 24 24)`}/>
-              ))}
-              {/* Inner wave accent */}
-              <path d="M18 26 Q21 20 24 26 Q27 32 30 26" fill="none" stroke="#2FA2E3" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            {/* Unified BrandMark */}
+            <BrandMark size={40} />
             <div className="orac-header-divider orac-brand-copy min-w-0 pl-3 hidden sm:block">
               <div className="truncate text-base font-bold text-orac-slate">ORAC SYSTEMS</div>
               <div className="truncate text-xs font-semibold text-orac-accent">Operational Portal</div>
@@ -242,7 +233,7 @@ export default function PortalLayout({ user, onLogout, children }) {
           </div>
 
           {/* Zone 2: Desktop Navigation — stays route-policy-derived */}
-          <nav aria-label="Primary" className="orac-primary-nav hidden min-[900px]:flex min-w-0 flex-1 items-center justify-evenly gap-1 px-2 py-1 mx-2">
+          <nav aria-label="Primary" className="orac-primary-nav hidden min-[900px]:flex min-w-0 flex-1 items-center justify-evenly gap-2 px-3 py-1 mx-3">
             {navGroups.map((group) => <WorkspaceNavMenu key={group.id} group={group} pathname={location.pathname} />)}
           </nav>
 
@@ -300,7 +291,8 @@ export default function PortalLayout({ user, onLogout, children }) {
             className="fixed inset-y-0 left-0 z-50 flex w-full max-w-xs flex-col border-r border-gray-200 bg-white p-4 shadow-xl dark:bg-slate-900 dark:border-slate-800"
           >
             <div className="flex items-center justify-between border-b border-gray-100 pb-3 dark:border-slate-800">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                <BrandMark size={40} />
                 <span className="text-base font-bold text-orac-slate dark:text-white">ORAC SYSTEMS</span>
               </div>
               <button
@@ -333,7 +325,7 @@ export default function PortalLayout({ user, onLogout, children }) {
                           to={item.path}
                           end={item.path === "/"}
                           onClick={() => setMobileMenuOpen(false)}
-                          className={`flex h-11 items-center rounded-md px-3 text-sm font-semibold transition-colors ${
+                          className={`flex min-h-[44px] items-center rounded-md px-3 text-sm font-semibold transition-colors ${
                             isActive
                               ? "bg-orac-navy text-white shadow-xs"
                               : "text-slate-700 hover:bg-gray-100 hover:text-orac-slate dark:text-slate-300 dark:hover:bg-slate-800"
@@ -348,14 +340,20 @@ export default function PortalLayout({ user, onLogout, children }) {
               ))}
             </nav>
 
-            <div className="border-t border-gray-100 pt-3 flex items-center justify-between dark:border-slate-800">
-              <div className="text-xs text-slate-500 truncate font-medium">
-                {user?.name || user?.email}
+            <div className="border-t border-gray-100 pt-3 flex items-center justify-between gap-2 dark:border-slate-800">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orac-navy font-bold text-white leading-none" aria-hidden="true">
+                  {(user?.name || user?.email || "U").slice(0, 2).toUpperCase()}
+                </div>
+                <div className="text-xs text-slate-500 truncate font-medium">
+                  <div className="truncate text-orac-slate font-semibold dark:text-white">{user?.name || user?.email}</div>
+                  {user?.role && <div className="truncate opacity-75">{user.role}</div>}
+                </div>
               </div>
               <button
                 type="button"
                 onClick={onLogout}
-                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-slate-700"
+                className="shrink-0 rounded-md border border-gray-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-slate-700"
               >
                 Sign out
               </button>

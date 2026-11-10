@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { leads } from "../api/client.js";
 import { Icon, ICONS } from "../components/icons.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
+import BrandMark from "../components/ui/BrandMark.jsx";
 
 const stages = [
   { code: "Q-1042", label: "Quote", state: "Approved", tone: "bg-sky-100 text-sky-800" },
@@ -44,7 +45,7 @@ export default function LandingPage() {
     <header className="border-b border-slate-200 bg-white">
       <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-6 lg:px-8">
         <a href="#top" className="flex items-center gap-3" aria-label="Orac-IOS home">
-          <img src="/images/orac-systems-logo.png" alt="Orac Systems" className="h-11 w-11 rounded-full bg-white object-contain" />
+          <BrandMark size={40} />
           <span><span className="block text-base font-bold text-slate-800">ORAC-IOS</span><span className="block text-xs font-semibold uppercase tracking-wide text-slate-500">Operations portal</span></span>
         </a>
         <div className="flex items-center gap-3 sm:gap-5">

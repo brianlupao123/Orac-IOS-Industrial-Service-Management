@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { accessRequests } from "../api/client.js";
 import SearchableSelect from "../components/SearchableSelect.jsx";
+import BrandMark from "../components/ui/BrandMark.jsx";
 
 // Matches REQUESTABLE_ROLES in accessRequestsController.js exactly.
 // "Admin" is intentionally not offered here — see that file's comment for why.
@@ -42,7 +43,11 @@ export default function RequestAccess() {
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
       <div className="mx-auto w-full max-w-md">
-        <div className="mb-6 text-center"><img src="/images/orac-systems-logo.png" alt="Orac Systems" className="mx-auto h-20 w-20 rounded-full bg-white object-contain shadow-sm" /><p className="mt-3 text-sm font-semibold text-orac-navy">ORAC-IOS</p><p className="text-xs text-gray-500">Orac Systems operations portal</p></div>
+        <div className="mb-6 text-center">
+          <BrandMark size={80} className="mx-auto" />
+          <p className="mt-3 text-sm font-semibold text-orac-navy">ORAC-IOS</p>
+          <p className="text-xs text-gray-500">Orac Systems operations portal</p>
+        </div>
       <div className="bg-white rounded-lg border border-gray-300 shadow-sm p-6">
         <h1 className="text-lg font-semibold text-orac-slate mb-1">Request access</h1>
 
