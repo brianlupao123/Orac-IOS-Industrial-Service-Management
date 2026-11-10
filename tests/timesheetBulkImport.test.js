@@ -467,6 +467,27 @@ test("matchTechnician: normalizes whitespace in names", () => {
   assert.equal(match.id, "t1");
 });
 
+// U-10 checker requirement: identity conflict (name and national ID identify different people)
+test("matchTechnician: rejects identity conflict — name and national ID point to different people", () => {
+  const techs = [
+    { id: "t1", name: "Tapiwa Marufu", national_id: "63-1111111-A-01", is_active: true },
+    { id: "t2", name: "Farai Ndlovu", national_id: "63-2222222-B-02", is_active: true }
+  ];
+  // Row says "Tapiwa Marufu" but supplies Farai's national ID
+  const result = matchTechnician({ workerName: "Tapiwa Marufu", nationalId: "63-2222222-B-02" }, techs);
+  assert.ok(result.identityError, "Must return identityError when name and ID disagree");
+  assert.match(result.identityError, /different people/i);
+});
+
+test("matchTechnician: rejects unrecognised national ID with descriptive error", () => {
+  const techs = [
+    { id: "t1", name: "Tapiwa Marufu", national_id: "63-1111111-A-01", is_active: true }
+  ];
+  const result = matchTechnician({ workerName: "Tapiwa Marufu", nationalId: "99-XXXXXXX-Z-99" }, techs);
+  assert.ok(result.identityError, "Must return identityError for unknown national ID");
+  assert.match(result.identityError, /does not match/i);
+});
+
 test("matchTechnician: detects ambiguous duplicate names and returns ambiguous flag", () => {
   const techs = [
     { id: "t1", name: "John Moyo", national_id: "63-1111111-A-01", is_active: true },
