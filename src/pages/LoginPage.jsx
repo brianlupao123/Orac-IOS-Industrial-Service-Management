@@ -4,6 +4,8 @@ import { auth } from "../api/client.js";
 import SessionExpiredBanner from "../components/SessionExpiredBanner.jsx";
 import BrandMark from "../components/ui/BrandMark.jsx";
 import Button from "../components/ui/Button.jsx";
+import Field from "../components/ui/Field.jsx";
+import Input from "../components/ui/Input.jsx";
 
 export default function LoginPage({ onLogin, sessionExpired = false }) {
   const navigate = useNavigate();
@@ -11,6 +13,9 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [challenge, setChallenge] = useState(null);
+  const [factorValue, setFactorValue] = useState("");
+  const [recoveryMode, setRecoveryMode] = useState(false);
 
   async function handleSubmit(e, directEmail = null, directPassword = null) {
     if (e) e.preventDefault();
@@ -22,12 +27,42 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
     setBusy(true);
     try {
       const user = await auth.login(targetEmail, targetPassword);
+      if (user?.status === "verification_required") {
+        setChallenge(user);
+        setPassword("");
+        setBusy(false);
+        return;
+      }
       onLogin(user);
       navigate("/", { replace: true });
     } catch (err) {
       setError(err.message);
       setBusy(false);
     }
+  }
+
+  async function handleFactorSubmit(e) {
+    e.preventDefault();
+    const value = factorValue.trim();
+    if (!challenge?.challenge_id || (!recoveryMode && !/^\d{6}$/.test(value)) || (recoveryMode && !value)) return;
+    setError("");
+    setBusy(true);
+    try {
+      const user = await auth.verifyLoginCode(email, challenge.challenge_id, value, recoveryMode);
+      onLogin(user);
+      navigate("/", { replace: true });
+    } catch (err) {
+      setError(err.message);
+      setFactorValue("");
+      setBusy(false);
+    }
+  }
+
+  function startOver() {
+    setChallenge(null);
+    setFactorValue("");
+    setRecoveryMode(false);
+    setError("");
   }
 
   return (
@@ -43,13 +78,28 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
           </div>
 
           <div className="mb-8">
-            <h1 className="text-ux-title font-bold tracking-tight text-orac-text-primary mb-2">Sign in to your account</h1>
-            <p className="text-ux-body text-orac-text-secondary">Enter your credentials to access the portal.</p>
+            <h1 className="text-ux-title font-bold tracking-tight text-orac-text-primary mb-2">{challenge ? "Verify your sign-in" : "Sign in to your account"}</h1>
+            <p className="text-ux-body text-orac-text-secondary">{challenge ? "Enter the code from your authenticator app or use a recovery code." : "Enter your credentials to access the portal."}</p>
           </div>
 
           {sessionExpired && <div data-evidence="session-expired-state" className="mb-6"><SessionExpiredBanner /></div>}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          {challenge ? <form onSubmit={handleFactorSubmit} className="space-y-5">
+            <p className="text-ux-body text-orac-text-secondary">{email}</p>
+            <Field id="login-factor" label={recoveryMode ? "Recovery code" : "Authenticator code"}>
+              <Input id="login-factor" name={recoveryMode ? "recovery_code" : "one-time-code"}
+                type="text" inputMode={recoveryMode ? "text" : "numeric"}
+                autoComplete={recoveryMode ? "off" : "one-time-code"}
+                pattern={recoveryMode ? undefined : "[0-9]{6}"} maxLength={recoveryMode ? 64 : 6}
+                value={factorValue} onChange={(e) => setFactorValue(e.target.value)}
+                required autoFocus disabled={busy} />
+            </Field>
+            {error && <div role="alert" className="rounded-lg bg-orac-danger-surface border border-orac-danger-border px-4 py-3 text-ux-body text-orac-danger-text">{error}</div>}
+            <Button type="submit" disabled={busy} variant="primary" className="w-full py-3 flex justify-center">{busy ? "Verifying…" : "Verify"}</Button>
+            <Button variant="link" onClick={() => { setRecoveryMode(!recoveryMode); setFactorValue(""); setError(""); }}>{recoveryMode ? "Use authenticator code" : "Use a recovery code instead"}</Button>
+            <Button variant="link" onClick={startOver}>Start sign-in again</Button>
+            <p className="text-ux-caption text-orac-text-muted">Lost access to both? Contact your administrator.</p>
+          </form> : <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="login-email" className="mb-2 block text-ux-label font-semibold text-orac-text-primary">
                 Email address
@@ -128,7 +178,7 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
                 Request access
               </Link>
             </p>
-          </form>
+          </form>}
 
           <p className="mt-6 text-center text-ux-caption text-orac-text-muted">
             Orac-IOS &copy; {new Date().getFullYear()} &bull; Orac Systems

@@ -131,9 +131,10 @@ async function request(path, options = {}) {
   if (!res.ok || body.success !== true) {
     const message = body.message || `Request failed (${res.status})`;
     if (res.status === 401) {
-      notifySessionExpired();
+      // A rejected sign-in factor is not an expired authenticated session.
+      if (!options.authFlow) notifySessionExpired();
       const error = new Error(message);
-      error.sessionExpired = true;
+      if (!options.authFlow) error.sessionExpired = true;
       error.status = res.status;
       throw error;
     }
@@ -152,9 +153,22 @@ export const auth = {
   async login(email, password) {
     const data = await request("/auth/login", {
       method: "POST",
+      authFlow: true,
       body: JSON.stringify({ email, password })
     });
-    // Confirmed shape: { user, token } â€” not { role } at the top level.
+    // Protected roles receive a short-lived challenge, never a session here.
+    if (data?.status === "verification_required") return data;
+    if (!data?.user || !data?.token) throw new Error("The service returned an incomplete sign-in response.");
+    setSession(data.user, data.token);
+    return data.user;
+  },
+  async verifyLoginCode(email, challengeId, value, recovery = false) {
+    const data = await request("/auth/totp/verify", {
+      method: "POST",
+      authFlow: true,
+      body: JSON.stringify({ email, challenge_id: challengeId, [recovery ? "recovery_code" : "code"]: value })
+    });
+    if (!data?.user || !data?.token) throw new Error("The service returned an incomplete verification response.");
     setSession(data.user, data.token);
     return data.user;
   },
