@@ -527,7 +527,7 @@ export default function AdminPage({ user }) {
               <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Payroll Employee Code</label>
               <input name="employee_code" maxLength={32} defaultValue={userModal.data?.employee_code || ""} placeholder="Pastel employee code" className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
             </div>
-            <p className="text-ux-caption text-orac-text-muted sm:col-span-2">Used only for the Finance payroll report and the Sage Pastel export. The employee code is sent to Pastel when set; otherwise the national ID is.</p>
+            <p className="text-ux-caption text-orac-text-muted sm:col-span-2">Used for the Finance payroll report and review export. An employee code is required to export; national ID fallback is disabled.</p>
           </div>
           <div>
             <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Account Status</label>

@@ -6,7 +6,7 @@ import { ErrorBanner } from "./PageStates.jsx";
 import { defaultPayrollMonth, isPayrollMonth, pastelExportState, formatHours } from "../payrollModel.js";
 
 // Technician Payroll Summary: certified Worksheet hours per technician for a month,
-// with a one-click Sage Pastel batch export. Read-only: it never changes a Worksheet.
+// with a one-click payroll review export. Non-posting review file: it never changes a Worksheet.
 export default function TechnicianPayrollPanel({ user }) {
   const [month, setMonth] = useState(defaultPayrollMonth());
   const [report, setReport] = useState(null);
@@ -46,7 +46,7 @@ export default function TechnicianPayrollPanel({ user }) {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 id="payroll-title" className="text-sm font-semibold text-gray-700">Technician Payroll Summary</h2>
-            <p className="mt-1 text-sm text-gray-600">Certified hours from approved Worksheets, grouped by work date. Hours only: no rates or amounts. Nothing is re-typed.</p>
+            <p className="mt-1 text-sm text-gray-600">Certified hours from approved Worksheets, grouped by work date. Hours only: no rates or amounts. Non-posting review export.</p>
           </div>
           <div className="flex flex-wrap items-end gap-3">
             <label className="text-sm font-medium text-gray-700">
@@ -54,7 +54,7 @@ export default function TechnicianPayrollPanel({ user }) {
               <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm" />
             </label>
             <button type="button" onClick={handleExport} disabled={!exportState.enabled || loading || exporting} data-evidence="pastel-payroll-export" className="min-h-11 rounded-lg bg-orac-blue px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-500 disabled:opacity-50">
-              {exporting ? "Preparing..." : "Export to Sage Pastel Payroll (CSV)"}
+              {exporting ? "Preparing..." : "Export to Sage Pastel Payroll (CSV) — Review Only"}
             </button>
           </div>
         </div>
