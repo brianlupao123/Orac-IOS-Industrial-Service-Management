@@ -1,5 +1,23 @@
 const DASH = "\u2014"; // Em-dash: '—'
 
+// Business timezone for CSV filenames and date displays.
+// Configurable via VITE_ORAC_BUSINESS_TZ (browser) or ORAC_BUSINESS_TZ (node tests).
+// Default: Africa/Harare (CAT, UTC+2) — confirmed pilot fallback pending accountant TZ decision.
+const _env = (name) => (typeof import.meta !== "undefined" && import.meta.env && import.meta.env[name] !== undefined
+  ? import.meta.env[name]
+  : (typeof process !== "undefined" ? process.env?.[name] : undefined));
+
+export const BUSINESS_TZ = _env("VITE_ORAC_BUSINESS_TZ") || _env("ORAC_BUSINESS_TZ") || "Africa/Harare";
+
+/**
+ * Format a Date as YYYY-MM-DD in the business timezone.
+ * Uses Intl.DateTimeFormat with "sv-SE" locale for ISO-style output.
+ */
+export function formatBusinessDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: BUSINESS_TZ }).format(date);
+}
+
 const MONTH_NAMES_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const MONTH_NAMES_LONG = [
   "January", "February", "March", "April", "May", "June",

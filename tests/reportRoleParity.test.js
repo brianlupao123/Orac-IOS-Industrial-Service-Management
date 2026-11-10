@@ -80,14 +80,14 @@ test("per-tab roles match backend exactly", () => {
   }
 });
 
-test("CSV filename uses business timezone, not UTC ISO", () => {
+test("CSV filename uses formatBusinessDate, not UTC ISO", () => {
   // Ensure the old pattern is gone
   assert.ok(
     !portalSrc.includes('toISOString().split("T")[0]'),
-    "CSV filename should not use toISOString (UTC); use Intl.DateTimeFormat with business timezone"
+    "CSV filename should not use toISOString (UTC); use formatBusinessDate"
   );
   assert.ok(
-    portalSrc.includes("BUSINESS_TZ"),
-    "CSV filename should reference a BUSINESS_TZ constant"
+    portalSrc.includes("formatBusinessDate"),
+    "CSV filename should use formatBusinessDate from lib/format.js"
   );
 });

@@ -11,7 +11,7 @@ import { ErrorBanner } from "../components/PageStates.jsx";
 import { ICONS } from "../components/icons.jsx";
 import TechnicianPayrollPanel from "../components/TechnicianPayrollPanel.jsx";
 import { csvCell } from "../csvSafe.js";
-import { formatMoney, formatNumber, formatSignedMoney } from "../lib/format.js";
+import { formatMoney, formatNumber, formatSignedMoney, formatBusinessDate } from "../lib/format.js";
 
 const REPORT_TABS = [
   { key: "pipeline", label: "Pipeline", roles: ["Admin", "Management", "Sales"] },
@@ -106,8 +106,7 @@ export default function ReportsPage({ user }) {
     a.href = url;
     // Use business-day date for filename. Timezone is configurable; default
     // Africa/Harare (CAT, UTC+2) pending confirmed accounting-timezone source.
-    const BUSINESS_TZ = "Africa/Harare";
-    const bizDate = new Intl.DateTimeFormat("sv-SE", { timeZone: BUSINESS_TZ }).format(new Date());
+    const bizDate = formatBusinessDate(new Date());
     a.download = `orac-report-${active}-${bizDate}.csv`;
     a.click();
     URL.revokeObjectURL(url);

@@ -79,7 +79,7 @@ test("Reports: categorical summaries lead with the status; numeric measures use 
   // StatCard stays only on the Variance tab (a count of POs over budget and a money total).
   assert.equal((page.match(/<StatCard /g) || []).length, 2);
   assert.match(page, /<StatCard label="Total Variance" value=\{formatMoney\(totalVariance\)\}/);
-  assert.match(page, /import \{ formatMoney, formatNumber, formatSignedMoney \} from "\.\.\/lib\/format\.js"/);
+  assert.match(page, /import \{[^}]*formatMoney[^}]*formatNumber[^}]*formatSignedMoney[^}]*\} from "\.\.\/lib\/format\.js"/);
   assert.match(page, /\{formatMoney\(row\.total_amount\)\}/);
   assert.match(page, /\{formatMoney\(row\.po_amount\)\}/);
   assert.match(page, /\{formatSignedMoney\(variance\)\}/);

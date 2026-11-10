@@ -8,6 +8,8 @@ import {
   formatDateTime,
   formatTime,
   formatLongDate,
+  formatBusinessDate,
+  BUSINESS_TZ,
 } from "../src/lib/format.js";
 
 const DASH = "\u2014";
@@ -125,4 +127,41 @@ test("format.js preserves valid zeroes and explicit zero representations", () =>
   assert.equal(formatNumber(0), "0");
   assert.equal(formatNumber("0"), "0");
   assert.equal(formatNumber(-0), "0");
+});
+
+
+// ---- Business timezone date formatting ----
+
+test("BUSINESS_TZ defaults to Africa/Harare", () => {
+  // In test context, no VITE_ORAC_BUSINESS_TZ or ORAC_BUSINESS_TZ is set,
+  // so the default pilot fallback must be Africa/Harare.
+  assert.equal(BUSINESS_TZ, "Africa/Harare");
+});
+
+test("formatBusinessDate returns YYYY-MM-DD in business timezone", () => {
+  // Use a fixed UTC date
+  const d = new Date("2026-11-10T12:00:00Z");
+  const result = formatBusinessDate(d);
+  assert.match(result, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(result, "2026-11-10");
+});
+
+test("formatBusinessDate handles midnight boundary (UTC 22:30 → next day in CAT)", () => {
+  // 2026-11-10T22:30:00Z = 2026-11-11T00:30:00 in Africa/Harare (UTC+2)
+  const lateUtc = new Date("2026-11-10T22:30:00Z");
+  const result = formatBusinessDate(lateUtc);
+  assert.equal(result, "2026-11-11", "Late UTC should be next business day in CAT");
+});
+
+test("formatBusinessDate handles early morning (UTC 00:30 → same day in CAT)", () => {
+  // 2026-11-10T00:30:00Z = 2026-11-10T02:30:00 in Africa/Harare (UTC+2)
+  const earlyUtc = new Date("2026-11-10T00:30:00Z");
+  const result = formatBusinessDate(earlyUtc);
+  assert.equal(result, "2026-11-10", "Early UTC should be same business day in CAT");
+});
+
+test("formatBusinessDate returns null for invalid input", () => {
+  assert.equal(formatBusinessDate(new Date("nope")), null);
+  assert.equal(formatBusinessDate(null), null);
+  assert.equal(formatBusinessDate("2026-01-01"), null);
 });

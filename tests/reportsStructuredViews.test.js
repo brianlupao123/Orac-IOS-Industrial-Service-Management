@@ -57,7 +57,7 @@ test("Variance report highlights over-budget POs distinctly from under/at-budget
 
 test("Reports uses the shared USD formatters for all visible money", () => {
   const page = read("src/pages/ReportsPage.jsx");
-  assert.match(page, /import \{ formatMoney, formatNumber, formatSignedMoney \} from "\.\.\/lib\/format\.js"/);
+  assert.match(page, /import \{[^}]*formatMoney[^}]*formatNumber[^}]*formatSignedMoney[^}]*\} from "\.\.\/lib\/format\.js"/);
   assert.match(page, /\{formatMoney\(row\.total_amount\)\}/);
   assert.match(page, /\{formatMoney\(row\.po_amount\)\}/);
   assert.match(page, /\{formatMoney\(row\.logged_value\)\}/);
