@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { auth } from "../api/client.js";
+import BrandMark from "../components/ui/BrandMark.jsx";
+import BrandPanel from "../components/ui/BrandPanel.jsx";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -23,53 +25,102 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-        <h1 className="text-lg font-semibold text-orac-slate mb-1">Reset your password</h1>
+    <div className="min-h-screen bg-orac-canvas text-orac-text-primary font-sans selection:bg-orac-accent/20">
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
+        {/* Left Side: Brand Panel */}
+        <BrandPanel
+          title="Account Recovery & Credential Management"
+          subtitle="Reset your password securely. Operators can request recovery links, and administrators verify dual-factor resets."
+          showChain={false}
+          className="min-h-[260px] lg:min-h-screen"
+        />
 
-        {submitted ? (
-          <div>
-            <p className="text-sm text-gray-600 mt-2">
-              If that email has an account, a reset link has been issued. Email delivery isn't
-              fully automated for this pilot yet — if you don't hear back shortly, contact an
-              administrator directly and they can retrieve the link for you.
-            </p>
-            <Link to="/login" className="text-sm text-blue-700 hover:underline mt-4 inline-block">
-              Back to sign in
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <p className="text-sm text-gray-500 mb-4">Enter the email address on your account.</p>
-            <label htmlFor="forgot-email" className="text-sm font-medium text-gray-700 block mb-1">Email address</label>
-            <input
-              id="forgot-email"
-              name="email"
-              autoComplete="username"
-              inputMode="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm mb-3"
-              required
-            />
-            {error && (
-              <p className="text-sm text-red-600 mb-3 rounded bg-red-50 border border-red-200 px-2 py-1.5">
-                {error}
+        {/* Right Side: Form Card */}
+        <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-16">
+          <div className="mx-auto w-full max-w-[420px]">
+            <div className="mb-8 flex items-center gap-3">
+              <BrandMark size={44} />
+              <div>
+                <div className="text-xl font-bold tracking-tight text-orac-text-primary">ORAC-IOS</div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-orac-accent">Password Recovery</div>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold tracking-tight text-orac-text-primary sm:text-3xl">
+                Reset your password
+              </h1>
+              <p className="mt-2 text-sm text-orac-text-secondary sm:text-base">
+                Enter the email address registered on your account to request a secure password reset link.
               </p>
+            </div>
+
+            {submitted ? (
+              <div className="rounded-xl border border-orac-info-border bg-orac-info-bg p-6 text-orac-text-primary shadow-xs">
+                <div className="flex items-center gap-2 font-bold text-orac-info-text">
+                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  Reset Link Requested
+                </div>
+                <p className="mt-3 text-sm text-orac-text-secondary leading-relaxed">
+                  If that email belongs to an active account, a reset link has been dispatched. For the pilot environment, if you do not receive it promptly, please contact an administrator to retrieve your link.
+                </p>
+                <Link
+                  to="/login"
+                  className="mt-6 inline-flex items-center font-semibold text-orac-accent hover:underline"
+                >
+                  ← Back to sign in
+                </Link>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label htmlFor="forgot-email" className="mb-2 block text-sm font-semibold text-orac-text-primary">
+                    Email address
+                  </label>
+                  <input
+                    id="forgot-email"
+                    name="email"
+                    autoComplete="username"
+                    inputMode="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@company.com"
+                    className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-3 text-base text-orac-text-primary placeholder:text-orac-text-muted focus:border-orac-accent focus:outline-none focus:ring-4 focus:ring-orac-focus-ring/10 transition-all"
+                    required
+                    autoFocus
+                  />
+                </div>
+
+                {error && (
+                  <div role="alert" className="rounded-lg border border-orac-danger-border bg-orac-danger-bg px-4 py-3 text-sm text-orac-danger-text">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="w-full min-h-[44px] rounded-lg bg-orac-accent hover:bg-orac-accent-strong text-white font-semibold py-3 text-base shadow-xs disabled:opacity-50 transition-all cursor-pointer"
+                >
+                  {busy ? "Sending link..." : "Send reset link"}
+                </button>
+
+                <div className="pt-2 text-center">
+                  <Link to="/login" className="text-ux-secondary font-semibold text-orac-accent hover:underline">
+                    ← Back to sign in
+                  </Link>
+                </div>
+              </form>
             )}
-            <button
-              type="submit"
-              disabled={busy}
-              className="w-full rounded bg-orac-blue text-orac-slate font-semibold py-2.5 text-sm disabled:opacity-50"
-            >
-              {busy ? "Sending..." : "Send reset link"}
-            </button>
-            <Link to="/login" className="block text-center text-xs text-gray-500 hover:underline mt-4">
-              Back to sign in
-            </Link>
-          </form>
-        )}
+
+            <p className="mt-8 text-center text-ux-caption text-orac-text-muted">
+              Orac-IOS &copy; {new Date().getFullYear()} &bull; Orac Systems
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

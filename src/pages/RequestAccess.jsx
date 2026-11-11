@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { accessRequests } from "../api/client.js";
 import SearchableSelect from "../components/SearchableSelect.jsx";
 import BrandMark from "../components/ui/BrandMark.jsx";
+import BrandPanel from "../components/ui/BrandPanel.jsx";
 
 // Matches REQUESTABLE_ROLES in accessRequestsController.js exactly.
 // "Admin" is intentionally not offered here — see that file's comment for why.
@@ -41,103 +42,150 @@ export default function RequestAccess() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-10">
-      <div className="mx-auto w-full max-w-md">
-        <div className="mb-6 text-center">
-          <BrandMark size={80} className="mx-auto" />
-          <p className="mt-3 text-sm font-semibold text-orac-navy">ORAC-IOS</p>
-          <p className="text-xs text-gray-500">Orac Systems operations portal</p>
-        </div>
-      <div className="bg-white rounded-lg border border-gray-300 shadow-sm p-6">
-        <h1 className="text-lg font-semibold text-orac-slate mb-1">Request access</h1>
+    <div className="min-h-screen bg-orac-canvas text-orac-text-primary font-sans selection:bg-orac-accent/20">
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
+        {/* Left Side: Brand Panel */}
+        <BrandPanel
+          title="Join Your Operational Workspace"
+          subtitle="Request access to your role-governed dashboard. Administrators verify each applicant and assign appropriate organizational permissions."
+          showChain={true}
+          className="min-h-[260px] lg:min-h-screen"
+        />
 
-        {submitted ? (
-          <div>
-            <p className="text-sm text-gray-600 mt-2">
-              Your request has been sent to an administrator for review. You'll receive a link to
-              set your own password once it's approved.
-            </p>
-            <Link to="/login" className="text-sm text-blue-700 hover:underline mt-4 inline-block">
-              Back to sign in
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <p className="text-sm text-gray-500 mb-4">
-              Accounts on this portal are approved by an administrator, who assigns the actual
-              role — the role you select below is a request, not a guarantee.
-            </p>
-
-            <label htmlFor="request-name" className="text-sm font-medium text-gray-700 block mb-1">Full name</label>
-            <input
-              id="request-name"
-              name="name"
-              autoComplete="name"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm mb-3"
-              required
-            />
-
-            <label htmlFor="request-email" className="text-sm font-medium text-gray-700 block mb-1">Email address</label>
-            <input
-              id="request-email"
-              name="email"
-              autoComplete="email"
-              inputMode="email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm mb-3"
-              required
-            />
-
-            <p id="request-role-label" className="text-xs font-medium text-gray-600 block mb-1">Requested role</p>
-            <div className="mb-3">
-              <SearchableSelect
-                id="request-role"
-                ariaLabel="Requested role"
-                options={ROLE_OPTIONS}
-                value={form.requested_role}
-                onChange={(v) => setForm((f) => ({ ...f, requested_role: v }))}
-                placeholder="Select a role..."
-              />
+        {/* Right Side: Form Card */}
+        <div className="flex flex-col justify-center px-6 py-10 sm:px-12 lg:px-16">
+          <div className="mx-auto w-full max-w-[460px]">
+            <div className="mb-6 flex items-center gap-3">
+              <BrandMark size={44} />
+              <div>
+                <div className="text-xl font-bold tracking-tight text-orac-text-primary">ORAC-IOS</div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-orac-accent">Access Provisioning</div>
+              </div>
             </div>
 
-            <label htmlFor="request-reason" className="text-sm font-medium text-gray-700 block mb-1">
-              Reason (optional)
-            </label>
-            <textarea
-              id="request-reason"
-              name="reason"
-              value={form.reason}
-              onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
-              rows={3}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm mb-3"
-              placeholder="e.g. Joining the field service team, need dispatch access"
-            />
-
-            {error && (
-              <p className="text-sm text-red-600 mb-3 rounded bg-red-50 border border-red-200 px-2 py-1.5">
-                {error}
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold tracking-tight text-orac-text-primary sm:text-3xl">
+                Request access
+              </h1>
+              <p className="mt-2 text-sm text-orac-text-secondary">
+                Accounts are approved by an administrator, who assigns verified permissions. The selected role is a request subject to internal governance.
               </p>
+            </div>
+
+            {submitted ? (
+              <div className="rounded-xl border border-orac-success-border bg-orac-success-bg p-6 text-orac-text-primary shadow-xs">
+                <div className="flex items-center gap-2 font-bold text-orac-success-text">
+                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Request Successfully Submitted
+                </div>
+                <p className="mt-3 text-sm text-orac-text-secondary leading-relaxed">
+                  Your request has been sent to an administrator for review. You will receive an invitation to set your password once your role has been provisioned.
+                </p>
+                <Link
+                  to="/login"
+                  className="mt-6 inline-flex items-center font-semibold text-orac-accent hover:underline"
+                >
+                  ← Back to sign in
+                </Link>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="request-name" className="mb-1.5 block text-sm font-semibold text-orac-text-primary">
+                    Full name
+                  </label>
+                  <input
+                    id="request-name"
+                    name="name"
+                    autoComplete="name"
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder="e.g. John Moyo"
+                    className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2.5 text-base text-orac-text-primary placeholder:text-orac-text-muted focus:border-orac-accent focus:outline-none focus:ring-4 focus:ring-orac-focus-ring/10 transition-all"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="request-email" className="mb-1.5 block text-sm font-semibold text-orac-text-primary">
+                    Email address
+                  </label>
+                  <input
+                    id="request-email"
+                    name="email"
+                    autoComplete="email"
+                    inputMode="email"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    placeholder="john.moyo@oracsystems.com"
+                    className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2.5 text-base text-orac-text-primary placeholder:text-orac-text-muted focus:border-orac-accent focus:outline-none focus:ring-4 focus:ring-orac-focus-ring/10 transition-all"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <p id="request-role-label" className="mb-1.5 block text-sm font-semibold text-orac-text-primary">
+                    Requested role
+                  </p>
+                  <SearchableSelect
+                    id="request-role"
+                    ariaLabel="Requested role"
+                    options={ROLE_OPTIONS}
+                    value={form.requested_role}
+                    onChange={(v) => setForm((f) => ({ ...f, requested_role: v }))}
+                    placeholder="Select a role..."
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="request-reason" className="mb-1.5 block text-sm font-semibold text-orac-text-primary">
+                    Reason (optional)
+                  </label>
+                  <textarea
+                    id="request-reason"
+                    name="reason"
+                    value={form.reason}
+                    onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
+                    rows={3}
+                    placeholder="e.g. Joining the field service team, need dispatch access"
+                    className="w-full rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2.5 text-base text-orac-text-primary placeholder:text-orac-text-muted focus:border-orac-accent focus:outline-none focus:ring-4 focus:ring-orac-focus-ring/10 transition-all"
+                  />
+                </div>
+
+                {error && (
+                  <div role="alert" className="rounded-lg border border-orac-danger-border bg-orac-danger-bg px-4 py-3 text-sm text-orac-danger-text">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="w-full min-h-[44px] rounded-lg bg-orac-accent hover:bg-orac-accent-strong text-white font-semibold py-3 text-base shadow-xs disabled:opacity-50 transition-all cursor-pointer"
+                >
+                  {busy ? "Submitting..." : "Submit request"}
+                </button>
+
+                <div className="pt-2 text-center">
+                  <Link to="/login" className="text-sm font-semibold text-orac-accent hover:underline">
+                    ← Back to sign in
+                  </Link>
+                </div>
+              </form>
             )}
 
-            <button
-              type="submit"
-              disabled={busy}
-              className="w-full rounded bg-orac-navy text-white font-semibold py-2.5 text-sm disabled:opacity-50"
-            >
-              {busy ? "Submitting..." : "Submit request"}
-            </button>
-
-            <Link to="/login" className="block text-center text-xs text-gray-500 hover:underline mt-4">
-              Back to sign in
-            </Link>
-          </form>
-        )}
-      </div>
-      <footer className="mt-6 border-t border-gray-200 pt-4 text-center text-xs text-gray-500"><p>Orac-IOS · Orac Industrial Operations System</p><p className="mt-1">&copy; {new Date().getFullYear()} Handon Enterprises (Pvt) Ltd, trading as Orac Systems.</p><a className="mt-2 inline-block font-semibold text-orac-navy hover:underline" href="https://oracsystems.co.zw" target="_blank" rel="noreferrer">Company site</a></footer>
+            <footer className="mt-8 border-t border-orac-border pt-4 text-center text-xs text-orac-text-muted">
+              <p>Orac-IOS · Orac Industrial Operations System</p>
+              <p className="mt-1">&copy; {new Date().getFullYear()} Handon Enterprises (Pvt) Ltd, trading as Orac Systems.</p>
+              <a className="mt-2 inline-block font-semibold text-orac-accent hover:underline" href="https://oracsystems.co.zw" target="_blank" rel="noreferrer">
+                Company site
+              </a>
+            </footer>
+          </div>
+        </div>
       </div>
     </div>
   );

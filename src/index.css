@@ -55,6 +55,9 @@
   --orac-border-strong: #64748b;  /* inputs, table rules, essential boundaries (>=3:1) */
 
   /* Brand / accent */
+  --orac-brand-a: #06284a;
+  --orac-brand-b: #00488c;
+  --orac-brand-light: #9fc4ea;
   --orac-accent: #00488c;         /* links, headings, icons on light surfaces */
   --orac-accent-strong: #003c74;  /* filled buttons (bg), hover of accent */
   --orac-focus-ring: #00488c;
@@ -105,6 +108,9 @@ html[data-theme="dark"] {
   --orac-border: #2a3348;
   --orac-border-strong: #7c849a;
 
+  --orac-brand-a: #041a31;
+  --orac-brand-b: #003c74;
+  --orac-brand-light: #8fc4ea;
   --orac-accent: #8fc4ea;
   --orac-accent-strong: #00488c;   /* filled buttons keep brand navy in both themes */
   --orac-focus-ring: #8fc4ea;
@@ -155,6 +161,11 @@ body {
 /* Shared visual-system utilities. They complement Tailwind during the
    migration away from page-specific colour and spacing decisions. */
 .orac-app-shell { background-color: var(--orac-page); color: var(--orac-text-primary); }
+.orac-brand-panel-bg { background: linear-gradient(135deg, var(--orac-brand-a), var(--orac-brand-b)); }
+.orac-brand-panel-contour { stroke: var(--orac-brand-light); }
+.orac-brand-panel-tag { color: var(--orac-brand-light); }
+.orac-brand-panel-subtitle { color: #cfe0f2; }
+.orac-brand-panel-footer { color: #b5cbe3; }
 .orac-primary-nav {
   scrollbar-width: none;
   -ms-overflow-style: none;
