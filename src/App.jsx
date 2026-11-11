@@ -7,6 +7,7 @@ import LandingPage from "./pages/LandingPage.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import RequestAccess from "./pages/RequestAccess.jsx";
+import EnrollmentPage from "./pages/EnrollmentPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import WorksheetsPage from "./pages/WorksheetsPage.jsx";
 import InventoryPage from "./pages/InventoryPage.jsx";
@@ -85,6 +86,7 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/request-access" element={<RequestAccess />} />
+        <Route path="/enroll" element={<EnrollmentPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );

@@ -248,12 +248,20 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
                   )}
                 </Button>
 
-                <p className="border-t border-orac-border pt-5 text-center text-ux-secondary text-orac-text-muted">
-                  Need an account?{" "}
-                  <Link to="/request-access" className="font-semibold text-orac-accent hover:underline">
-                    Request access
-                  </Link>
-                </p>
+                <div className="border-t border-orac-border pt-4 text-center space-y-1 text-ux-secondary text-orac-text-muted">
+                  <p>
+                    Need an account?{" "}
+                    <Link to="/request-access" className="font-semibold text-orac-accent hover:underline">
+                      Request access
+                    </Link>
+                  </p>
+                  <p>
+                    Have a setup ticket?{" "}
+                    <Link to="/enroll" className="font-semibold text-orac-accent hover:underline">
+                      Set up authenticator
+                    </Link>
+                  </p>
+                </div>
               </form>
             )}
 

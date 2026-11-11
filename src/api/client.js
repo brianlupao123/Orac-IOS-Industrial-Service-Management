@@ -172,6 +172,20 @@ export const auth = {
     setSession(data.user, data.token);
     return data.user;
   },
+  startTotpEnrollment(email, password, ticket) {
+    return request("/auth/totp/enrollment/start", {
+      method: "POST",
+      authFlow: true,
+      body: JSON.stringify({ email, password, ticket })
+    });
+  },
+  confirmTotpEnrollment(email, enrollmentId, code) {
+    return request("/auth/totp/enrollment/confirm", {
+      method: "POST",
+      authFlow: true,
+      body: JSON.stringify({ email, enrollment_id: enrollmentId, code })
+    });
+  },
   async restoreSession() {
     if (!getToken()) return null;
     try {
@@ -652,6 +666,33 @@ export const admin = {
   updateCatalogItem(id, payload) { return request(`/admin/catalog_items/${id}`, { method: "PATCH", body: JSON.stringify(payload) }); },
   deactivateEntity(collection, id) { return request(`/admin/${collection}/${id}/deactivate`, { method: "POST" }); },
   reactivateEntity(collection, id) { return request(`/admin/${collection}/${id}/reactivate`, { method: "POST" }); }
+};
+
+export const totp = {
+  issueTicket(userId) {
+    return request("/auth/totp/enrollment/tickets", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId })
+    });
+  },
+  resetFactor(userId) {
+    return request("/auth/totp/factor/reset", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId })
+    });
+  },
+  requestFactorReset(userId) {
+    return request("/auth/totp/factor/reset/request", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId })
+    });
+  },
+  approveFactorReset(userId, requestId) {
+    return request("/auth/totp/factor/reset/approve", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, request_id: requestId })
+    });
+  }
 };
 
 // Attach to the existing `quotes` export rather than redefining it.

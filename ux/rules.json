@@ -132,7 +132,8 @@
         "src/pages/LoginPage.jsx",
         "src/pages/RequestAccess.jsx",
         "src/pages/ForgotPassword.jsx",
-        "src/pages/ResetPassword.jsx"
+        "src/pages/ResetPassword.jsx",
+        "src/pages/EnrollmentPage.jsx"
       ]
     },
     {

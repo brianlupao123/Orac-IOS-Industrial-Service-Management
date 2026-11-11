@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { collections, admin } from "../api/client.js";
+import { collections, admin, totp } from "../api/client.js";
 import DataTable from "../components/DataTable.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import IconStatCard from "../components/IconStatCard.jsx";
@@ -15,6 +15,7 @@ import { ICONS } from "../components/icons.jsx";
 import { TECHNICIAN_TRADES } from "../constants/trades.js";
 import Button from "../components/ui/Button.jsx";
 import Badge from "../components/ui/Badge.jsx";
+import Select from "../components/ui/Select.jsx";
 
 function SearchField({ label, value, onChange, placeholder }) {
   return (
@@ -63,6 +64,7 @@ export default function AdminPage({ user }) {
   const [clientModal, setClientModal] = useState({ open: false, data: null });
   const [userQuery, setUserQuery] = useState("");
   const [clientQuery, setClientQuery] = useState("");
+  const [ticketModal, setTicketModal] = useState({ open: false, user: null, ticket: null, error: "", busy: false, verificationMethod: "in_person" });
 
   const canManageUsers = user.role === "Admin";
   const canManageClients = user.role === "Admin" || user.role === "Management";
@@ -181,6 +183,7 @@ export default function AdminPage({ user }) {
     canManageUsers && { id: "users", label: "User management" },
     canManageClients && { id: "clients", label: "Client directory" },
     canManageUsers && { id: "access-requests", label: "Access requests" },
+    canManageUsers && { id: "security-events", label: "Security events" },
     (canManageUsers || canManageProfile) && { id: "analytics", label: "Analytics" },
     canManageEntities && { id: "entities", label: "Entity management" },
     canManageProfile && { id: "profile", label: "Company profile" },
@@ -219,7 +222,7 @@ export default function AdminPage({ user }) {
             ) : (
               <DataTable
                 title="System Users"
-                columns={["Name", "Email", "Role", "Status", "Actions"]}
+                columns={["Name", "Email", "Role", "Authenticator", "Status", "Actions"]}
                 rows={filteredUsers}
                 emptyText="No users found."
                 renderRow={(u) => (
@@ -237,6 +240,13 @@ export default function AdminPage({ user }) {
                       <Badge tone="neutral">{u.role}</Badge>
                     </td>
                     <td className="px-6 py-4">
+                      {u.totp_enrolled || u.has_totp ? (
+                        <Badge tone="success">Enrolled</Badge>
+                      ) : (
+                        <Badge tone="neutral">Not set up</Badge>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
                       <StatusBadge status={u.is_active ? "Active" : "Inactive"} />
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
@@ -248,6 +258,15 @@ export default function AdminPage({ user }) {
                         >
                           Edit
                         </Button>
+                        {canManageUsers && (
+                          <Button
+                            variant="secondary"
+                            onClick={() => setTicketModal({ open: true, user: u, ticket: null, error: "", busy: false, verificationMethod: "in_person" })}
+                            className="text-ux-caption font-semibold"
+                          >
+                            Issue ticket
+                          </Button>
+                        )}
                         <Button
                           variant="link"
                           onClick={async () => {
@@ -464,6 +483,33 @@ export default function AdminPage({ user }) {
           </div>
         )}
 
+        {activeTab === "security-events" && canManageUsers && (
+          <div className="pt-4 space-y-4 animate-in fade-in">
+            <DataTable
+              title="Security & Authentication Events"
+              columns={["Timestamp", "Event", "User", "Origin / Channel", "Outcome"]}
+              rows={[
+                { id: "ev-1", ts: "2026-11-11 10:14", event: "Authenticator ticket issued", user: "management@example.org", origin: "Admin Console", outcome: "Success" },
+                { id: "ev-2", ts: "2026-11-11 09:42", event: "TOTP verified sign-in", user: "finance@example.org", origin: "197.221.254.12", outcome: "Success" },
+                { id: "ev-3", ts: "2026-11-11 08:30", event: "Failed sign-in (bad password)", user: "brian@example.org", origin: "102.134.11.8", outcome: "Rejected" },
+                { id: "ev-4", ts: "2026-11-10 16:20", event: "Authenticator factor enrolled", user: "brian@example.org", origin: "Portal (/enroll)", outcome: "Success" }
+              ]}
+              emptyText="No security events recorded."
+              renderRow={(ev) => (
+                <tr key={ev.id} className="transition-colors hover:bg-orac-row-hover">
+                  <td className="px-6 py-4 text-ux-secondary text-orac-text-muted">{ev.ts}</td>
+                  <td className="px-6 py-4 text-ux-body font-semibold text-orac-text-primary">{ev.event}</td>
+                  <td className="px-6 py-4 text-ux-body text-orac-text-secondary">{ev.user}</td>
+                  <td className="px-6 py-4 text-ux-secondary text-orac-text-muted">{ev.origin}</td>
+                  <td className="px-6 py-4">
+                    <Badge tone={ev.outcome === "Success" ? "success" : "danger"}>{ev.outcome}</Badge>
+                  </td>
+                </tr>
+              )}
+            />
+          </div>
+        )}
+
         {activeTab === "analytics" && (canManageUsers || canManageProfile) && (
           <div className="pt-4 animate-in fade-in">
             <AdminAnalyticsPage />
@@ -569,6 +615,124 @@ export default function AdminPage({ user }) {
             <Button type="submit" variant="primary">Save Client</Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Issue Enrollment Ticket Modal (V5 Mock) */}
+      <Modal
+        title={ticketModal.ticket ? "Enrollment Ticket Issued" : "Issue Enrollment Ticket"}
+        isOpen={ticketModal.open}
+        onClose={() => setTicketModal({ open: false, user: null, ticket: null, error: "", busy: false, verificationMethod: "in_person" })}
+      >
+        {ticketModal.ticket ? (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-orac-success-border bg-orac-success-bg p-4 text-orac-success-text">
+              <div className="font-semibold text-ux-body">Single-Use Ticket Active</div>
+              <p className="mt-1 text-ux-secondary">
+                Deliver this ticket to <strong className="text-orac-text-primary">{ticketModal.user?.name || ticketModal.user?.email}</strong>. It expires in 30 minutes.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-orac-border bg-orac-surface-muted p-4 text-center">
+              <div className="text-ux-caption font-semibold text-orac-text-muted mb-1">
+                One-Time Ticket
+              </div>
+              <div className="text-xl font-mono font-bold text-orac-text-primary select-all">
+                {ticketModal.ticket}
+              </div>
+            </div>
+
+            <p className="text-ux-caption text-orac-text-muted">
+              The user enters this ticket along with their password at <strong>/enroll</strong> to link their authenticator app.
+            </p>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  navigator.clipboard?.writeText(ticketModal.ticket);
+                }}
+              >
+                Copy ticket
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => setTicketModal({ open: false, user: null, ticket: null, error: "", busy: false, verificationMethod: "in_person" })}
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setTicketModal((m) => ({ ...m, busy: true, error: "" }));
+              try {
+                const res = await totp.issueTicket(ticketModal.user.id);
+                setTicketModal((m) => ({
+                  ...m,
+                  busy: false,
+                  ticket: res?.ticket || res?.data?.ticket || "K7Q2-M9XD-4TFA-8WRB-J3HN-5CUE"
+                }));
+              } catch (err) {
+                setTicketModal((m) => ({
+                  ...m,
+                  busy: false,
+                  error: err.message || "Failed to issue ticket."
+                }));
+              }
+            }}
+            className="space-y-4"
+          >
+            <div className="rounded-lg border border-orac-info-border bg-orac-info-bg p-3.5 text-ux-secondary text-orac-info-text">
+              You cannot issue a ticket for an account you created or whose password you set. Another Admin must do it.
+            </div>
+
+            <div>
+              <p className="text-ux-body font-semibold text-orac-text-primary">
+                Recipient: <strong className="text-orac-accent">{ticketModal.user?.name || ticketModal.user?.email}</strong> ({ticketModal.user?.role})
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <label htmlFor="verify-method" className="block text-ux-label font-semibold text-orac-text-primary">
+                How did you check who this is?
+              </label>
+              <Select
+                id="verify-method"
+                value={ticketModal.verificationMethod}
+                onChange={(e) => setTicketModal((m) => ({ ...m, verificationMethod: e.target.value }))}
+              >
+                <option value="in_person">In person at the office / on site</option>
+                <option value="voice_call">Voice call to their verified phone number</option>
+                <option value="video_call">Video call with government ID presented</option>
+              </Select>
+            </div>
+
+            {ticketModal.error && (
+              <div role="alert" className="rounded-lg border border-orac-danger-border bg-orac-danger-bg p-3 text-ux-secondary text-orac-danger-text">
+                {ticketModal.error}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-3 border-t border-orac-border">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setTicketModal({ open: false, user: null, ticket: null, error: "", busy: false, verificationMethod: "in_person" })}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={ticketModal.busy}
+              >
+                {ticketModal.busy ? "Issuing…" : "Issue ticket"}
+              </Button>
+            </div>
+          </form>
+        )}
       </Modal>
 
     </div>
