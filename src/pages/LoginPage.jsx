@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../api/client.js";
+import { totpEnrollmentUiEnabled } from "../totpFlags.js";
 import SessionExpiredBanner from "../components/SessionExpiredBanner.jsx";
 import BrandMark from "../components/ui/BrandMark.jsx";
 import BrandPanel from "../components/ui/BrandPanel.jsx";
@@ -255,12 +256,14 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
                       Request access
                     </Link>
                   </p>
-                  <p>
-                    Have a setup ticket?{" "}
-                    <Link to="/enroll" className="font-semibold text-orac-accent hover:underline">
-                      Set up authenticator
-                    </Link>
-                  </p>
+                  {totpEnrollmentUiEnabled() && (
+                    <p>
+                      Have a setup ticket?{" "}
+                      <Link to="/enroll" className="font-semibold text-orac-accent hover:underline">
+                        Set up authenticator
+                      </Link>
+                    </p>
+                  )}
                 </div>
               </form>
             )}

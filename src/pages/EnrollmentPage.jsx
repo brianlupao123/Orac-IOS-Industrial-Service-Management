@@ -33,14 +33,18 @@ export default function EnrollmentPage() {
     setBusy(true);
     try {
       const data = await auth.startTotpEnrollment(email.trim(), password, ticket.trim());
-      setEnrollmentId(data.enrollment_id || "demo-enrollment-id");
+      setEnrollmentId(data.enrollment_id || "");
       setOtpauthUri(data.otpauth_uri || "");
       // Extract secret if present in uri or returned directly
       const uriMatch = (data.otpauth_uri || "").match(/secret=([A-Z2-7]+)/i);
-      setSecretKey(data.secret || (uriMatch ? uriMatch[1] : ticket.replace(/[^A-Z0-9]/gi, "").slice(0, 32)));
+      setSecretKey(data.secret || (uriMatch ? uriMatch[1] : ""));
       setStep(2);
     } catch (err) {
-      setError(err.message || "Failed to start enrollment. Check your ticket and password.");
+      if (err.status === 404 || (err.message && (err.message.includes("404") || err.message.toLowerCase().includes("not found")))) {
+        setError("Authenticator setup is not open yet. Contact your administrator.");
+      } else {
+        setError(err.message || "Failed to start enrollment. Check your ticket and password.");
+      }
     } finally {
       setBusy(false);
     }
@@ -57,13 +61,14 @@ export default function EnrollmentPage() {
     setBusy(true);
     try {
       const data = await auth.confirmTotpEnrollment(email.trim(), enrollmentId, code.trim());
-      setRecoveryCodes(data.recovery_codes || [
-        "A1B2-C3D4", "E5F6-G7H8", "J9K0-L1M2", "N3P4-Q5R6", "S7T8-U9V0",
-        "W1X2-Y3Z4", "B5C6-D7E8", "F9G0-H1J2", "K3L4-M5N6", "P7Q8-R9S0"
-      ]);
+      setRecoveryCodes(data.recovery_codes || []);
       setStep(3);
     } catch (err) {
-      setError(err.message || "Invalid verification code. Please check your authenticator and try again.");
+      if (err.status === 404 || (err.message && (err.message.includes("404") || err.message.toLowerCase().includes("not found")))) {
+        setError("Authenticator setup is not open yet. Contact your administrator.");
+      } else {
+        setError(err.message || "Invalid verification code. Please check your authenticator and try again.");
+      }
     } finally {
       setBusy(false);
     }

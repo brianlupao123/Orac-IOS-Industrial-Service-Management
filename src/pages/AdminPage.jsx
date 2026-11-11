@@ -108,6 +108,15 @@ export default function AdminPage({ user }) {
     );
   }, [users, userQuery]);
 
+  const hasTotpColumn = useMemo(
+    () => filteredUsers.some((u) => typeof u.totp_enrolled === "boolean"),
+    [filteredUsers]
+  );
+  const userColumns = useMemo(
+    () => ["Name", "Email", "Role", ...(hasTotpColumn ? ["Authenticator"] : []), "Status", "Actions"],
+    [hasTotpColumn]
+  );
+
   const filteredClients = useMemo(() => {
     const query = clientQuery.trim().toLowerCase();
     if (!query) return clients;
@@ -183,7 +192,6 @@ export default function AdminPage({ user }) {
     canManageUsers && { id: "users", label: "User management" },
     canManageClients && { id: "clients", label: "Client directory" },
     canManageUsers && { id: "access-requests", label: "Access requests" },
-    canManageUsers && { id: "security-events", label: "Security events" },
     (canManageUsers || canManageProfile) && { id: "analytics", label: "Analytics" },
     canManageEntities && { id: "entities", label: "Entity management" },
     canManageProfile && { id: "profile", label: "Company profile" },
@@ -222,7 +230,7 @@ export default function AdminPage({ user }) {
             ) : (
               <DataTable
                 title="System Users"
-                columns={["Name", "Email", "Role", "Authenticator", "Status", "Actions"]}
+                columns={userColumns}
                 rows={filteredUsers}
                 emptyText="No users found."
                 renderRow={(u) => (
@@ -239,13 +247,15 @@ export default function AdminPage({ user }) {
                     <td className="px-6 py-4">
                       <Badge tone="neutral">{u.role}</Badge>
                     </td>
-                    <td className="px-6 py-4">
-                      {u.totp_enrolled || u.has_totp ? (
-                        <Badge tone="success">Enrolled</Badge>
-                      ) : (
-                        <Badge tone="neutral">Not set up</Badge>
-                      )}
-                    </td>
+                    {hasTotpColumn && (
+                      <td className="px-6 py-4">
+                        {typeof u.totp_enrolled === "boolean" ? (
+                          <Badge tone={u.totp_enrolled ? "success" : "neutral"}>
+                            {u.totp_enrolled ? "Enrolled" : "Not set up"}
+                          </Badge>
+                        ) : null}
+                      </td>
+                    )}
                     <td className="px-6 py-4">
                       <StatusBadge status={u.is_active ? "Active" : "Inactive"} />
                     </td>
@@ -483,32 +493,6 @@ export default function AdminPage({ user }) {
           </div>
         )}
 
-        {activeTab === "security-events" && canManageUsers && (
-          <div className="pt-4 space-y-4 animate-in fade-in">
-            <DataTable
-              title="Security & Authentication Events"
-              columns={["Timestamp", "Event", "User", "Origin / Channel", "Outcome"]}
-              rows={[
-                { id: "ev-1", ts: "2026-11-11 10:14", event: "Authenticator ticket issued", user: "management@example.org", origin: "Admin Console", outcome: "Success" },
-                { id: "ev-2", ts: "2026-11-11 09:42", event: "TOTP verified sign-in", user: "finance@example.org", origin: "197.221.254.12", outcome: "Success" },
-                { id: "ev-3", ts: "2026-11-11 08:30", event: "Failed sign-in (bad password)", user: "brian@example.org", origin: "102.134.11.8", outcome: "Rejected" },
-                { id: "ev-4", ts: "2026-11-10 16:20", event: "Authenticator factor enrolled", user: "brian@example.org", origin: "Portal (/enroll)", outcome: "Success" }
-              ]}
-              emptyText="No security events recorded."
-              renderRow={(ev) => (
-                <tr key={ev.id} className="transition-colors hover:bg-orac-row-hover">
-                  <td className="px-6 py-4 text-ux-secondary text-orac-text-muted">{ev.ts}</td>
-                  <td className="px-6 py-4 text-ux-body font-semibold text-orac-text-primary">{ev.event}</td>
-                  <td className="px-6 py-4 text-ux-body text-orac-text-secondary">{ev.user}</td>
-                  <td className="px-6 py-4 text-ux-secondary text-orac-text-muted">{ev.origin}</td>
-                  <td className="px-6 py-4">
-                    <Badge tone={ev.outcome === "Success" ? "success" : "danger"}>{ev.outcome}</Badge>
-                  </td>
-                </tr>
-              )}
-            />
-          </div>
-        )}
 
         {activeTab === "analytics" && (canManageUsers || canManageProfile) && (
           <div className="pt-4 animate-in fade-in">
@@ -672,7 +656,7 @@ export default function AdminPage({ user }) {
                 setTicketModal((m) => ({
                   ...m,
                   busy: false,
-                  ticket: res?.ticket || res?.data?.ticket || "K7Q2-M9XD-4TFA-8WRB-J3HN-5CUE"
+                  ticket: res?.ticket || res?.data?.ticket || ""
                 }));
               } catch (err) {
                 setTicketModal((m) => ({
@@ -698,6 +682,9 @@ export default function AdminPage({ user }) {
               <label htmlFor="verify-method" className="block text-ux-label font-semibold text-orac-text-primary">
                 How did you check who this is?
               </label>
+              <p className="text-ux-caption text-orac-text-muted">
+                Checklist for your records - not stored by the system
+              </p>
               <Select
                 id="verify-method"
                 value={ticketModal.verificationMethod}
