@@ -40,7 +40,7 @@ export default function EnrollmentPage() {
       setSecretKey(data.secret || (uriMatch ? uriMatch[1] : ""));
       setStep(2);
     } catch (err) {
-      if (err.status === 404 || (err.message && (err.message.includes("404") || err.message.toLowerCase().includes("not found")))) {
+      if (err.status === 404) {
         setError("Authenticator setup is not open yet. Contact your administrator.");
       } else {
         setError(err.message || "Failed to start enrollment. Check your ticket and password.");
@@ -64,11 +64,7 @@ export default function EnrollmentPage() {
       setRecoveryCodes(data.recovery_codes || []);
       setStep(3);
     } catch (err) {
-      if (err.status === 404 || (err.message && (err.message.includes("404") || err.message.toLowerCase().includes("not found")))) {
-        setError("Authenticator setup is not open yet. Contact your administrator.");
-      } else {
-        setError(err.message || "Invalid verification code. Please check your authenticator and try again.");
-      }
+      setError(err.message || "Invalid verification code. Please check your authenticator and try again.");
     } finally {
       setBusy(false);
     }
