@@ -7,6 +7,7 @@ import {
   parseHours,
   parseDelimitedText,
   matchTechnician,
+  technicianDisplayName,
   reconstructFailedText,
   validateImportBatch,
   computeRowFingerprint,
@@ -658,4 +659,34 @@ test("idempotency retry safety: content fingerprint preserves exact request IDs 
   // Crucial: Row C retained its own original request ID, and did NOT inherit Row B's old ID!
   assert.equal(idC_retry, idC_initial);
   assert.notEqual(idC_retry, idB_initial);
+});
+
+test("technicianDisplayName: resolves name from name property or first_name + last_name", () => {
+  assert.equal(technicianDisplayName({ name: "Tapiwa Marufu" }), "Tapiwa Marufu");
+  assert.equal(technicianDisplayName({ first_name: "Tendai", last_name: "Chikore" }), "Tendai Chikore");
+  assert.equal(technicianDisplayName({ first_name: "Simba" }), "Simba");
+  assert.equal(technicianDisplayName(null), "");
+});
+
+test("matchTechnician & validation: ID-only row populates workerName for first_name/last_name profiles", () => {
+  const techs = [
+    { id: "t_split", first_name: "Tendai", last_name: "Chikore", national_id: "63-999-K-88", trade: "Electrician", is_active: true }
+  ];
+  const dispatches = [{ id: "d1", dispatch_number: "DC-001" }];
+
+  const parsedRows = parseDelimitedText("Date,Technician,National ID,Dispatch,Hours\n2026-11-05,,63-999-K-88,DC-001,8.0");
+  const validated = validateImportBatch(parsedRows, techs, dispatches, "d1");
+  assert.equal(validated[0].isValid, true);
+  assert.equal(validated[0].workerName, "Tendai Chikore");
+  assert.equal(validated[0].errors.length, 0);
+});
+
+test("matchTechnician: conflict message displays full first + last name for first_name/last_name profiles", () => {
+  const techs = [
+    { id: "t_split", first_name: "Tendai", last_name: "Chikore", national_id: "63-999-K-88", trade: "Electrician", is_active: true }
+  ];
+  const row = { workerName: "Farai Gumbo", nationalId: "63-999-K-88" };
+  const match = matchTechnician(row, techs);
+  assert.ok(match?.conflict);
+  assert.match(match.message, /National ID belongs to Tendai Chikore\)\./);
 });

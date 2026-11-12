@@ -24,6 +24,16 @@
       "file": "src/pages/AdminPage.jsx",
       "rule": "SIZE-LOST",
       "reason": "B3: table cells replaced raw text-sm with text-ux-body semantic token and Button/Badge primitives"
+    },
+    {
+      "file": "src/pages/LandingPage.jsx",
+      "rule": "SIZE-LOST",
+      "reason": "V5 navy hero typography upgrade: raw text-sm replaced by design token scale"
+    },
+    {
+      "file": "src/lib/timesheetBulkImportLogic.js",
+      "rule": "LOGIC-FILE",
+      "reason": "Owner-approved port of technicianDisplayName, name-vs-ID conflict detection, ID-only row support from ux/p1a-quickfixes"
     }
   ]
 }

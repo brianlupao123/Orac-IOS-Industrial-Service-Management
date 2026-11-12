@@ -233,8 +233,16 @@ export function parseDelimitedText(text) {
   });
 }
 
+// Helper to resolve technician display name across profile variants (name or first_name + last_name)
+export function technicianDisplayName(tech) {
+  if (!tech) return "";
+  if (tech.name && String(tech.name).trim()) return String(tech.name).trim();
+  const parts = [tech.first_name, tech.last_name].filter(Boolean).map((s) => String(s).trim()).filter(Boolean);
+  return parts.join(" ");
+}
+
 // Exact matching for active technician profiles (no loose substring or trade fallback)
-// Normalized whitespace matching and ambiguous name detection with National ID disambiguation
+// Normalized whitespace matching and ambiguous name detection with National ID disambiguation and conflict detection
 export function matchTechnician(row, technicians) {
   if (!row.workerName && !row.nationalId) return null;
   const activeTechs = (technicians || []).filter((t) => t.is_active !== false);
@@ -257,7 +265,8 @@ export function matchTechnician(row, technicians) {
     if (byId.ambiguous) return byId;
     const knownNames = [byId.name, `${byId.first_name || ""} ${byId.last_name || ""}`].map(normalizeName).filter(Boolean);
     if (cleanInput && normalizeNationalId(row.workerName) !== normalizeNationalId(row.nationalId) && knownNames.length && !knownNames.includes(cleanInput)) {
-      return { identityError: "Technician name and National ID identify different people. Correct the row before import." };
+      const msg = `Technician name and National ID identify different people (National ID belongs to ${technicianDisplayName(byId)}). Correct the row before import.`;
+      return { conflict: true, techById: byId, identityError: msg, message: msg };
     }
     return byId;
   }
@@ -340,7 +349,8 @@ export function validateImportBatch(parsedRows, technicians, dispatches, default
 
   // Accumulate daily hours per worker on each valid calendar date
   for (const item of prepped) {
-    if (item.workerName && item.date && item.isDateValid) {
+    const effectiveName = item.workerName || technicianDisplayName(item.matchedTech);
+    if (effectiveName && item.date && item.isDateValid) {
       const dailyKey = `${item.workerKey}|${item.date}`;
       cumulativeHours.set(dailyKey, (cumulativeHours.get(dailyKey) || 0) + item.totalHours);
     }
@@ -350,7 +360,8 @@ export function validateImportBatch(parsedRows, technicians, dispatches, default
     const errors = [...(item.parseErrors || [])];
     const warnings = [];
 
-    if (!item.workerName) {
+    const effectiveName = item.workerName || technicianDisplayName(item.matchedTech);
+    if (!effectiveName && !item.nationalId) {
       errors.push("Missing technician name");
     }
 
@@ -369,6 +380,8 @@ export function validateImportBatch(parsedRows, technicians, dispatches, default
     // Technician match checks
     if (item.matchedTech?.identityError) {
       errors.push(item.matchedTech.identityError);
+    } else if (item.matchedTech?.conflict) {
+      errors.push(item.matchedTech.message);
     } else if (item.matchedTech?.ambiguous) {
       errors.push(`Multiple active technicians (${item.matchedTech.count}) named "${item.workerName}". Provide National ID in CSV to disambiguate.`);
     } else if (!item.matchedTech && item.workerName) {
@@ -377,29 +390,36 @@ export function validateImportBatch(parsedRows, technicians, dispatches, default
       } else {
         warnings.push(`Technician "${item.workerName}" not found in registry; importing as external contractor.`);
       }
+    } else if (!item.matchedTech && !item.workerName) {
+      errors.push("National ID not found in active technician registry");
+    }
+
+    if (item.matchedTech?.unverifiedIdWarning) {
+      warnings.push(item.matchedTech.unverifiedIdWarning);
     }
 
     // Batch duplicate check: same worker, date, and dispatch
-    if (item.workerName && item.date && item.resolvedDispatchId) {
+    if (effectiveName && item.date && item.resolvedDispatchId) {
       const entryKey = `${item.workerKey}|${item.date}|${item.resolvedDispatchId}`;
       if (seenEntries.has(entryKey)) {
-        errors.push(`Duplicate entry in batch for "${item.workerName}" on ${item.date} under this dispatch (matches row ${seenEntries.get(entryKey)})`);
+        errors.push(`Duplicate entry in batch for "${effectiveName}" on ${item.date} under this dispatch (matches row ${seenEntries.get(entryKey)})`);
       } else {
         seenEntries.set(entryKey, item.rowId);
       }
     }
 
     // Cumulative daily hours check across batch
-    if (item.workerName && item.date && item.isDateValid) {
+    if (effectiveName && item.date && item.isDateValid) {
       const dailyKey = `${item.workerKey}|${item.date}`;
       const dailyTotal = cumulativeHours.get(dailyKey) || 0;
       if (dailyTotal > 24 && item.totalHours <= 24) {
-        errors.push(`Cumulative daily hours (${dailyTotal}h) for "${item.workerName}" on ${item.date} exceed 24h limit`);
+        errors.push(`Cumulative daily hours (${dailyTotal}h) for "${effectiveName}" on ${item.date} exceed 24h limit`);
       }
     }
 
     return {
       ...item,
+      workerName: effectiveName,
       errors,
       warnings,
       isValid: errors.length === 0
