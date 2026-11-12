@@ -134,7 +134,18 @@ export default function AdminPage({ user }) {
     setSaveBusy(true);
     setSaveSuccess(false);
     try {
-      const updated = await admin.updateCompanyProfile(profile);
+      const payload = { ...profile };
+      if (payload.quotation_tax_configuration) {
+        payload.quotation_tax_configuration = {
+          tax_status: "taxable",
+          ...payload.quotation_tax_configuration
+        };
+        // Normalize tax_status if somehow empty
+        if (!payload.quotation_tax_configuration.tax_status) {
+          payload.quotation_tax_configuration.tax_status = "taxable";
+        }
+      }
+      const updated = await admin.updateCompanyProfile(payload);
       setProfile(updated);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -447,7 +458,14 @@ export default function AdminPage({ user }) {
                         value={profile.quotation_tax_configuration?.applied_tax_rate == null ? "" : Number(profile.quotation_tax_configuration.applied_tax_rate) * 100}
                         onChange={(e) => {
                           const rawRate = e.target.value;
-                          setProfile({ ...profile, quotation_tax_configuration: { ...(profile.quotation_tax_configuration || {}), applied_tax_rate: rawRate === "" ? null : Number(rawRate) / 100 } });
+                          setProfile({
+                            ...profile,
+                            quotation_tax_configuration: {
+                              tax_status: profile.quotation_tax_configuration?.tax_status || "taxable",
+                              ...(profile.quotation_tax_configuration || {}),
+                              applied_tax_rate: rawRate === "" ? null : Number(rawRate) / 100
+                            }
+                          });
                         }}
                         className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:outline-none focus:ring-2 focus:ring-orac-focus-ring/30"
                       />
@@ -458,7 +476,14 @@ export default function AdminPage({ user }) {
                     <input
                       id="quotation-tax-approval-reference"
                       value={profile.quotation_tax_configuration?.approval_reference || ""}
-                      onChange={(e) => setProfile({ ...profile, quotation_tax_configuration: { ...(profile.quotation_tax_configuration || {}), approval_reference: e.target.value } })}
+                      onChange={(e) => setProfile({
+                        ...profile,
+                        quotation_tax_configuration: {
+                          tax_status: profile.quotation_tax_configuration?.tax_status || "taxable",
+                          ...(profile.quotation_tax_configuration || {}),
+                          approval_reference: e.target.value
+                        }
+                      })}
                       className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:outline-none focus:ring-2 focus:ring-orac-focus-ring/30"
                       placeholder="Accountant sign-off or policy reference"
                     />
@@ -467,7 +492,14 @@ export default function AdminPage({ user }) {
                     <input
                       type="checkbox"
                       checked={Boolean(profile.quotation_tax_configuration?.approved)}
-                      onChange={(e) => setProfile({ ...profile, quotation_tax_configuration: { ...(profile.quotation_tax_configuration || {}), approved: e.target.checked } })}
+                      onChange={(e) => setProfile({
+                        ...profile,
+                        quotation_tax_configuration: {
+                          tax_status: profile.quotation_tax_configuration?.tax_status || "taxable",
+                          ...(profile.quotation_tax_configuration || {}),
+                          approved: e.target.checked
+                        }
+                      })}
                       className="mt-0.5 h-4 w-4 rounded border-orac-border-strong text-orac-accent focus:ring-orac-accent"
                     />
                     <span>I confirm this is an accountant-approved production quotation tax configuration.</span>
