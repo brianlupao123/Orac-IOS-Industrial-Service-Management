@@ -6,6 +6,7 @@ import ThemeToggle, { applyStoredTheme } from "../components/ThemeToggle.jsx";
 import OfflineOutboxBar from "../components/OfflineOutboxBar.jsx";
 import { visibleNavigationGroups } from "../accessPolicy.js";
 import BrandMark from "../components/ui/BrandMark.jsx";
+import Badge from "../components/ui/Badge.jsx";
 
 /**
  * Production portal layout shell.
@@ -208,10 +209,10 @@ export default function PortalLayout({ user, onLogout, children }) {
         <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 px-4 sm:px-6 lg:px-7" style={{ height: "72px" }}>
           {/* Zone 1: Brand & mobile hamburger */}
           <div className="flex min-w-0 items-center gap-3">
-            {/* Mobile menu trigger button */}
+            {/* Navigation menu trigger button */}
             <button
               type="button"
-              className="flex min-[900px]:hidden items-center justify-center h-11 w-11 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-orac-slate focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40"
+              className="flex items-center justify-center h-11 w-11 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-orac-slate focus:outline-none focus-visible:ring-2 focus-visible:ring-orac-blue/40"
               onClick={() => setMobileMenuOpen((open) => !open)}
               aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
               aria-expanded={mobileMenuOpen}
@@ -272,28 +273,33 @@ export default function PortalLayout({ user, onLogout, children }) {
       {/* Timesheets saved on this device: status line + the background sender (stays mounted on every page). */}
       <OfflineOutboxBar user={user} />
 
-      {/* Mobile navigation drawer — accessible, full labels, no clipping */}
+      {/* 264px navigation drawer — accessible, full labels, available across viewports */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 min-[900px]:hidden">
+        <div className="fixed inset-0 z-40">
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-slate-950/20 backdrop-blur-xs transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
             aria-hidden="true"
           />
-          {/* Slide-out drawer */}
+          {/* 264px slide-out sidebar */}
           <aside
             ref={mobileMenuRef}
             id="mobile-nav-menu"
             role="dialog"
             aria-modal="true"
             aria-label="Navigation menu"
-            className="fixed inset-y-0 left-0 z-50 flex w-full max-w-xs flex-col border-r border-gray-200 bg-white p-4 shadow-xl dark:bg-slate-900 dark:border-slate-800"
+            className="fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col border-r border-gray-200 bg-white p-4 shadow-xl dark:bg-slate-900 dark:border-slate-800"
           >
             <div className="flex items-center justify-between border-b border-gray-100 pb-3 dark:border-slate-800">
               <div className="flex items-center gap-3">
                 <BrandMark size={40} />
-                <span className="text-base font-bold text-orac-slate dark:text-white">ORAC SYSTEMS</span>
+                <div className="min-w-0">
+                  <div className="truncate text-base font-bold text-orac-slate dark:text-white">ORAC SYSTEMS</div>
+                  {user?.role && (
+                    <Badge variant="neutral" compact>{user.role}</Badge>
+                  )}
+                </div>
               </div>
               <button
                 type="button"
