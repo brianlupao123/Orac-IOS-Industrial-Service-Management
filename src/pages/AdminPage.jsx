@@ -14,9 +14,11 @@ import TabNav from "../components/TabNav.jsx";
 import { ErrorBanner, PageLoadingSkeleton } from "../components/PageStates.jsx";
 import { ICONS } from "../components/icons.jsx";
 import { TECHNICIAN_TRADES } from "../constants/trades.js";
+import { ZIM_BANKS } from "../constants/banks.js";
 import Button from "../components/ui/Button.jsx";
 import Badge from "../components/ui/Badge.jsx";
 import Select from "../components/ui/Select.jsx";
+import Input from "../components/ui/Input.jsx";
 
 function SearchField({ label, value, onChange, placeholder }) {
   return (
@@ -164,6 +166,15 @@ export default function AdminPage({ user }) {
     if (!payload.password) delete payload.password;
     // Payroll identifiers: blank means "not on file", never an empty string.
     for (const key of ["national_id", "employee_code"]) payload[key] = String(payload[key] || "").trim() || null;
+    for (const key of ["phone_number", "ecocash_number", "payment_method", "bank_name", "bank_account", "bank_branch", "assigned_site"]) {
+      if (payload[key] !== undefined) payload[key] = String(payload[key] || "").trim() || null;
+    }
+    for (const key of ["hourly_rate", "ot_15_rate", "ot_20_rate"]) {
+      if (payload[key] !== undefined && payload[key] !== "") {
+        const num = parseFloat(payload[key]);
+        payload[key] = Number.isFinite(num) ? num : null;
+      }
+    }
 
     try {
       if (userModal.data?.id) {
@@ -587,11 +598,62 @@ export default function AdminPage({ user }) {
               <input name="national_id" maxLength={32} defaultValue={userModal.data?.national_id || ""} placeholder="Technician accounts only" className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
             </div>
             <div>
-              <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Payroll Employee Code</label>
-              <input name="employee_code" maxLength={32} defaultValue={userModal.data?.employee_code || ""} placeholder="Pastel employee code" className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
+              <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Pastel Supplier / Employee Code</label>
+              <input name="employee_code" maxLength={32} defaultValue={userModal.data?.employee_code || ""} placeholder="e.g. $TBS50, AC24" className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30" />
             </div>
-            <p className="text-ux-caption text-orac-text-muted sm:col-span-2">Used for the Finance payroll report and review export. An employee code is required to export; national ID fallback is disabled.</p>
+            <p className="text-ux-caption text-orac-text-muted sm:col-span-2">Matches the Sage Pastel Supplier/Payroll code for automated finance reconciliation.</p>
           </div>
+
+          <div className="rounded-lg border border-orac-border-default bg-orac-surface p-3.5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-ux-label font-semibold text-orac-text-primary">Finance Settlement Details (EcoCash / Bank)</span>
+              <Badge tone="info">Technicians</Badge>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">EcoCash / Phone Number</label>
+                <Input name="phone_number" maxLength={32} defaultValue={userModal.data?.phone_number || userModal.data?.ecocash_number || ""} placeholder="e.g. 0788662513 or 0777922096" />
+              </div>
+              <div>
+                <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Bank Name (If not EcoCash)</label>
+                <Select name="bank_name" defaultValue={userModal.data?.bank_name || ""}>
+                  <option value="">None / EcoCash Preferred</option>
+                  {ZIM_BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
+                </Select>
+              </div>
+              <div>
+                <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Bank Account Number</label>
+                <Input name="bank_account" maxLength={32} defaultValue={userModal.data?.bank_account || ""} placeholder="e.g. 09085503102001" />
+              </div>
+              <div>
+                <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Bank Branch Code</label>
+                <Input name="bank_branch" maxLength={16} defaultValue={userModal.data?.bank_branch || ""} placeholder="e.g. 11101, 18508" />
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-orac-border-default/60">
+              <span className="mb-2 block text-ux-label font-semibold text-orac-text-primary">Site Assignment & Hourly Pay Rates (USD)</span>
+              <div className="grid gap-3 sm:grid-cols-4">
+                <div className="sm:col-span-1">
+                  <label className="mb-1 block text-ux-caption font-semibold text-orac-text-muted">Assigned Site / Project</label>
+                  <Input name="assigned_site" defaultValue={userModal.data?.assigned_site || ""} placeholder="e.g. Cairns, Eureka" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-ux-caption font-semibold text-orac-text-muted">Normal ($/hr)</label>
+                  <Input name="hourly_rate" type="number" step="0.01" defaultValue={userModal.data?.hourly_rate ?? 1.06} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-ux-caption font-semibold text-orac-text-muted">OT 1.5 ($/hr)</label>
+                  <Input name="ot_15_rate" type="number" step="0.01" defaultValue={userModal.data?.ot_15_rate ?? 1.59} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-ux-caption font-semibold text-orac-text-muted">OT 2.0 ($/hr)</label>
+                  <Input name="ot_20_rate" type="number" step="0.01" defaultValue={userModal.data?.ot_20_rate ?? 2.12} />
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div>
             <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Account Status</label>
             <select name="is_active" defaultValue={userModal.data ? String(userModal.data.is_active) : "true"} className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30">

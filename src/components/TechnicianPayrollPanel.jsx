@@ -3,7 +3,9 @@ import { reports } from "../api/client.js";
 import DataTable from "./DataTable.jsx";
 import StatCard from "./StatCard.jsx";
 import { ErrorBanner } from "./PageStates.jsx";
+import Button from "./ui/Button.jsx";
 import { defaultPayrollMonth, isPayrollMonth, pastelExportState, formatHours } from "../payrollModel.js";
+import ContractorStatementModal from "./ContractorStatementModal.jsx";
 
 // Technician Payroll Summary: certified Worksheet hours per technician for a month,
 // with a one-click payroll review export. Non-posting review file: it never changes a Worksheet.
@@ -14,6 +16,7 @@ export default function TechnicianPayrollPanel({ user }) {
   const [error, setError] = useState("");
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState("");
+  const [statementTarget, setStatementTarget] = useState(null);
 
   useEffect(() => {
     if (!isPayrollMonth(month)) { setReport(null); setLoading(false); return undefined; }
@@ -92,7 +95,7 @@ export default function TechnicianPayrollPanel({ user }) {
 
           <DataTable
             title={`Hours by technician - ${month}`}
-            columns={["Full name", "National ID", "Trade", "Normal hours", "Overtime 1.5 hours", "Overtime 2.0 hours", "Total hours", "Days worked"]}
+            columns={["Full name", "National ID", "Trade", "Normal hours", "Overtime 1.5 hours", "Overtime 2.0 hours", "Total hours", "Days worked", "Statement"]}
             rows={employees}
             emptyStateClassName="px-5 py-6 flex flex-col items-center justify-center text-center"
             emptyText="No approved Worksheet hours were found for this month."
@@ -106,8 +109,23 @@ export default function TechnicianPayrollPanel({ user }) {
                 <td className="px-5 py-3.5 tabular-nums">{formatHours(row.overtime_20_hours)}</td>
                 <td className="px-5 py-3.5 font-semibold tabular-nums">{formatHours(row.total_hours)}</td>
                 <td className="px-5 py-3.5 tabular-nums">{row.days_worked}</td>
+                <td className="px-5 py-3.5 text-right">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setStatementTarget(row)}
+                  >
+                    Statement
+                  </Button>
+                </td>
               </tr>
             )}
+          />
+
+          <ContractorStatementModal
+            isOpen={Boolean(statementTarget)}
+            onClose={() => setStatementTarget(null)}
+            employee={statementTarget}
+            month={month}
           />
         </>
       )}
