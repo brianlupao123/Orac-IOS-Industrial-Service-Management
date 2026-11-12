@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { collections, admin, totp } from "../api/client.js";
+import { totpEnrollmentUiEnabled } from "../totpFlags.js";
 import DataTable from "../components/DataTable.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import IconStatCard from "../components/IconStatCard.jsx";
@@ -268,7 +269,7 @@ export default function AdminPage({ user }) {
                         >
                           Edit
                         </Button>
-                        {canManageUsers && (
+                        {canManageUsers && totpEnrollmentUiEnabled() && (
                           <Button
                             variant="secondary"
                             onClick={() => setTicketModal({ open: true, user: u, ticket: null, error: "", busy: false, verificationMethod: "in_person" })}
@@ -602,6 +603,7 @@ export default function AdminPage({ user }) {
       </Modal>
 
       {/* Issue Enrollment Ticket Modal (V5 Mock) */}
+      {totpEnrollmentUiEnabled() && (
       <Modal
         title={ticketModal.ticket ? "Enrollment Ticket Issued" : "Issue Enrollment Ticket"}
         isOpen={ticketModal.open}
@@ -721,6 +723,7 @@ export default function AdminPage({ user }) {
           </form>
         )}
       </Modal>
+      )}
 
     </div>
   );
