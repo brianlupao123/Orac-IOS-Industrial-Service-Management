@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { auth } from "../api/client.js";
+import AuthShell from "../components/ui/AuthShell.jsx";
+import Button from "../components/ui/Button.jsx";
+import Field from "../components/ui/Field.jsx";
+import Input from "../components/ui/Input.jsx";
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
@@ -60,63 +64,27 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-        <h1 className="text-lg font-semibold text-orac-slate mb-1">Set a new password</h1>
-
-        {!email || !token ? (
-          <p className="text-sm text-red-600 mt-3">
-            This link is missing required information.{" "}
-            <Link to="/forgot-password" className="underline">Request a new one</Link>.
-          </p>
-        ) : done ? (
-          <p className="text-sm text-green-700 mt-3">Password updated. Redirecting to sign in...</p>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <p className="text-sm text-gray-500 mb-4">Resetting password for {email}</p>
-
-            <label htmlFor="reset-new-password" className="text-sm font-medium text-gray-700 block mb-1">New password</label>
-            <input
-              id="reset-new-password"
-              name="new-password"
-              autoComplete="new-password"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm mb-3"
-              minLength={10}
-              required
-            />
-
-            <label htmlFor="reset-confirm-password" className="text-sm font-medium text-gray-700 block mb-1">Confirm password</label>
-            <input
-              id="reset-confirm-password"
-              name="confirm-password"
-              autoComplete="new-password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm mb-3"
-              minLength={10}
-              required
-            />
-
-            {error && (
-              <p className="text-sm text-red-600 mb-3 rounded bg-red-50 border border-red-200 px-2 py-1.5">
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={busy}
-              className="w-full rounded bg-orac-blue text-orac-slate font-semibold py-2.5 text-sm disabled:opacity-50"
-            >
-              {busy ? "Updating..." : "Update password"}
-            </button>
-          </form>
-        )}
-      </div>
-    </div>
+    <AuthShell tag="Set a new password" maxWidth="max-w-[420px]">
+      {!email || !token ? (
+        <p role="alert" className="rounded-lg border border-orac-danger-border bg-orac-danger-bg px-4 py-3 text-ux-body text-orac-danger-text">
+          This link is missing required information.{" "}
+          <Link to="/forgot-password" className="font-semibold underline">Request a new one</Link>.
+        </p>
+      ) : done ? (
+        <p role="status" className="rounded-lg border border-orac-success-border bg-orac-success-bg px-4 py-3 text-ux-body text-orac-success-text">Password updated. Redirecting to sign in...</p>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <p className="text-ux-secondary text-orac-text-secondary">Resetting password for <strong className="text-orac-text-primary">{email}</strong></p>
+          <Field id="reset-new-password" label="New password" hint="At least 10 characters.">
+            <Input id="reset-new-password" name="new-password" autoComplete="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={10} required />
+          </Field>
+          <Field id="reset-confirm-password" label="Confirm password">
+            <Input id="reset-confirm-password" name="confirm-password" autoComplete="new-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={10} required />
+          </Field>
+          {error && <p role="alert" className="rounded-lg border border-orac-danger-border bg-orac-danger-bg px-4 py-3 text-ux-secondary text-orac-danger-text">{error}</p>}
+          <Button type="submit" variant="primary" loading={busy} className="w-full">{busy ? "Updating..." : "Update password"}</Button>
+        </form>
+      )}
+    </AuthShell>
   );
 }

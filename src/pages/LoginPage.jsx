@@ -3,8 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../api/client.js";
 import { totpEnrollmentUiEnabled } from "../totpFlags.js";
 import SessionExpiredBanner from "../components/SessionExpiredBanner.jsx";
-import BrandMark from "../components/ui/BrandMark.jsx";
-import BrandPanel from "../components/ui/BrandPanel.jsx";
+import AuthShell from "../components/ui/AuthShell.jsx";
 import Button from "../components/ui/Button.jsx";
 import Field from "../components/ui/Field.jsx";
 import Input from "../components/ui/Input.jsx";
@@ -68,28 +67,7 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
   }
 
   return (
-    <div className="min-h-screen bg-orac-canvas text-orac-text-primary font-sans selection:bg-orac-accent/20">
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
-        {/* Left Side: Brand Panel with gradient, contour overlay, and workflow chain */}
-        <BrandPanel
-          title="Industrial Service & Operations Management"
-          subtitle="Every job, from client request to final invoice settlement, in one secure operational platform."
-          showChain={true}
-          className="min-h-[280px] lg:min-h-screen"
-        />
-
-        {/* Right Side: Centered Form Card */}
-        <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-16">
-          <div className="mx-auto w-full max-w-[420px]">
-            {/* Header with BrandMark */}
-            <div className="mb-8 flex items-center gap-3">
-              <BrandMark size={44} />
-              <div>
-                <div className="text-xl font-bold tracking-tight text-orac-text-primary">ORAC-IOS</div>
-                <div className="text-ux-caption font-semibold uppercase tracking-wider text-orac-accent">Industrial Service Management</div>
-              </div>
-            </div>
-
+    <AuthShell tag="Industrial Service Management" maxWidth="max-w-[420px]">
             <div className="mb-8">
               <h1 className="text-2xl font-bold tracking-tight text-orac-text-primary sm:text-3xl">
                 {challenge ? "Verify your sign-in" : "Sign in to your account"}
@@ -271,9 +249,6 @@ export default function LoginPage({ onLogin, sessionExpired = false }) {
             <p className="mt-8 text-center text-ux-caption text-orac-text-muted">
               Orac-IOS &copy; {new Date().getFullYear()} &bull; Orac Systems
             </p>
-          </div>
-        </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

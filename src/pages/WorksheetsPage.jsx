@@ -56,7 +56,6 @@ export default function WorksheetsPage({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [comment, setComment] = useState({});
-  const [filter, setFilter] = useState("all");
   const [tradeFilter, setTradeFilter] = useState("all");
 
   // Timesheet form (create or edit) and the offline outbox panel
@@ -67,6 +66,15 @@ export default function WorksheetsPage({ user }) {
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [paperView, setPaperView] = useState(null); // the Timesheet whose signed paper copy is open
   const [searchParams, setSearchParams] = useSearchParams();
+  // The status filter lives in the URL (?status=Draft) so the sidebar sub-items and this page stay in step.
+  const STATUS_KEYS = ["Draft", "Submitted", "Client_Acknowledged", "Supervisor_Approved", "Returned_For_Correction"];
+  const urlStatus = searchParams.get("status");
+  const filter = STATUS_KEYS.includes(urlStatus) ? urlStatus : "all";
+  const setFilter = (key) => {
+    const next = new URLSearchParams(searchParams);
+    if (key === "all") next.delete("status"); else next.set("status", key);
+    setSearchParams(next, { replace: true });
+  };
   const [notice, setNotice] = useState("");
 
   // Revision (a new linked draft after acknowledgement or approval)

@@ -2,7 +2,9 @@ import React from "react";
 
 const SIZES = {
   40: "w-10 h-10",
+  44: "w-11 h-11",
   48: "w-12 h-12",
+  64: "w-16 h-16",
   80: "w-20 h-20",
 };
 

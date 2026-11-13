@@ -6,8 +6,9 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 
 test("portal navigation stays policy-derived (no hard-coded role links)", () => {
   const file = read("src/layouts/PortalLayout.jsx");
-  assert.match(file, /import \{ visibleNavigationGroups \} from "\.\.\/accessPolicy\.js"/);
-  assert.match(file, /visibleNavigationGroups\(user\.role\)/);
+  assert.match(file, /import \{ sidebarGroups \} from "\.\.\/navModel\.js"/);
+  assert.match(file, /sidebarGroups\(user\.role\)/);
+  assert.match(read("src/navModel.js"), /visibleNavigationGroups\(role\)/);
   // Guard against role names being hard-coded into the layout itself.
   for (const role of ["Admin", "Management", "Sales", "Finance", "Operations", "Supervisor", "Technician", "Client Viewer"]) {
     assert.doesNotMatch(file, new RegExp(`"${role}"`));
@@ -24,10 +25,13 @@ test("nav and footer no longer use the unconverted navy utility that fails dark-
   assert.match(file, /className="font-semibold text-orac-blue/);
 });
 
-test("desktop navigation uses evenly distributed labelled destinations", () => {
+test("from 1100px the shell shows a persistent 264px sidebar and the top bar drops brand, hamburger and menu", () => {
   const file = read("src/layouts/PortalLayout.jsx");
-  assert.match(file, /orac-primary-nav hidden min-\[900px\]:flex[^\"]*justify-evenly/);
-  assert.match(file, /WorkspaceNavMenu key=\{group\.id\} group=\{group\} pathname=\{location\.pathname\}/);
+  assert.match(file, /<aside aria-label="Sidebar" className="orac-sidebar sticky top-0 hidden h-screen w-\[264px\] shrink-0 min-\[1100px\]:block">/);
+  assert.match(file, /<SidebarPanel user=\{user\} navGroups=\{navGroups\} onLogout=\{onLogout\} \/>/);
+  assert.match(file, /flex min-\[1100px\]:hidden items-center justify-center h-11 w-11/);
+  assert.doesNotMatch(file, /orac-primary-nav/);
+  assert.doesNotMatch(file, /WorkspaceNavMenu/);
 });
 
 test("only one top-level sign-out affordance competes for space at narrow widths", () => {
