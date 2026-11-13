@@ -10,6 +10,7 @@ import { ICONS } from "../components/icons.jsx";
 import AIAssistantPanel from "../components/AIAssistantPanel.jsx";
 import SectionTitle from "../components/ui/SectionTitle.jsx";
 import Button from "../components/ui/Button.jsx";
+import QuickActionsBar from "../components/QuickActionsBar.jsx";
 import { canAccessRoute } from "../accessPolicy.js";
 import { formatMoney } from "../lib/format.js";
 
@@ -291,6 +292,9 @@ export default function DashboardPage({ user }) {
         iconPath={ICONS.dashboard}
         aside={new Date().toLocaleDateString("en-ZA", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
       />
+
+      {/* Quick Actions — Role-specific 1-click shortcuts (Africa University Acacia style) */}
+      <QuickActionsBar user={user} />
 
       {/* Urgent / actionable work comes first, ahead of general totals, so the
           most important next step is visible without scrolling past low-priority

@@ -19,6 +19,9 @@ import Button from "../components/ui/Button.jsx";
 import Badge from "../components/ui/Badge.jsx";
 import Select from "../components/ui/Select.jsx";
 import Input from "../components/ui/Input.jsx";
+import TradesAndRatesModal from "../components/TradesAndRatesModal.jsx";
+import RecordOfWorkDossier from "../components/RecordOfWorkDossier.jsx";
+import { getRatesForTrade } from "../tradeMaster.js";
 
 function SearchField({ label, value, onChange, placeholder }) {
   return (
@@ -68,6 +71,8 @@ export default function AdminPage({ user }) {
   const [userQuery, setUserQuery] = useState("");
   const [clientQuery, setClientQuery] = useState("");
   const [ticketModal, setTicketModal] = useState({ open: false, user: null, ticket: null, error: "", busy: false, verificationMethod: "in_person" });
+  const [tradesModalOpen, setTradesModalOpen] = useState(false);
+  const [dossierModal, setDossierModal] = useState({ open: false, client: null, site: null });
 
   const canManageUsers = user.role === "Admin";
   const canManageClients = user.role === "Admin" || user.role === "Management";
@@ -244,9 +249,14 @@ export default function AdminPage({ user }) {
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <SearchField label="Search users" value={userQuery} onChange={setUserQuery} placeholder="Search users" />
-              <Button onClick={() => setUserModal({ open: true, data: null })} variant="primary">
-                + Add new user
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button onClick={() => setTradesModalOpen(true)} variant="secondary">
+                  Manage Trades &amp; Rates
+                </Button>
+                <Button onClick={() => setUserModal({ open: true, data: null })} variant="primary">
+                  + Add new user
+                </Button>
+              </div>
             </div>
             {loading ? (
               <PageLoadingSkeleton label="Loading users" />
@@ -333,6 +343,9 @@ export default function AdminPage({ user }) {
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <SearchField label="Search clients" value={clientQuery} onChange={setClientQuery} placeholder="Search clients" />
+                <Button onClick={() => setDossierModal({ open: true, client: null, site: null })} variant="secondary">
+                  Record of Work
+                </Button>
                 <Button onClick={() => setClientModal({ open: true, data: null })} variant="primary">
                   + Register Client
                 </Button>
@@ -586,11 +599,22 @@ export default function AdminPage({ user }) {
           </div>
           <div>
             <label className="mb-1 block text-ux-label font-semibold text-orac-text-primary">Trade / Specialty</label>
-            <select name="trade" defaultValue={userModal.data?.trade || ""} className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30">
+            <select name="trade" defaultValue={userModal.data?.trade || ""} onChange={(e) => {
+              const rates = getRatesForTrade(e.target.value);
+              const form = e.target.closest("form");
+              if (form) {
+                const hrField = form.querySelector('[name="hourly_rate"]');
+                const ot15Field = form.querySelector('[name="ot_15_rate"]');
+                const ot20Field = form.querySelector('[name="ot_20_rate"]');
+                if (hrField) hrField.value = rates.hourly_rate;
+                if (ot15Field) ot15Field.value = rates.ot_15_rate;
+                if (ot20Field) ot20Field.value = rates.ot_20_rate;
+              }
+            }} className="w-full min-h-[44px] rounded-lg border border-orac-border-strong bg-orac-canvas px-3.5 py-2 text-ux-body text-orac-text-primary focus:border-orac-accent focus:ring-2 focus:ring-orac-focus-ring/30">
               <option value="">Not assigned</option>
               {TECHNICIAN_TRADES.map((trade) => <option key={trade} value={trade}>{trade}</option>)}
             </select>
-            <p className="mt-1 text-ux-caption text-orac-text-muted">Assign only to Technician accounts. This groups operational timesheets without changing access rights.</p>
+            <p className="mt-1 text-ux-caption text-orac-text-muted">Assign only to Technician accounts. Selecting a trade auto-fills baseline pay rates from the Trades &amp; Rates master catalog.</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
@@ -818,6 +842,14 @@ export default function AdminPage({ user }) {
         )}
       </Modal>
       )}
+
+      <TradesAndRatesModal isOpen={tradesModalOpen} onClose={() => setTradesModalOpen(false)} users={users} />
+      <RecordOfWorkDossier
+        isOpen={dossierModal.open}
+        onClose={() => setDossierModal({ open: false, client: null, site: null })}
+        initialClient={dossierModal.client}
+        initialSite={dossierModal.site}
+      />
 
     </div>
   );
