@@ -67,10 +67,10 @@ test("there is no dead Status dropdown: status changes only via the audited Disa
 test("deactivation effects are explained where the decision is made: in the confirmation dialog and the form", () => {
   assert.match(page, /function statusEffectNote/);
   assert.match(page, /can no longer be chosen as the parent for new/);
-  // Confirm dialog carries the effect text for Disable, and a re-enable note.
+  // ConfirmDialog carries the effect text for Disable, and a re-enable note.
   assert.match(page, /statusEffectNote\(currentConfig\)/);
   assert.match(page, /It becomes available for new links again\./);
-  assert.match(page, /confirm\(`\$\{isActive \? "Deactivate" : "Reactivate"\} this record\?/);
+  assert.match(page, /setConfirmAction/);
   // ...and the same explanation is repeated in the edit form.
   assert.match(page, /\{statusEffect \? ` \$\{statusEffect\}` : ""\}/);
 });

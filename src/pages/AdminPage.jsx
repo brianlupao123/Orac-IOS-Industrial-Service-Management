@@ -19,6 +19,7 @@ import Button from "../components/ui/Button.jsx";
 import Badge from "../components/ui/Badge.jsx";
 import Select from "../components/ui/Select.jsx";
 import Input from "../components/ui/Input.jsx";
+import ConfirmDialog from "../components/ui/ConfirmDialog.jsx";
 import TradesAndRatesModal from "../components/TradesAndRatesModal.jsx";
 import RecordOfWorkDossier from "../components/RecordOfWorkDossier.jsx";
 import { getRatesForTrade } from "../tradeMaster.js";
@@ -73,6 +74,10 @@ export default function AdminPage({ user }) {
   const [ticketModal, setTicketModal] = useState({ open: false, user: null, ticket: null, error: "", busy: false, verificationMethod: "in_person" });
   const [tradesModalOpen, setTradesModalOpen] = useState(false);
   const [dossierModal, setDossierModal] = useState({ open: false, client: null, site: null });
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
+  const [showInactiveUsers, setShowInactiveUsers] = useState(false);
+  const [showInactiveClients, setShowInactiveClients] = useState(false);
 
   const canManageUsers = user.role === "Admin";
   const canManageClients = user.role === "Admin" || user.role === "Management";
@@ -107,14 +112,17 @@ export default function AdminPage({ user }) {
   useEffect(() => { load(); }, []);
 
   const filteredUsers = useMemo(() => {
+    let list = users;
+    // Recycle bin toggle: show inactive users when toggled, active otherwise
+    list = list.filter((entry) => showInactiveUsers ? !entry.is_active : entry.is_active !== false);
     const query = userQuery.trim().toLowerCase();
-    if (!query) return users;
-    return users.filter((entry) =>
+    if (!query) return list;
+    return list.filter((entry) =>
       [entry.name, entry.email, entry.role]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(query))
     );
-  }, [users, userQuery]);
+  }, [users, userQuery, showInactiveUsers]);
 
   const hasTotpColumn = useMemo(
     () => filteredUsers.some((u) => typeof u.totp_enrolled === "boolean"),
@@ -126,14 +134,17 @@ export default function AdminPage({ user }) {
   );
 
   const filteredClients = useMemo(() => {
+    let list = clients;
+    // Recycle bin toggle: show inactive clients when toggled, active otherwise
+    list = list.filter((entry) => showInactiveClients ? entry.is_active === false : entry.is_active !== false);
     const query = clientQuery.trim().toLowerCase();
-    if (!query) return clients;
-    return clients.filter((entry) =>
+    if (!query) return list;
+    return list.filter((entry) =>
       [entry.name, entry.contact_person, entry.email, entry.client_type]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(query))
     );
-  }, [clients, clientQuery]);
+  }, [clients, clientQuery, showInactiveClients]);
 
   async function saveProfile(e) {
     e.preventDefault();
@@ -248,7 +259,26 @@ export default function AdminPage({ user }) {
         {activeTab === "users" && canManageUsers && (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <SearchField label="Search users" value={userQuery} onChange={setUserQuery} placeholder="Search users" />
+              <div className="flex flex-wrap items-center gap-3">
+                <SearchField label="Search users" value={userQuery} onChange={setUserQuery} placeholder="Search users" />
+                <div className="inline-flex rounded-lg border border-orac-border-default overflow-hidden shadow-2xs">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowInactiveUsers(false)}
+                    className={`rounded-none border-0 shadow-none px-3 py-1.5 text-ux-caption font-semibold transition-colors ${!showInactiveUsers ? "bg-orac-accent text-white" : "bg-orac-surface text-orac-text-muted hover:bg-orac-row-hover"}`}
+                  >
+                    Active ({users.filter((u) => u.is_active !== false).length})
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowInactiveUsers(true)}
+                    className={`rounded-none border-0 shadow-none px-3 py-1.5 text-ux-caption font-semibold transition-colors flex items-center gap-1.5 ${showInactiveUsers ? "bg-orac-warning-bg text-orac-warning-text border-l border-orac-warning-border" : "bg-orac-surface text-orac-text-muted hover:bg-orac-row-hover border-l border-orac-border-default"}`}
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    Recycle Bin ({users.filter((u) => !u.is_active).length})
+                  </Button>
+                </div>
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Button onClick={() => setTradesModalOpen(true)} variant="secondary">
                   Manage Trades &amp; Rates
@@ -312,14 +342,13 @@ export default function AdminPage({ user }) {
                         )}
                         <Button
                           variant="link"
-                          onClick={async () => {
-                            if (!confirm((u.is_active ? "Deactivate " : "Reactivate ") + u.email)) return;
-                            try {
-                              u.is_active ? await admin.deactivateEntity("users", u.id) : await admin.reactivateEntity("users", u.id);
-                              load();
-                            } catch (e) {
-                              alert(e.message);
-                            }
+                          onClick={() => {
+                            setConfirmAction({
+                              type: "user",
+                              entity: u,
+                              isActive: u.is_active,
+                              label: u.name || u.email,
+                            });
                           }}
                           className={`font-bold ${u.is_active ? "text-orac-danger-text hover:text-red-700" : "text-orac-success-text hover:text-emerald-700"}`}
                         >
@@ -337,10 +366,29 @@ export default function AdminPage({ user }) {
         {activeTab === "clients" && canManageClients && (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <p className="text-ux-caption text-orac-text-muted">
-                Top of the client-owned hierarchy: Client → Mine Site → Plant → Plant Section → Equipment Tag.
-                Manage mine sites, plants, plant sections and equipment tags under Entity Management.
-              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-ux-caption text-orac-text-muted">
+                  Top of the client-owned hierarchy: Client → Mine Site → Plant → Plant Section → Equipment Tag.
+                  Manage mine sites, plants, plant sections and equipment tags under Entity Management.
+                </p>
+                <div className="inline-flex rounded-lg border border-orac-border-default overflow-hidden shadow-2xs">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowInactiveClients(false)}
+                    className={`rounded-none border-0 shadow-none px-3 py-1.5 text-ux-caption font-semibold transition-colors ${!showInactiveClients ? "bg-orac-accent text-white" : "bg-orac-surface text-orac-text-muted hover:bg-orac-row-hover"}`}
+                  >
+                    Active ({clients.filter((c) => c.is_active !== false).length})
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowInactiveClients(true)}
+                    className={`rounded-none border-0 shadow-none px-3 py-1.5 text-ux-caption font-semibold transition-colors flex items-center gap-1.5 ${showInactiveClients ? "bg-orac-warning-bg text-orac-warning-text border-l border-orac-warning-border" : "bg-orac-surface text-orac-text-muted hover:bg-orac-row-hover border-l border-orac-border-default"}`}
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    Recycle Bin ({clients.filter((c) => c.is_active === false).length})
+                  </Button>
+                </div>
+              </div>
               <div className="flex flex-wrap items-center gap-3">
                 <SearchField label="Search clients" value={clientQuery} onChange={setClientQuery} placeholder="Search clients" />
                 <Button onClick={() => setDossierModal({ open: true, client: null, site: null })} variant="secondary">
@@ -400,14 +448,14 @@ export default function AdminPage({ user }) {
                           </Button>
                           <Button
                             variant="link"
-                            onClick={async () => {
-                              if (!confirm((isActive ? "Deactivate " : "Reactivate ") + (c.name || c.email))) return;
-                              try {
-                                isActive ? await admin.deactivateEntity("clients", c.id) : await admin.reactivateEntity("clients", c.id);
-                                load();
-                              } catch (e) {
-                                alert(e.message);
-                              }
+                            onClick={() => {
+                              const isActive = c.is_active !== false;
+                              setConfirmAction({
+                                type: "client",
+                                entity: c,
+                                isActive,
+                                label: c.name || c.email,
+                              });
                             }}
                             className={`font-bold ${isActive ? "text-orac-danger-text hover:text-red-700" : "text-orac-success-text hover:text-emerald-700"}`}
                           >
@@ -849,6 +897,43 @@ export default function AdminPage({ user }) {
         onClose={() => setDossierModal({ open: false, client: null, site: null })}
         initialClient={dossierModal.client}
         initialSite={dossierModal.site}
+      />
+
+      <ConfirmDialog
+        isOpen={!!confirmAction}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={async () => {
+          if (!confirmAction) return;
+          setConfirmBusy(true);
+          try {
+            const collection = confirmAction.type === "user" ? "users" : "clients";
+            if (confirmAction.isActive) {
+              await admin.deactivateEntity(collection, confirmAction.entity.id);
+            } else {
+              await admin.reactivateEntity(collection, confirmAction.entity.id);
+            }
+            setConfirmAction(null);
+            load();
+          } catch (err) {
+            alert(err.message);
+          } finally {
+            setConfirmBusy(false);
+          }
+        }}
+        title={confirmAction?.isActive ? "Confirm Deactivation" : "Confirm Reactivation"}
+        message={
+          confirmAction?.isActive
+            ? `Are you sure you want to deactivate "${confirmAction?.label}"?`
+            : `Are you sure you want to reactivate "${confirmAction?.label}"?`
+        }
+        detail={
+          confirmAction?.isActive
+            ? `This ${confirmAction?.type} will be moved to the Recycle Bin and will no longer appear in active lists. You can restore them later from the Recycle Bin.`
+            : `This ${confirmAction?.type} will be restored to active status and will appear in all active lists again.`
+        }
+        confirmText={confirmAction?.isActive ? "Yes, Deactivate" : "Yes, Reactivate"}
+        tone={confirmAction?.isActive ? "danger" : "success"}
+        busy={confirmBusy}
       />
 
     </div>

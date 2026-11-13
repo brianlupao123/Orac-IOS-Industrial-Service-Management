@@ -41,6 +41,8 @@ export default function DashboardPage({ user }) {
   const [quotes, setQuotes] = useState([]);
   const [dispatches, setDispatches] = useState([]);
   const [siteNames, setSiteNames] = useState({});
+  const [equipmentSiteMap, setEquipmentSiteMap] = useState({});
+  const [technicianNames, setTechnicianNames] = useState({});
   const [worksheets, setWorksheets] = useState([]);
   const [pendingAccessCount, setPendingAccessCount] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -92,14 +94,30 @@ export default function DashboardPage({ user }) {
       ? collections.list("access_requests").catch(() => null)
       : Promise.resolve(null);
     loads.push(accessPromise);
-    // Dispatch cards carry only a site id; look the names up so the Site column is readable.
-    // A role that may not read mine sites simply keeps the dash.
+    // Dispatch cards carry equipment_tag_id and sometimes site_id; hydrate both mine_sites
+    // and equipment_tags so the Site column reliably resolves real names.
     loads.push(canLoadOperationalData ? collections.list("mine_sites").catch(() => null) : Promise.resolve(null));
+    loads.push(canLoadOperationalData ? collections.list("equipment_tags").catch(() => null) : Promise.resolve(null));
+    loads.push(canLoadOperationalData ? collections.list("users").catch(() => null) : Promise.resolve(null));
 
     Promise.all(loads)
-      .then(([s, q, d, w, ar, sites]) => {
+      .then(([s, q, d, w, ar, sites, equipmentTags, allUsers]) => {
         if (cancelled) return;
-        if (Array.isArray(sites)) setSiteNames(Object.fromEntries(sites.map((site) => [site.id, site.name])));
+        const siteLookup = {};
+        if (Array.isArray(sites)) {
+          for (const site of sites) siteLookup[site.id] = site.name;
+          setSiteNames(siteLookup);
+        }
+        if (Array.isArray(equipmentTags)) {
+          const eqMap = {};
+          for (const eq of equipmentTags) {
+            eqMap[eq.id] = eq.mine_site_name || eq.plant_name || (eq.mine_site_id && siteLookup[eq.mine_site_id]) || eq.equipment_name;
+          }
+          setEquipmentSiteMap(eqMap);
+        }
+        if (Array.isArray(allUsers)) {
+          setTechnicianNames(Object.fromEntries(allUsers.map((u) => [u.id, u.name || u.email])));
+        }
         setStats(s);
         setQuotes(q || []);
         if (d) setDispatches(d);
@@ -456,7 +474,7 @@ export default function DashboardPage({ user }) {
               <tr key={d.id} className="transition-colors hover:bg-orac-row-hover">
                 <td className="px-6 py-4 font-medium text-orac-text-primary">{d.dispatch_number || d.id}</td>
                 <td className="px-6 py-4"><StatusBadge status={d.status} /></td>
-                <td className="px-6 py-4 text-orac-text-muted">{d.site_name || d.mine_site || siteNames[d.site_id] || "—"}</td>
+                <td className="px-6 py-4 text-orac-text-muted">{d.site_name || d.mine_site || siteNames[d.site_id] || equipmentSiteMap[d.equipment_tag_id] || "—"}</td>
               </tr>
             )}
           />
@@ -476,7 +494,7 @@ export default function DashboardPage({ user }) {
                 <td className="px-6 py-4 font-medium text-orac-text-primary">{ws.activity || "—"}</td>
                 <td className="px-6 py-4 tabular-nums text-right">{ws.hours ?? "—"}</td>
                 <td className="px-6 py-4"><StatusBadge status={ws.status} /></td>
-                <td className="px-6 py-4 text-orac-text-muted">{ws.worker_name || ws.technician_name || "—"}</td>
+                <td className="px-6 py-4 text-orac-text-muted">{ws.worker_name || ws.technician_name || technicianNames[ws.technician_id] || "—"}</td>
               </tr>
             )}
           />

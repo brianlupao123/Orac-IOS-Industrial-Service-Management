@@ -9,6 +9,7 @@ import { ErrorBanner } from "../components/PageStates.jsx";
 import { PageLoadingSkeleton } from "../components/PageStates.jsx";
 import Button from "../components/ui/Button.jsx";
 import Badge from "../components/ui/Badge.jsx";
+import ConfirmDialog from "../components/ui/ConfirmDialog.jsx";
 import { formatMoney } from "../lib/format.js";
 
 // The full master-data chain this tab surfaces. Client sits at the top but
@@ -161,6 +162,9 @@ export default function AdminEntitiesTab({ user }) {
   const [modal, setModal] = useState({ open: false, item: null });
   const [parentId, setParentId] = useState("");
   const [formError, setFormError] = useState("");
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   const currentConfig = visibleEntities.find((e) => e.key === activeEntity);
 
@@ -314,13 +318,32 @@ export default function AdminEntitiesTab({ user }) {
               </div>
               <p className="mt-1 text-ux-body text-orac-text-secondary">{currentConfig.purpose}</p>
             </div>
-            <Button
-              onClick={() => setModal({ open: true, item: null })}
-              variant="primary"
-              className="whitespace-nowrap"
-            >
-              + Add new
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="inline-flex rounded-lg border border-orac-border-default overflow-hidden shadow-2xs">
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowInactive(false)}
+                  className={`rounded-none border-0 shadow-none px-3 py-1.5 text-ux-caption font-semibold transition-colors ${!showInactive ? "bg-orac-accent text-white" : "bg-orac-surface text-orac-text-muted hover:bg-orac-row-hover"}`}
+                >
+                  Active ({data.filter((r) => r.is_active !== false).length})
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowInactive(true)}
+                  className={`rounded-none border-0 shadow-none px-3 py-1.5 text-ux-caption font-semibold transition-colors flex items-center gap-1.5 ${showInactive ? "bg-orac-warning-bg text-orac-warning-text border-l border-orac-warning-border" : "bg-orac-surface text-orac-text-muted hover:bg-orac-row-hover border-l border-orac-border-default"}`}
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  Bin ({data.filter((r) => r.is_active === false).length})
+                </Button>
+              </div>
+              <Button
+                onClick={() => setModal({ open: true, item: null })}
+                variant="primary"
+                className="whitespace-nowrap"
+              >
+                + Add new
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -333,7 +356,7 @@ export default function AdminEntitiesTab({ user }) {
             <DataTable
               title=""
               columns={currentConfig.columns}
-              rows={data}
+              rows={data.filter((r) => showInactive ? r.is_active === false : r.is_active !== false)}
               emptyText={`No ${currentConfig.label.toLowerCase()} found.`}
               renderRow={(row) => (
                 <tr key={row.id} className="transition-colors hover:bg-orac-row-hover group">
@@ -396,20 +419,18 @@ export default function AdminEntitiesTab({ user }) {
                       </Button>
                       <Button
                         variant="link"
-                        onClick={async () => {
+                        onClick={() => {
                           const isActive = row.is_active !== false;
                           const effect = isActive
                             ? statusEffectNote(currentConfig)
                             : "It becomes available for new links again.";
-                          if (!confirm(`${isActive ? "Deactivate" : "Reactivate"} this record?${effect ? `\n\n${effect}` : ""}`)) return;
-                          try {
-                            if (isActive) {
-                              await admin.deactivateEntity(activeEntity, row.id);
-                            } else {
-                              await admin.reactivateEntity(activeEntity, row.id);
-                            }
-                            loadData(activeEntity);
-                          } catch (err) { alert("Error: " + err.message); }
+                          setConfirmAction({
+                            entity: activeEntity,
+                            row,
+                            isActive,
+                            label: row.name || row.tag_code || row.item_code || row.id,
+                            detail: effect,
+                          });
                         }}
                         className={`font-bold ${
                           row.is_active !== false ? "text-orac-warning-text hover:text-amber-800" : "text-orac-success-text hover:text-green-800"
@@ -547,6 +568,42 @@ export default function AdminEntitiesTab({ user }) {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={!!confirmAction}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={async () => {
+          if (!confirmAction) return;
+          setConfirmBusy(true);
+          try {
+            if (confirmAction.isActive) {
+              await admin.deactivateEntity(confirmAction.entity, confirmAction.row.id);
+            } else {
+              await admin.reactivateEntity(confirmAction.entity, confirmAction.row.id);
+            }
+            setConfirmAction(null);
+            loadData(activeEntity);
+          } catch (err) {
+            alert("Error: " + err.message);
+          } finally {
+            setConfirmBusy(false);
+          }
+        }}
+        title={confirmAction?.isActive ? "Confirm Deactivation" : "Confirm Reactivation"}
+        message={
+          confirmAction?.isActive
+            ? `Are you sure you want to deactivate "${confirmAction?.label}"?`
+            : `Are you sure you want to reactivate "${confirmAction?.label}"?`
+        }
+        detail={
+          confirmAction?.isActive
+            ? confirmAction?.detail || "This record will be moved to the Recycle Bin."
+            : confirmAction?.detail || "This record will be restored to active status."
+        }
+        confirmText={confirmAction?.isActive ? "Yes, Deactivate" : "Yes, Reactivate"}
+        tone={confirmAction?.isActive ? "danger" : "success"}
+        busy={confirmBusy}
+      />
     </div>
   );
 }

@@ -1,12 +1,13 @@
 import { canAccessRoute, visibleNavigationGroups } from "./accessPolicy.js";
 
-// Sidebar navigation model.
+// Sidebar and Mobile Drawer navigation model.
 //
 // accessPolicy.js stays the single source of truth for who may open a route.
-// This module only decides how the sidebar presents what a role may already
-// open: it adds menu entries for pages that exist but had no menu link, and
-// attaches sub-filters to Timesheets. Every entry is still checked with
-// canAccessRoute, so nothing here can widen access to a route.
+// This module decides how the sidebar and hamburger drawer present what a role
+// is authorized to open: it cleanly organizes menus into logical operational
+// categories per role, attaches sub-filters to Timesheets, and adds entries
+// for pages like Contracts and Kiosk. Every entry is strictly verified with
+// canAccessRoute, so nothing here can widen access to any route.
 
 export const TIMESHEET_STATUS_FILTERS = Object.freeze([
   { key: "all", label: "All Timesheets" },
@@ -17,10 +18,38 @@ export const TIMESHEET_STATUS_FILTERS = Object.freeze([
   { key: "Returned_For_Correction", label: "Returned" }
 ]);
 
-// Pages that exist and are role-gated but were not reachable from the menu.
+// Pages that exist and are role-gated but were not reachable from the default menu.
 const EXTRA_ITEMS = Object.freeze([
   { groupId: "commercial", path: "/contracts", label: "Contracts" },
   { groupId: "field-work", path: "/kiosk", label: "Kiosk mode" }
+]);
+
+const PRESENTATION_ORDER = Object.freeze([
+  {
+    id: "workspace",
+    label: "Workspace",
+    paths: ["/", "/operational-data", "/documents", "/imports", "/admin"]
+  },
+  {
+    id: "commercial",
+    label: "Commercial",
+    paths: ["/quotations", "/contracts", "/finance", "/invoice-readiness", "/internal-requests", "/service-requests", "/portal"]
+  },
+  {
+    id: "field-work",
+    label: "Field Work",
+    paths: ["/job-cards", "/worksheets", "/monthly-worksheets", "/kiosk"]
+  },
+  {
+    id: "inventory",
+    label: "Inventory",
+    paths: ["/inventory"]
+  },
+  {
+    id: "reports",
+    label: "Reports",
+    paths: ["/reports"]
+  }
 ]);
 
 function withChildren(item) {
@@ -37,17 +66,40 @@ function withChildren(item) {
 }
 
 export function sidebarGroups(role) {
-  const groups = visibleNavigationGroups(role).map((group) => ({
-    ...group,
-    items: group.items.map(withChildren)
-  }));
+  // Collect all policy-allowed items from visibleNavigationGroups(role)
+  const policyGroups = visibleNavigationGroups(role);
+  const itemMap = new Map();
 
-  for (const extra of EXTRA_ITEMS) {
-    if (!canAccessRoute(role, extra.path)) continue;
-    const group = groups.find((g) => g.id === extra.groupId);
-    if (group && !group.items.some((item) => item.path === extra.path)) {
-      group.items.push({ path: extra.path, label: extra.label });
+  for (const group of policyGroups) {
+    for (const item of group.items) {
+      itemMap.set(item.path, item);
     }
   }
+
+  // Include role-gated extra items if allowed
+  for (const extra of EXTRA_ITEMS) {
+    if (canAccessRoute(role, extra.path) && !itemMap.has(extra.path)) {
+      itemMap.set(extra.path, { path: extra.path, label: extra.label });
+    }
+  }
+
+  // Assemble into organized presentation groups per role
+  const groups = [];
+  for (const groupDef of PRESENTATION_ORDER) {
+    const items = [];
+    for (const path of groupDef.paths) {
+      if (itemMap.has(path)) {
+        items.push(withChildren(itemMap.get(path)));
+      }
+    }
+    if (items.length > 0) {
+      groups.push({
+        id: groupDef.id,
+        label: groupDef.label,
+        items
+      });
+    }
+  }
+
   return groups;
 }
