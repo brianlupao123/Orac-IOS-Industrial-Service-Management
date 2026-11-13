@@ -596,3 +596,63 @@ html[data-theme="dark"] [data-record-id]:focus { outline-color: #7CC4F0; }
   }
 }
 
+
+/* ---- Persistent sidebar (>= 900px) and mobile drawer ---------------------- */
+.orac-sidebar { background: linear-gradient(180deg, var(--orac-brand-a), #0a3560); color: #eaf2fb; }
+.orac-sidebar-muted { color: #a9c4e2; }
+.orac-sidebar-brand { display: flex; align-items: center; gap: 0.75rem; padding: 1.25rem 1rem 1rem; border-bottom: 1px solid rgba(255,255,255,.12); }
+.orac-sidebar-nav { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0.75rem 0.75rem 1rem; }
+.orac-sidebar-group { margin-bottom: 0.75rem; }
+.orac-sidebar-group-label { background: transparent; display: flex; width: 100%; align-items: center; justify-content: space-between; min-height: 36px; padding: 0 0.75rem; border-radius: 0.5rem; font-size: 0.8125rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #a9c4e2; }
+.orac-sidebar-group-label:hover { color: #fff; }
+.orac-sidebar-item { background: transparent; display: flex; width: 100%; align-items: center; gap: 0.75rem; min-height: 44px; padding: 0 0.75rem; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; color: #eaf2fb; transition: background-color .15s; }
+.orac-sidebar-item:hover { background: rgba(255,255,255,.08); }
+.orac-sidebar-item-active { background: rgba(255,255,255,.16); box-shadow: inset 3px 0 0 #6fb7ee; color: #fff; }
+.orac-sidebar-sub { margin: 0.125rem 0 0.375rem 1.4rem; padding-left: 0.75rem; border-left: 1px solid rgba(255,255,255,.18); }
+.orac-sidebar-subitem { display: flex; align-items: center; min-height: 40px; padding: 0 0.75rem; border-radius: 0.5rem; font-size: 0.9375rem; font-weight: 500; color: #cfe0f2; }
+.orac-sidebar-subitem:hover { background: rgba(255,255,255,.08); color: #fff; }
+.orac-sidebar-subitem-active { background: rgba(111,183,238,.22); color: #fff; font-weight: 700; }
+.orac-sidebar-user { display: flex; align-items: center; gap: 0.625rem; padding: 0.875rem 1rem; border-top: 1px solid rgba(255,255,255,.12); }
+.orac-sidebar-avatar { display: flex; height: 2.25rem; width: 2.25rem; flex: none; align-items: center; justify-content: center; border-radius: 9999px; background: rgba(255,255,255,.16); font-weight: 700; font-size: 0.875rem; }
+.orac-sidebar-signout { background: transparent; flex: none; min-height: 36px; padding: 0 0.75rem; border: 1px solid rgba(255,255,255,.3); border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; color: #fff; }
+.orac-sidebar-signout:hover { background: rgba(255,255,255,.12); }
+.orac-sidebar-close { background: transparent; display: inline-flex; height: 44px; width: 44px; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.3); border-radius: 0.5rem; color: #fff; }
+.orac-sidebar :focus-visible { outline: 2px solid #9fd0f5; outline-offset: 2px; }
+
+/* ---- Signed-out account pages: photo backdrop + centred card -------------- */
+.orac-auth-bg { position: relative; background: #06284a url("/images/orac-mining-service-960.jpg") center / cover no-repeat; }
+@media (min-width: 900px) { .orac-auth-bg { background-image: url("/images/orac-mining-service-1920.jpg"); background-attachment: fixed; } }
+.orac-auth-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(4,26,49,.88), rgba(0,72,140,.62)); }
+.orac-auth-card { background: var(--orac-surface); border: 1px solid var(--orac-border); border-radius: 1.25rem; padding: 2rem 1.5rem; box-shadow: 0 24px 60px rgba(0,0,0,.35); }
+@media (min-width: 640px) { .orac-auth-card { padding: 2.25rem 2.25rem; } }
+.orac-auth-back { color: #eaf2fb; font-weight: 600; font-size: 0.9375rem; min-height: 44px; display: inline-flex; align-items: center; }
+.orac-auth-back:hover { text-decoration: underline; }
+
+/* ---- Public landing page --------------------------------------------------- */
+.orac-land-hero, .orac-land-band { position: relative; color: #fff; background: #06284a url("/images/orac-mining-service-960.jpg") center / cover no-repeat; }
+@media (min-width: 900px) { .orac-land-hero, .orac-land-band { background-image: url("/images/orac-mining-service-1920.jpg"); } }
+.orac-land-hero-overlay { position: absolute; inset: 0; background: linear-gradient(100deg, rgba(4,26,49,.92) 0%, rgba(4,26,49,.78) 45%, rgba(0,72,140,.45) 100%); }
+.orac-land-hero-copy { color: #dbe8f6; }
+.orac-land-eyebrow { display: inline-block; padding: .35rem .8rem; border: 1px solid rgba(255,255,255,.35); border-radius: 9999px; background: rgba(255,255,255,.1); font-size: .875rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.orac-land-kicker { font-size: .875rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--orac-accent); }
+.orac-land-btn-light, .orac-land-btn-ghost, .orac-land-btn-text, .orac-land-link-solid, .orac-land-link-outline, .orac-land-link-soft { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 1.4rem; border-radius: .6rem; font-size: 1rem; font-weight: 700; transition: background-color .15s, border-color .15s, transform .15s; }
+.orac-land-btn-light { background: #fff; color: #06284a; }
+.orac-land-btn-light:hover { background: #e6f0fb; transform: translateY(-1px); }
+.orac-land-btn-ghost { border: 2px solid rgba(255,255,255,.7); color: #fff; }
+.orac-land-btn-ghost:hover { background: rgba(255,255,255,.14); }
+.orac-land-btn-text { color: #fff; padding: 0 .5rem; }
+.orac-land-btn-text:hover { text-decoration: underline; }
+.orac-land-link-solid { background: var(--orac-accent-strong); color: #fff; }
+.orac-land-link-solid:hover { filter: brightness(1.12); }
+.orac-land-link-outline { border: 2px solid var(--orac-accent); color: var(--orac-accent); }
+.orac-land-link-outline:hover { background: var(--orac-surface-muted); }
+.orac-land-link-soft { width: 100%; background: var(--orac-surface-muted); color: var(--orac-text-primary); }
+.orac-land-link-soft:hover { background: var(--orac-accent-strong); color: #fff; }
+.orac-land-card { background: var(--orac-surface); border: 1px solid var(--orac-border); border-radius: 1rem; padding: 1.5rem; transition: box-shadow .2s, transform .2s; }
+a.orac-land-card:hover, li.orac-land-card:hover, article.orac-land-card:hover { box-shadow: 0 10px 28px rgba(6,40,74,.14); transform: translateY(-2px); }
+.orac-land-chip { display: inline-block; padding: .2rem .65rem; border-radius: 9999px; background: var(--orac-surface-muted); color: var(--orac-text-secondary); font-size: .8125rem; font-weight: 600; }
+.orac-land-tab { min-height: 44px; padding: 0 1.1rem; border: 1px solid var(--orac-border-strong); border-radius: 9999px; background: var(--orac-surface); color: var(--orac-text-primary); font-weight: 600; font-size: 1rem; }
+.orac-land-tab:hover { background: var(--orac-surface-muted); }
+.orac-land-tab-active { background: var(--orac-accent-strong); border-color: var(--orac-accent-strong); color: #fff; }
+.orac-land-tab:focus-visible, .orac-land-hero a:focus-visible, .orac-land-link-solid:focus-visible { outline: 2px solid var(--orac-focus-ring); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .orac-land-card, .orac-land-btn-light, a.orac-land-card { transition: none; transform: none !important; } }

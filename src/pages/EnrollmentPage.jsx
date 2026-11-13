@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import BrandMark from "../components/ui/BrandMark.jsx";
-import BrandPanel from "../components/ui/BrandPanel.jsx";
+import AuthShell from "../components/ui/AuthShell.jsx";
 import Button from "../components/ui/Button.jsx";
 import Field from "../components/ui/Field.jsx";
 import Input from "../components/ui/Input.jsx";
@@ -89,29 +88,7 @@ export default function EnrollmentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-orac-page text-orac-text-primary">
-      <div className="grid min-h-screen lg:grid-cols-2">
-        {/* Left Side: Brand Panel */}
-        <BrandPanel
-          title="Protect your account with an authenticator app."
-          subtitle="Your administrator gives you a one-time ticket. You prove who you are with your password, then link your app."
-          workflow={["Ticket", "Authenticator", "Recovery codes"]}
-        />
-
-        {/* Right Side: Step Card */}
-        <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-16">
-          <div className="mx-auto w-full max-w-[440px]">
-            {/* Header with BrandMark */}
-            <div className="mb-6 flex items-center gap-3">
-              <BrandMark size={44} />
-              <div>
-                <div className="text-xl font-bold text-orac-text-primary">ORAC-IOS</div>
-                <div className="text-ux-caption font-semibold text-orac-accent">
-                  Two-Factor Authentication Setup
-                </div>
-              </div>
-            </div>
-
+    <AuthShell tag="Two-Factor Authentication Setup" maxWidth="max-w-[440px]">
             {/* Stepper Header */}
             <div className="mb-6 flex items-center justify-between border-b border-orac-border pb-4">
               <div className="flex items-center gap-2">
@@ -388,9 +365,6 @@ export default function EnrollmentPage() {
             <p className="mt-8 text-center text-ux-caption text-orac-text-muted">
               Orac-IOS &copy; {new Date().getFullYear()} &bull; Orac Systems
             </p>
-          </div>
-        </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

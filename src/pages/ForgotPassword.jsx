@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { auth } from "../api/client.js";
-import BrandMark from "../components/ui/BrandMark.jsx";
-import BrandPanel from "../components/ui/BrandPanel.jsx";
+import AuthShell from "../components/ui/AuthShell.jsx";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -25,27 +24,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-orac-canvas text-orac-text-primary font-sans selection:bg-orac-accent/20">
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
-        {/* Left Side: Brand Panel */}
-        <BrandPanel
-          title="Account Recovery & Credential Management"
-          subtitle="Reset your password securely. Operators can request recovery links, and administrators verify dual-factor resets."
-          showChain={false}
-          className="min-h-[260px] lg:min-h-screen"
-        />
-
-        {/* Right Side: Form Card */}
-        <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-16">
-          <div className="mx-auto w-full max-w-[420px]">
-            <div className="mb-8 flex items-center gap-3">
-              <BrandMark size={44} />
-              <div>
-                <div className="text-xl font-bold tracking-tight text-orac-text-primary">ORAC-IOS</div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-orac-accent">Password Recovery</div>
-              </div>
-            </div>
-
+    <AuthShell tag="Password Recovery" maxWidth="max-w-[420px]">
             <div className="mb-8">
               <h1 className="text-2xl font-bold tracking-tight text-orac-text-primary sm:text-3xl">
                 Reset your password
@@ -119,9 +98,6 @@ export default function ForgotPassword() {
             <p className="mt-8 text-center text-ux-caption text-orac-text-muted">
               Orac-IOS &copy; {new Date().getFullYear()} &bull; Orac Systems
             </p>
-          </div>
-        </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

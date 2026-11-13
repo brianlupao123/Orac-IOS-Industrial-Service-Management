@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { accessRequests } from "../api/client.js";
 import SearchableSelect from "../components/SearchableSelect.jsx";
-import BrandMark from "../components/ui/BrandMark.jsx";
-import BrandPanel from "../components/ui/BrandPanel.jsx";
+import AuthShell from "../components/ui/AuthShell.jsx";
 
 // Matches REQUESTABLE_ROLES in accessRequestsController.js exactly.
 // "Admin" is intentionally not offered here — see that file's comment for why.
@@ -42,27 +41,7 @@ export default function RequestAccess() {
   }
 
   return (
-    <div className="min-h-screen bg-orac-canvas text-orac-text-primary font-sans selection:bg-orac-accent/20">
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
-        {/* Left Side: Brand Panel */}
-        <BrandPanel
-          title="Join Your Operational Workspace"
-          subtitle="Request access to your role-governed dashboard. Administrators verify each applicant and assign appropriate organizational permissions."
-          showChain={true}
-          className="min-h-[260px] lg:min-h-screen"
-        />
-
-        {/* Right Side: Form Card */}
-        <div className="flex flex-col justify-center px-6 py-10 sm:px-12 lg:px-16">
-          <div className="mx-auto w-full max-w-[460px]">
-            <div className="mb-6 flex items-center gap-3">
-              <BrandMark size={44} />
-              <div>
-                <div className="text-xl font-bold tracking-tight text-orac-text-primary">ORAC-IOS</div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-orac-accent">Access Provisioning</div>
-              </div>
-            </div>
-
+    <AuthShell tag="Access Provisioning" maxWidth="max-w-[460px]">
             <div className="mb-6">
               <h1 className="text-2xl font-bold tracking-tight text-orac-text-primary sm:text-3xl">
                 Request access
@@ -184,9 +163,6 @@ export default function RequestAccess() {
                 Company site
               </a>
             </footer>
-          </div>
-        </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

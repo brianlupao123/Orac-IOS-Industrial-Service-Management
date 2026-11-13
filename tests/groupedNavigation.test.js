@@ -18,13 +18,32 @@ test("commercial and field work keep related operational pages together", () => 
   assert.deepEqual(fieldWork.paths, ["/worksheets", "/monthly-worksheets"]);
 });
 
-test("primary navigation provides accessible menus and preserves direct one-item work areas", () => {
-  const src = readFileSync(new URL("../src/layouts/PortalLayout.jsx", import.meta.url), "utf8");
-  assert.match(src, /aria-haspopup="menu"/);
-  assert.match(src, /aria-expanded=\{isOpen\}/);
-  assert.match(src, /role="menu"/);
-  assert.match(src, /role="menuitem"/);
+test("sidebar groups are collapsible, expose state to assistive tech and keep one-item areas as direct links", () => {
+  const src = readFileSync(new URL("../src/components/layout/SidebarPanel.jsx", import.meta.url), "utf8");
+  assert.match(src, /aria-expanded=\{open\}/);
+  assert.match(src, /aria-controls=\{listId\}/);
   assert.match(src, /group\.items\.length === 1/);
+  assert.match(src, /aria-current=\{childActive \? "page" : undefined\}/);
+});
+
+test("sidebar adds Contracts, Kiosk mode and Timesheet sub-filters without widening any route", async () => {
+  const { sidebarGroups, TIMESHEET_STATUS_FILTERS } = await import("../src/navModel.js");
+  const { canAccessRoute } = await import("../src/accessPolicy.js");
+  for (const role of Object.values(ROLES)) {
+    const items = sidebarGroups(role).flatMap((g) => g.items);
+    for (const item of items) assert.ok(canAccessRoute(role, item.path), `${role} listed ${item.path} without route access`);
+    assert.equal(items.some((i) => i.path === "/contracts"), canAccessRoute(role, "/contracts"), `${role} contracts`);
+    assert.equal(items.some((i) => i.path === "/kiosk"), canAccessRoute(role, "/kiosk"), `${role} kiosk`);
+    const ts = items.find((i) => i.path === "/worksheets");
+    if (ts) assert.deepEqual(ts.children.map((c) => c.label), TIMESHEET_STATUS_FILTERS.map((f) => f.label));
+  }
+  assert.deepEqual(TIMESHEET_STATUS_FILTERS.map((f) => f.label), ["All Timesheets", "Draft", "Awaiting client", "Awaiting Supervisor", "Approved", "Returned"]);
+});
+
+test("the Timesheets page reads its status filter from the URL so sidebar sub-items stay in step", () => {
+  const src = readFileSync(new URL("../src/pages/WorksheetsPage.jsx", import.meta.url), "utf8");
+  assert.match(src, /searchParams\.get\("status"\)/);
+  assert.match(src, /next\.set\("status", key\)/);
 });
 
 test("compact screens keep labelled primary navigation and a route-safe More menu", () => {

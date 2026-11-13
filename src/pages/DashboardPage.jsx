@@ -40,6 +40,7 @@ export default function DashboardPage({ user }) {
   const [stats, setStats] = useState(null);
   const [quotes, setQuotes] = useState([]);
   const [dispatches, setDispatches] = useState([]);
+  const [siteNames, setSiteNames] = useState({});
   const [worksheets, setWorksheets] = useState([]);
   const [pendingAccessCount, setPendingAccessCount] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -91,10 +92,14 @@ export default function DashboardPage({ user }) {
       ? collections.list("access_requests").catch(() => null)
       : Promise.resolve(null);
     loads.push(accessPromise);
+    // Dispatch cards carry only a site id; look the names up so the Site column is readable.
+    // A role that may not read mine sites simply keeps the dash.
+    loads.push(canLoadOperationalData ? collections.list("mine_sites").catch(() => null) : Promise.resolve(null));
 
     Promise.all(loads)
-      .then(([s, q, d, w, ar]) => {
+      .then(([s, q, d, w, ar, sites]) => {
         if (cancelled) return;
+        if (Array.isArray(sites)) setSiteNames(Object.fromEntries(sites.map((site) => [site.id, site.name])));
         setStats(s);
         setQuotes(q || []);
         if (d) setDispatches(d);
@@ -451,7 +456,7 @@ export default function DashboardPage({ user }) {
               <tr key={d.id} className="transition-colors hover:bg-orac-row-hover">
                 <td className="px-6 py-4 font-medium text-orac-text-primary">{d.dispatch_number || d.id}</td>
                 <td className="px-6 py-4"><StatusBadge status={d.status} /></td>
-                <td className="px-6 py-4 text-orac-text-muted">{d.site_name || d.mine_site || "—"}</td>
+                <td className="px-6 py-4 text-orac-text-muted">{d.site_name || d.mine_site || siteNames[d.site_id] || "—"}</td>
               </tr>
             )}
           />
@@ -471,7 +476,7 @@ export default function DashboardPage({ user }) {
                 <td className="px-6 py-4 font-medium text-orac-text-primary">{ws.activity || "—"}</td>
                 <td className="px-6 py-4 tabular-nums text-right">{ws.hours ?? "—"}</td>
                 <td className="px-6 py-4"><StatusBadge status={ws.status} /></td>
-                <td className="px-6 py-4 text-orac-text-muted">{ws.technician_name || "—"}</td>
+                <td className="px-6 py-4 text-orac-text-muted">{ws.worker_name || ws.technician_name || "—"}</td>
               </tr>
             )}
           />

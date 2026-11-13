@@ -14,6 +14,8 @@ const VARIANTS = {
     "border-orac-danger-text bg-orac-surface text-orac-danger-text hover:bg-orac-danger-bg",
   ghost:
     "border-transparent bg-transparent text-orac-accent hover:bg-orac-surface-muted hover:underline",
+  // bare: no chrome at all; the caller's className owns the look (used by the sidebar rows).
+  bare: "",
   link:
     "border-transparent bg-transparent text-orac-accent hover:underline px-2 min-h-[44px] min-[900px]:min-h-[32px] inline-flex items-center",
 };
@@ -36,7 +38,7 @@ const Button = React.forwardRef(function Button(
   },
   ref
 ) {
-  const isLink = variant === "link";
+  const isLink = variant === "link" || variant === "bare";
   const sizeClass = isLink ? "" : SIZES[size] || SIZES.md;
   const variantClass = VARIANTS[variant] || VARIANTS.secondary;
 
@@ -49,7 +51,7 @@ const Button = React.forwardRef(function Button(
       data-size={size}
       disabled={disabled || loading}
       aria-busy={loading ? "true" : undefined}
-      className={`${BASE_STYLES} ${variantClass} ${sizeClass} ${className}`.trim()}
+      className={`${variant === "bare" ? "" : BASE_STYLES} ${variantClass} ${sizeClass} ${className}`.trim()}
       {...props}
     >
       {loading && (
